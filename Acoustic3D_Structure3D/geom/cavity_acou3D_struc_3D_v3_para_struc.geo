@@ -5,12 +5,12 @@ lz1 = 2.5;
 
 ly2 = 1.0;
 lx2 = 3.5;
-lx3 = 1.5;
+lx3 = <val##0>;
 
 ly4 = 1.2; // structure thickness
 R = 1.0; // sphere radius
 
-ly3 = 1;
+ly3 = <val##1>;
 l4 = 2.5;
 lz4 = 1.2;
 r4   = 0.5;
