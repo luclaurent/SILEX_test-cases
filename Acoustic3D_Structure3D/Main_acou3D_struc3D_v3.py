@@ -76,7 +76,7 @@ flag_write_gmsh_results=1
 
 freq_ini     = 10.0
 freq_end     = 120.0
-nb_freq_step_per_proc=2
+nb_freq_step_per_proc=10
 
 nb_freq_step = nb_freq_step_per_proc*nproc
 deltafreq=(freq_end-freq_ini)/(nb_freq_step-1)
@@ -130,20 +130,31 @@ if rank==0:
     print ("nelem for structure=",struc_nelem)
 
 ##################################################################
-# compute level set
+# compute level set and its gradient according to a parameter
 ##################################################################
 
 tic = time.clock()
 
-LevelSet,distance = silex_lib_xfem_acou_tet4.computelevelset(fluid_nodes,struc_nodes,struc_elements)
+# LS from a structure mesh
+LevelSet_from_Mesh,distance = silex_lib_xfem_acou_tet4.computelevelset(fluid_nodes,struc_nodes,struc_elements)
+
+# LS from a simple analytic shape (sphere)
+lx3 = 2.0 # Xc
+ly3 = 2.0 # Yc
+R = 1.0 # sphere radius
+
+LevelSet=scipy.sqrt((fluid_nodes[:,0]-lx3)**2+(fluid_nodes[:,1]-lx3)**2+(fluid_nodes[:,2]-0.0)**2)-R
+#Compute LS gradient according to Xc
+LevelSet_gradient=(lx3-fluid_nodes[:,0])/(2*scipy.sqrt((fluid_nodes[:,0]-lx3)**2+(fluid_nodes[:,1]-lx3)**2+(fluid_nodes[:,2]-0.0)**2))
+
 
 toc = time.clock()
 if rank==0:
     print ("time to compute level set:",toc-tic)
 
 if (flag_write_gmsh_results==1) and (rank==0):
-    silex_lib_gmsh.WriteResults2(results_file+'_LS_signed_distance',fluid_nodes,fluid_elements1,4,[[[LevelSet],'nodal',1,'Level set']])
-    silex_lib_gmsh.WriteResults2(results_file+'_LS_distance',fluid_nodes,fluid_elements1,4,[[[distance],'nodal',1,'Distance']])
+    silex_lib_gmsh.WriteResults2(results_file+'_LS_signed_distance',fluid_nodes,fluid_elements1,4,[[[LevelSet],'nodal',1,'Level set from analytics'],[[LevelSet_from_Mesh],'nodal',1,'Level set from mesh'],[[LevelSet_gradient],'nodal',1,'Level set gradient from analytics']])
+    #silex_lib_gmsh.WriteResults2(results_file+'_LS_distance',fluid_nodes,fluid_elements1,4,[[[distance],'nodal',1,'Distance']])
     silex_lib_gmsh.WriteResults2(results_file+'_struc_air_interface',struc_nodes,struc_elements,2)
 
 ##################################################################
@@ -249,14 +260,18 @@ SolvedDof = scipy.hstack([SolvedDofF,SolvedDofA+fluid_ndof])
 # Compute gradients with respect to parameters
 ##################################################################
 
-print(silex_lib_xfem_acou_tet4.globalacousticgradientmatrices.__doc__)
 
-LevelSet_gradient=-scipy.ones(fluid_nnodes)
-
-IIf,JJf,Vfak_gradient,Vfam_gradient=silex_lib_xfem_acou_tet4.globalacousticgradientmatrices(fluid_elements1[EnrichedElements],fluid_nodes,celerity,rho,LevelSet_gradient,LevelSet)
-dMFA_dtheta = scipy.sparse.csc_matrix( (Vfam_gradient,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
+#print(silex_lib_xfem_acou_tet4.globalacousticgradientmatrices.__doc__)
+IIf,JJf,Vfak_gradient,Vfam_gradient=silex_lib_xfem_acou_tet4.globalacousticgradientmatrices(fluid_nodes,fluid_elements1,LevelSet,celerity,rho,LevelSet_gradient)
 dKFA_dtheta = scipy.sparse.csc_matrix( (Vfak_gradient,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
+dMFA_dtheta = scipy.sparse.csc_matrix( (Vfam_gradient,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
 
+dK=scipy.sparse.construct.bmat( [
+            [None,dKFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
+            [dKFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]] )
+dM=scipy.sparse.construct.bmat( [
+            [None,dMFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
+            [dMFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]] )
 
 ##############################################################
 # FRF computation
@@ -265,6 +280,7 @@ dKFA_dtheta = scipy.sparse.csc_matrix( (Vfak_gradient,(IIf,JJf)), shape=(fluid_n
 Flag_frf_analysis=1
 frequencies=[]
 frf=[]
+frfgradient=[]
 
 if (Flag_frf_analysis==1):
     print ("Proc. ",rank," / time at the beginning of the FRF:",time.ctime())
@@ -274,6 +290,7 @@ if (Flag_frf_analysis==1):
 
     press_save=[]
     disp_save=[]
+    dpress_save=[]
 
     for i in range(nb_freq_step_per_proc):
 
@@ -297,10 +314,25 @@ if (Flag_frf_analysis==1):
         CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA]+enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
         #frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes,CorrectedPressure))
         frf.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(fluid_elements5,fluid_nodes,press1,enrichment,LevelSet,LevelSet*0-1.0))
+        #frf.append(scipy.dot(scipy.dot(M,sol),sol))
 
         if (flag_write_gmsh_results==1) and (rank==0):
             press_save.append(CorrectedPressure.real)
+
+        tmp=-(dK-(omega**2)*dM)*sol
+        Dsol_Dtheta = mumps.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='c16')  , tmp )
+
+        Dpress_Dtheta = scipy.zeros(fluid_ndof,dtype=float)
+        Dpress_Dtheta[SolvedDofF] = Dsol_Dtheta[list(range(len(SolvedDofF)))]
+        Denrichment_Dtheta = scipy.zeros(fluid_ndof,dtype=float)
+        Denrichment_Dtheta[SolvedDofA]= Dsol_Dtheta[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
+        #print(silex_lib_xfem_acou_tet4.computegradientcomplexquadratiquepressure.__doc__)
         
+
+        frfgradient.append(silex_lib_xfem_acou_tet4.computegradientcomplexquadratiquepressure(fluid_elements5,fluid_nodes,press1+0j,Dpress_Dtheta+0j,LevelSet))
+        dpress_save.append(Dpress_Dtheta.copy())
+        stop
+
     frfsave=[scipy.array(frequencies),scipy.array(frf)]
 
     #comm.send(frfsave, dest=0, tag=11)
@@ -308,7 +340,7 @@ if (Flag_frf_analysis==1):
     print ("Proc. ",rank," / time at the end of the FRF:",time.ctime())
 
     if (flag_write_gmsh_results==1) and (rank==0):
-        silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',fluid_nodes,fluid_elements1,4,[[press_save,'nodal',1,'pressure']])
+        silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',fluid_nodes,fluid_elements1,4,[[press_save,'nodal',1,'pressure'],[dpress_save,'nodal',1,'pressure']])
 
     # Save the FRF problem
     #Allfrequencies=scipy.zeros(nb_freq_step)
