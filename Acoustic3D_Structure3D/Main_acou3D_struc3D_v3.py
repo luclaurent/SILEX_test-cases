@@ -328,7 +328,9 @@ if (Flag_frf_analysis==1):
         Denrichment_Dtheta[SolvedDofA]= Dsol_Dtheta[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
         #print(silex_lib_xfem_acou_tet4.computegradientcomplexquadratiquepressure.__doc__)
         
-
+        #####################
+        #####################
+        #store gradients
         frfgradient.append(silex_lib_xfem_acou_tet4.computegradientcomplexquadratiquepressure(fluid_elements5,fluid_nodes,press1+0j,Dpress_Dtheta+0j,LevelSet))
         dpress_save.append(Dpress_Dtheta.copy())
         stop

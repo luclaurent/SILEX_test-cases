@@ -15,6 +15,7 @@ import time
 import scipy
 import scipy.sparse
 import scipy.sparse.linalg
+import scipy.io
 
 import pickle
 
@@ -142,7 +143,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal):#, caseDefine):
     flag_edge_enrichment = 0
 
     # number of parameters
-    nbPara = len(paraVal)
+    nbPara = 1 #len(paraVal)
     # prepare save file
     file_extension = "{:.{}E}".format(paraVal[0], 2)
     if nbPara > 1:
@@ -213,6 +214,11 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal):#, caseDefine):
 
     LevelSet, distance = silex_lib_xfem_acou_tet4.computelevelset(
         fluid_nodes, struc_nodes, struc_elements)
+
+    lx3=paraVal[0]
+    ly3=paraVal[1]
+    LevelSet_gradient=(lx3-fluid_nodes[:,0])/(2*scipy.sqrt((fluid_nodes[:,0]-lx3)**2+(fluid_nodes[:,1]-lx3)**2+(fluid_nodes[:,2]-0.0)**2))
+    
 
     toc = time.clock()
     if rank == 0:
@@ -340,21 +346,21 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal):#, caseDefine):
 
     SolvedDof = scipy.hstack([SolvedDofF, SolvedDofA+fluid_ndof])
 
+ 
     #################################################################
     # Compute gradients with respect to parameters
     ##################################################################
+    #print(silex_lib_xfem_acou_tet4.globalacousticgradientmatrices.__doc__)
+    IIf,JJf,Vfak_gradient,Vfam_gradient=silex_lib_xfem_acou_tet4.globalacousticgradientmatrices(fluid_nodes,fluid_elements1,LevelSet,celerity,rho,LevelSet_gradient)
+    dKFA_dtheta = scipy.sparse.csc_matrix( (Vfak_gradient,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
+    dMFA_dtheta = scipy.sparse.csc_matrix( (Vfam_gradient,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
 
-    print(silex_lib_xfem_acou_tet4.globalacousticgradientmatrices.__doc__)
-
-    LevelSet_gradient = -scipy.ones(fluid_nnodes)
-
-    IIf, JJf, Vfak_gradient, Vfam_gradient = silex_lib_xfem_acou_tet4.globalacousticgradientmatrices(
-        fluid_elements1[EnrichedElements], fluid_nodes, celerity, rho, LevelSet_gradient, LevelSet)
-    dMFA_dtheta = scipy.sparse.csc_matrix(
-        (Vfam_gradient, (IIf, JJf)), shape=(fluid_ndof, fluid_ndof))
-    dKFA_dtheta = scipy.sparse.csc_matrix(
-        (Vfak_gradient, (IIf, JJf)), shape=(fluid_ndof, fluid_ndof))
-
+    dK=scipy.sparse.construct.bmat( [
+                [None,dKFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
+                [dKFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]] )
+    dM=scipy.sparse.construct.bmat( [
+                [None,dMFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
+                [dMFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]] )
 
     ##############################################################
     # FRF computation
@@ -363,6 +369,9 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal):#, caseDefine):
     Flag_frf_analysis = 1
     frequencies = []
     frf = []
+    frfgradient=list()
+    #for it in range(0,nbPara):
+    #    frfgradient.append([])
 
     if (Flag_frf_analysis == 1):
         print("Proc. ", rank, " / time at the beginning of the FRF:", time.ctime())
@@ -372,6 +381,9 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal):#, caseDefine):
 
         press_save = []
         disp_save = []
+        dpress_save=list()
+        #for it in range(0,nbPara):
+        #    dpress_save.append([])
 
         #extract frequencies for the associated processors
         freqCompute=listFreqPerProc[:,rank]
@@ -406,20 +418,50 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal):#, caseDefine):
 
             if (flag_write_gmsh_results == 1) and (rank == 0):
                 press_save.append(CorrectedPressure.real)
+            #####################
+            #####################
+            tmp=-(dK-(omega**2)*dM)*sol
+            Dsol_Dtheta = mumps.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='c16')  , tmp )
+            #####################
+            #####################
+            Dpress_Dtheta = scipy.zeros(fluid_ndof,dtype=float)
+            Dpress_Dtheta[SolvedDofF] = Dsol_Dtheta[list(range(len(SolvedDofF)))]
+            #####################
+            #####################
+            Denrichment_Dtheta = scipy.zeros(fluid_ndof,dtype=float)
+            Denrichment_Dtheta[SolvedDofA]= Dsol_Dtheta[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
+            #print(silex_lib_xfem_acou_tet4.computegradientcomplexquadratiquepressure.__doc__)
+            #####################
+            #####################
+            frfgradient.append(silex_lib_xfem_acou_tet4.computegradientcomplexquadratiquepressure(fluid_elements5,fluid_nodes,press1+0j,Dpress_Dtheta+0j,LevelSet))
+            dpress_save.append(Dpress_Dtheta.copy())
 
-        frfsave = [frequencies, frf]
+        frfsave=[frequencies,frf,frfgradient]
         if rank!=0:
             comm.send(frfsave, dest=0, tag=11)
 
         print("Proc. ", rank, " / time at the end of the FRF:", time.ctime())
 
         if (flag_write_gmsh_results == 1) and (rank == 0):
-            silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',
-                                        fluid_nodes, fluid_elements1, 4, [[press_save, 'nodal', 1, 'pressure']])
+            dataW=list()
+            #prepare pressure field
+            dataW.append([scipy.real(press_save),'nodal',1,'pressure (real)'])
+            dataW.append([scipy.imag(press_save),'nodal',1,'pressure (imaginary)'])
+            dataW.append([scipy.absolute(press_save),'nodal',1,'pressure (norm)'])
+            #prepare gradient pressure field
+            dataW.append([scipy.real(dpress_save),'nodal',1,'pressure gradient  (real)'])
+            dataW.append([scipy.imag(dpress_save),'nodal',1,'pressure gradient (imaginary)'])
+            dataW.append([scipy.absolute(dpress_save),'nodal',1,'pressure gradient  (norm)'])
 
-        #Save the FRF problem
+            silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',
+                                        fluid_nodes, fluid_elements1, 4,dataW)
+
+        #####################
+        #####################
+        # save the FRF problem
         Allfrequencies=scipy.zeros(nbStep)
         Allfrf=scipy.zeros(nbStep)
+        Allfrfgradient=scipy.zeros([nbStep,nbPara])
         k=0
         if rank==0:
             for i in range(nproc):
@@ -428,17 +470,46 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal):#, caseDefine):
                     print(data)
                 else:
                     print(i)
-                    data=comm.recv(source=i,tag=11)
+                    data=comm.recv(source=i, tag=11)
+                    #data=data_buffer
+
                 for j in range(len(data[0])):
                     Allfrequencies[k]=data[0][j]
                     Allfrf[k]=data[1][j]
+                    for itP in range(0,nbPara):
+                        Allfrfgradient[k,itP]=data[2][j]#[itP][j]
                     k=k+1
+            #####################
+            #####################zip(*sorted(zip(Allfrequencies, Allfrf,Allfrfgradient)))
+            IXsort=scipy.argsort(Allfrequencies)
+            AllfreqSorted=scipy.zeros(nbStep)
+            AllfrfSorted=scipy.zeros(nbStep)
+            AllfrfgradientSorted=scipy.zeros([nbStep,nbPara])
+            for itS in range(0,nbStep):
+                AllfreqSorted[itS]=Allfrequencies[IXsort[itS]]
+                AllfrfSorted[itS]=Allfrf[IXsort[itS]]
+                for itP in range(0,nbPara):
+                    AllfrfgradientSorted[itS,itP]=Allfrfgradient[IXsort[itS],itP]
 
-            Allfrequencies, Allfrf = zip(*sorted(zip(Allfrequencies, Allfrf)))
-            Allfrfsave=[scipy.array(list(Allfrequencies)),scipy.array(list(Allfrf))]
-            f = open(results_file+'_results.frf', 'wb')
-            pickle.dump(frfsave, f)
+            #Allfrequencies, Allfrf,Allfrfgradient = zip(*sorted(zip(Allfrequencies, Allfrf,Allfrfgradient)))
+            Allfrfsave=list()
+            Allfrfsave.append(AllfreqSorted)
+            Allfrfsave.append(AllfrfSorted)
+            for itP in range(0,nbPara):
+                Allfrfsave.append(AllfrfgradientSorted[:,itP])
+
+            f=open(results_file+'_results.frf','wb')
+            pickle.dump(Allfrfsave, f)
+            print(Allfrfsave)
             f.close()
+            #####################
+            #####################
+            #save on mat file
+            scipy.io.savemat(results_file+'_results.mat',mdict={'AllFRF': Allfrfsave})
+            scipy.io.savemat(results_file_ini+'results.mat',mdict={'AllFRF': Allfrfsave})
+            #####################
+            #####################
+            return Allfrfsave
 
 
 #####################
@@ -505,7 +576,7 @@ def usage():
 class defaultV:
     freqMin     = 10.0
     freqMax     = 200.0
-    nbStep      = 200
+    nbStep      = 5
     paraVal   = [1.5,1]
     #caseDef= 'thick_u'
 
