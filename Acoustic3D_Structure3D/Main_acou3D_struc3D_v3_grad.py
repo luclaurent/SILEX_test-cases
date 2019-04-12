@@ -328,8 +328,8 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal):#, caseDefine):
     #################################################################
 
     K = scipy.sparse.construct.bmat([
-        [KFF[SolvedDofF, :][:, SolvedDofF], KAF[SolvedDofF, :][:, SolvedDofA]],
-        [KAF[SolvedDofA, :][:, SolvedDofF], KAA[SolvedDofA, :][:, SolvedDofA]]])
+        [fluid_damping*KFF[SolvedDofF, :][:, SolvedDofF], fluid_damping*KAF[SolvedDofF, :][:, SolvedDofA]],
+        [fluid_damping*KAF[SolvedDofA, :][:, SolvedDofF], fluid_damping*KAA[SolvedDofA, :][:, SolvedDofA]]])
 
     M = scipy.sparse.construct.bmat([
         [MFF[SolvedDofF, :][:, SolvedDofF], MAF[SolvedDofF, :][:, SolvedDofA]],
@@ -356,8 +356,8 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal):#, caseDefine):
     dMFA_dtheta = scipy.sparse.csc_matrix( (Vfam_gradient,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
 
     dK=scipy.sparse.construct.bmat( [
-                [None,dKFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
-                [dKFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]] )
+                [None,fluid_damping*dKFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
+                [fluid_damping*dKFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]] )
     dM=scipy.sparse.construct.bmat( [
                 [None,dMFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
                 [dMFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]] )
@@ -404,14 +404,18 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal):#, caseDefine):
             sol = mumps.spsolve(scipy.sparse.csc_matrix(
                 K-(omega**2)*M, dtype='c16'), F)
 
+            ## pressure field without enrichment
             press1 = scipy.zeros((fluid_ndof), dtype=complex)
             press1[SolvedDofF] = sol[list(range(len(SolvedDofF)))]
+            ## enrichment field
             enrichment = scipy.zeros((fluid_nnodes), dtype=complex)
             enrichment[SolvedDofA] = sol[list(
                 range(len(SolvedDofF), len(SolvedDofF)+len(SolvedDofA)))]
-            CorrectedPressure = press1
-            CorrectedPressure[SolvedDofA] = CorrectedPressure[SolvedDofA] + \
+            ## correction of the pressure field with enrichment
+            CorrectedPressure = scipy.zeros((fluid_ndof), dtype=complex)
+            CorrectedPressure[SolvedDofA] = press1[SolvedDofA] + \
                 enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
+            ## compute and store FRF on the test volume
             # frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes,CorrectedPressure))
             frf.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(
                 fluid_elements5, fluid_nodes, press1, enrichment, LevelSet, LevelSet*0-1.0))
@@ -424,11 +428,11 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal):#, caseDefine):
             Dsol_Dtheta = mumps.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='c16')  , tmp )
             #####################
             #####################
-            Dpress_Dtheta = scipy.zeros(fluid_ndof,dtype=float)
+            Dpress_Dtheta = scipy.zeros(fluid_ndof,dtype=complex)
             Dpress_Dtheta[SolvedDofF] = Dsol_Dtheta[list(range(len(SolvedDofF)))]
             #####################
             #####################
-            Denrichment_Dtheta = scipy.zeros(fluid_ndof,dtype=float)
+            Denrichment_Dtheta = scipy.zeros(fluid_ndof,dtype=complex)
             Denrichment_Dtheta[SolvedDofA]= Dsol_Dtheta[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
             #print(silex_lib_xfem_acou_tet4.computegradientcomplexquadratiquepressure.__doc__)
             #####################
