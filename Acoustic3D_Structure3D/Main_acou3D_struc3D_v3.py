@@ -74,9 +74,9 @@ results_file='results/cavity_acou3D_struc_3D_v3'
 
 flag_write_gmsh_results=1
 
-freq_ini     = 10.0
+freq_ini     = 90.0
 freq_end     = 120.0
-nb_freq_step_per_proc=10
+nb_freq_step_per_proc=2
 
 nb_freq_step = nb_freq_step_per_proc*nproc
 deltafreq=(freq_end-freq_ini)/(nb_freq_step-1)
@@ -310,11 +310,15 @@ if (Flag_frf_analysis==1):
         press1[SolvedDofF]=sol[list(range(len(SolvedDofF)))]
         enrichment=scipy.zeros((fluid_nnodes),dtype=complex)
         enrichment[SolvedDofA]=sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
-        CorrectedPressure=press1
-        CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA]+enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
+        CorrectedPressure=scipy.zeros((fluid_ndof),dtype=complex)
+        CorrectedPressure[SolvedDofA]=press1[SolvedDofA]+enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
         #frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes,CorrectedPressure))
         frf.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(fluid_elements5,fluid_nodes,press1,enrichment,LevelSet,LevelSet*0-1.0))
         #frf.append(scipy.dot(scipy.dot(M,sol),sol))
+
+        #print(silex_lib_xfem_acou_tet4.makexfemposfile.__doc__)
+        #silex_lib_xfem_acou_tet4.makexfemposfile(fluid_nodes,fluid_elements1,LevelSet,press1.real,enrichment.real,'press_plus.pos')
+        #silex_lib_xfem_acou_tet4.makexfemposfile(fluid_nodes,fluid_elements1,-LevelSet,press1.real,-enrichment.real,'press_moins.pos')
 
         if (flag_write_gmsh_results==1) and (rank==0):
             press_save.append(CorrectedPressure.real)
@@ -333,7 +337,6 @@ if (Flag_frf_analysis==1):
         #store gradients
         frfgradient.append(silex_lib_xfem_acou_tet4.computegradientcomplexquadratiquepressure(fluid_elements5,fluid_nodes,press1+0j,Dpress_Dtheta+0j,LevelSet))
         dpress_save.append(Dpress_Dtheta.copy())
-        stop
 
     frfsave=[scipy.array(frequencies),scipy.array(frf)]
 
@@ -342,7 +345,7 @@ if (Flag_frf_analysis==1):
     print ("Proc. ",rank," / time at the end of the FRF:",time.ctime())
 
     if (flag_write_gmsh_results==1) and (rank==0):
-        silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',fluid_nodes,fluid_elements1,4,[[press_save,'nodal',1,'pressure'],[dpress_save,'nodal',1,'pressure']])
+        silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',fluid_nodes,fluid_elements1,4,[[press_save,'nodal',1,'pressure'],[dpress_save,'nodal',1,'pressure gradient']])
 
     # Save the FRF problem
     #Allfrequencies=scipy.zeros(nb_freq_step)
