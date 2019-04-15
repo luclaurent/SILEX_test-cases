@@ -96,7 +96,7 @@ def buildStructMesh(fileOrig,destFile,paraVal):
         os.system(cmdSed)
         
     #run gmsh to build the mesh
-    os.system('gmsh -3 -format msh2 '+destFile+'.geo')
+    #os.system('gmsh -3 -format msh2 '+destFile+'.geo')
 
 
 ###########################################################
@@ -424,21 +424,29 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal):#, caseDefine):
                 press_save.append(CorrectedPressure.real)
             #####################
             #####################
+            ## solve gradient problem
             tmp=-(dK-(omega**2)*dM)*sol
             Dsol_Dtheta = mumps.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='c16')  , tmp )
             #####################
             #####################
+            ## gradient of the pressure field without enrichment
             Dpress_Dtheta = scipy.zeros(fluid_ndof,dtype=complex)
-            Dpress_Dtheta[SolvedDofF] = Dsol_Dtheta[list(range(len(SolvedDofF)))]
+            Dpress_Dtheta[SolvedDofF] = Dsol_Dtheta[list(range(len(SolvedDofF)))].copy()
             #####################
             #####################
+            ## gradient of the enrichment field
             Denrichment_Dtheta = scipy.zeros(fluid_ndof,dtype=complex)
             Denrichment_Dtheta[SolvedDofA]= Dsol_Dtheta[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
+            ## correction of the pressure field with enrichment
+            CorrectedDpress_Dtheta = scipy.zeros(fluid_ndof,dtype=complex)
+            tmpVar=Dpress_Dtheta[SolvedDofA].copy()
+            CorrectedDpress_Dtheta[SolvedDofA]=tmpVar+ \
+                 Denrichment_Dtheta[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
             #print(silex_lib_xfem_acou_tet4.computegradientcomplexquadratiquepressure.__doc__)
             #####################
             #####################
             frfgradient.append(silex_lib_xfem_acou_tet4.computegradientcomplexquadratiquepressure(fluid_elements5,fluid_nodes,press1+0j,Dpress_Dtheta+0j,LevelSet))
-            dpress_save.append(Dpress_Dtheta.copy())
+            dpress_save.append(CorrectedDpress_Dtheta.copy())
 
         frfsave=[frequencies,frf,frfgradient]
         if rank!=0:
@@ -459,6 +467,15 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal):#, caseDefine):
 
             silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',
                                         fluid_nodes, fluid_elements1, 4,dataW)
+
+            #export results with discontinuities on .pos files
+            #varExport=scipy.vstack(press_save)varExport.shape[0]
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,press1.real,enrichment.real,'press_plus.pos')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,press1.real,-enrichment.real,'press_moins.pos')
+            #
+            varExport=scipy.vstack(dpress_save)
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,varExport.real,varExport.shape[0],enrichment.real,'Gpress_plus.pos')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,varExport.real,varExport.shape[0],-enrichment.real,'Gpress_moins.pos')
 
         #####################
         #####################
@@ -580,7 +597,7 @@ def usage():
 class defaultV:
     freqMin     = 10.0
     freqMax     = 200.0
-    nbStep      = 5
+    nbStep      = 3
     paraVal   = [1.5,1]
     #caseDef= 'thick_u'
 
