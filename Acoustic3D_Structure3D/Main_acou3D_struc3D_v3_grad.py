@@ -380,6 +380,8 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal):#, caseDefine):
             print('nb of total dofs: ', len(SolvedDofF)+len(SolvedDofA))
 
         press_save = []
+        enrichment_save = []
+        uncorrectedpress_save = []
         disp_save = []
         dpress_save=list()
         #for it in range(0,nbPara):
@@ -421,7 +423,9 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal):#, caseDefine):
                 fluid_elements5, fluid_nodes, press1, enrichment, LevelSet, LevelSet*0-1.0))
 
             if (flag_write_gmsh_results == 1) and (rank == 0):
-                press_save.append(CorrectedPressure.real)
+                press_save.append(CorrectedPressure)
+                enrichment_save.append(enrichment)
+                uncorrectedpress_save.append(press1)
             #####################
             #####################
             ## solve gradient problem
@@ -469,13 +473,15 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal):#, caseDefine):
                                         fluid_nodes, fluid_elements1, 4,dataW)
 
             #export results with discontinuities on .pos files
-            #varExport=scipy.vstack(press_save)varExport.shape[0]
-            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,press1.real,enrichment.real,'press_plus.pos')
-            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,press1.real,-enrichment.real,'press_moins.pos')
+            varExport=scipy.vstack(uncorrectedpress_save).transpose()
+            varExportC=scipy.vstack(press_save).transpose()
+            varExportB=scipy.vstack(enrichment_save).transpose()
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,varExport.real,varExportB.real,'press_plus.pos')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,varExport.real,varExportB.real,'press_moins.pos')
             #
-            varExport=scipy.vstack(dpress_save)
-            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,varExport.real,varExport.shape[0],enrichment.real,'Gpress_plus.pos')
-            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,varExport.real,varExport.shape[0],-enrichment.real,'Gpress_moins.pos')
+            varExport=scipy.vstack(dpress_save).transpose()
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,varExport.real,varExportB.real,'Gpress_plus.pos')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,varExport.real,varExportB.real,'Gpress_moins.pos')
 
         #####################
         #####################
@@ -597,7 +603,7 @@ def usage():
 class defaultV:
     freqMin     = 10.0
     freqMax     = 200.0
-    nbStep      = 3
+    nbStep      = 100
     paraVal   = [1.5,1]
     #caseDef= 'thick_u'
 
