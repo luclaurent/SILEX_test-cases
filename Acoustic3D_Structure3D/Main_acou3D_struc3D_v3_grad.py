@@ -390,14 +390,15 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal):#, caseDefine):
         #extract frequencies for the associated processors
         freqCompute=listFreqPerProc[:,rank]
         freqCompute=freqCompute[freqCompute>0]
-
+        it=0
+        itmax=len(freqCompute)
         for freq in freqCompute:
-
+            it=it+1
             #freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
             frequencies.append(freq)
             omega = 2*scipy.pi*freq
 
-            print("proc number", rank, "frequency=", freq)
+            print("Freq. step ",it," proc number", rank, "frequency=", freq)
 
             tic = time.clock()
 
