@@ -1,3 +1,8 @@
+### OMP_NUM_THREADS
+### OPENBLAS_NUM_THREADS
+### MKL_NUM_THREADS
+
+
 import cProfile
 cp = cProfile.Profile()
 
@@ -6,26 +11,26 @@ from Main_acou3D_struc3D_v3_grad import *
 
 freqMin=10.
 freqMax=100.
-paraVal=scipy.array([1.0,1.0])
-nbStep=5
+paraVal=scipy.array([1.0,1.0,1.0])
+nbStep=400
 
 
 #load info from MPI
 nbProc,rank,comm=mpiInfo() 
 
-cp.enable()
-dataFRFgrad=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal)
-cp.disable()
-cp.print_stats()
+#cp.enable()
+dataFRFgrad=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,[0],0)
+#cp.disable()
+#cp.print_stats()
 
 #finite differences (CD2)
 dd=1e-1
-ddVX=scipy.array([dd,0.])
+ddVX=scipy.array([dd,0.,0.])
 paraValBX=paraVal-ddVX
 paraValFX=paraVal+ddVX
 
-dataFRFBX=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValBX)
-dataFRFFX=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValFX)
+dataFRFBX=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValBX,saveResults=0)
+dataFRFFX=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValFX,saveResults=0)
 
 # ddVY=scipy.array([0.,dd])
 # paraValBY=paraVal-ddVY
@@ -35,8 +40,10 @@ dataFRFFX=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValFX)
 # dataFRFFY=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValFY)
 
 
+import pickle
+
 f=open('debug'+'_results.frf','wb')
-# pickle.dump([dataFRFgrad,dataFRFBX,dataFRFFX,dataFRFBY,dataFRFFY], f)
+#pickle.dump([dataFRFgrad,dataFRFBX,dataFRFFX,dataFRFBY,dataFRFFY], f)
 pickle.dump([dataFRFgrad,dataFRFBX,dataFRFFX], f)
 f.close()
 
@@ -62,7 +69,7 @@ pl.ylabel('Mean quadratic pressure (dB)')
 pl.grid('on')
 pl.legend(loc=4)
 
-pl.show()
+pl.draw()
 
 pl.figure(2)
 pl.plot(dataFRFgrad[0],dataFRFgrad[2],'r-',label='grad (full)', linewidth=1)
@@ -74,6 +81,7 @@ pl.grid('on')
 pl.legend(loc=4)
 
 pl.show()
+print("  ")
 
 # pl.figure(3)
 # pl.plot(dataFRFgrad[0],dataFRFgrad[2],'r-',label='grad (full)', linewidth=1)
@@ -87,4 +95,4 @@ pl.show()
 # pl.show()
 
 
-cp.print_stats()
+#cp.print_stats()

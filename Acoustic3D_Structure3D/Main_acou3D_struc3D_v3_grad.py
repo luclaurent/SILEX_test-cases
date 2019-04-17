@@ -51,11 +51,8 @@ def mpiInfo():
 
 class comm_mumps_one_proc:
     rank = 0
-
     def py2f(self):
         return 0
-
-
 mycomm = comm_mumps_one_proc()
 
 # distribution of frequencies per processor
@@ -117,7 +114,16 @@ def buildStructMesh(fileOrig,destFile,paraVal):
 ##############################################################
 
 
-def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[]):#, caseDefine):
+def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[],saveResults=1):#, caseDefine):
+
+    print("##################################################")
+    print("##################################################")
+    print("##################################################")
+    print("##    Start SILEX vibro-acoustics computation   ##")
+    if len(gradValRequire)>0:
+        print("##          (with gradients computation)        ##")
+    print("##################################################")
+    print("##################################################")
 
     # load 3D geometry
     orig_mesh_file = 'geom/cavity_acou3D_struc_3D_v3_para'
@@ -138,7 +144,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     nproc = comm.Get_size()
     rank = comm.Get_rank()
 
-    flag_write_gmsh_results = 1
+    flag_write_gmsh_results = saveResults
 
     flag_edge_enrichment = 0
 
@@ -146,7 +152,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     nbPara = len(paraVal)
     # prepare save file
     file_extension = "{:.{}E}".format(paraVal[0], 2)
-    if nbPara > 1:
+    if (nbPara > 1) and (rank==0):
         for i in range(1, nbPara):
             file_extension = file_extension+'_'+"{:.{}E}".format(paraVal[i], 2)
 
@@ -307,13 +313,12 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     if (flag_write_gmsh_results == 1) and (rank == 0):
         silex_lib_gmsh.WriteResults2(
             results_file+'_enriched_elements', fluid_nodes, fluid_elements1[EnrichedElements], 4)
-
-    LS_moins_enriched = scipy.setdiff1d(LSEnrichedElements, EnrichedElements)
-    enriched_moins_LS = scipy.setdiff1d(EnrichedElements, LSEnrichedElements)
-    silex_lib_gmsh.WriteResults2(
-        results_file+'_LS_moins_enriched', fluid_nodes, fluid_elements1[LS_moins_enriched], 4)
-    silex_lib_gmsh.WriteResults2(
-        results_file+'_enriched_moins_LS', fluid_nodes, fluid_elements1[enriched_moins_LS], 4)
+        LS_moins_enriched = scipy.setdiff1d(LSEnrichedElements, EnrichedElements)
+        enriched_moins_LS = scipy.setdiff1d(EnrichedElements, LSEnrichedElements)
+        silex_lib_gmsh.WriteResults2(
+            results_file+'_LS_moins_enriched', fluid_nodes, fluid_elements1[LS_moins_enriched], 4)
+        silex_lib_gmsh.WriteResults2(
+                results_file+'_enriched_moins_LS', fluid_nodes, fluid_elements1[enriched_moins_LS], 4)
     ##############################################################
     # Compute Standard Fluid Matrices
     ##############################################################
@@ -431,7 +436,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         freqCompute=listFreqPerProc[:,rank]
         freqCompute=freqCompute[freqCompute>0]
         it=0
-        itmax=len(freqCompute)
+        itmax=len(freqCompute)         
         for freq in freqCompute:
             it=it+1
             #freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
@@ -444,9 +449,16 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
             F = scipy.array(omega**2*UF[SolvedDof], dtype='c16')
 
-            sol = mumps.spsolve(scipy.sparse.csc_matrix(
-                K-(omega**2)*M, dtype='c16'), F)
-
+            if rank>=0:
+                print(K)
+                print(M)
+                print(omega)
+                sol = mumps.spsolve(scipy.sparse.csc_matrix(
+                    K-(omega**2)*M, dtype='c16'), F)
+                sol
+                #sol = scipy.sparse.linalg.spsolve(scipy.sparse.csc_matrix(
+                #     K-(omega**2)*M, dtype='c16'), F)
+            stop
             ## pressure field without enrichment
             press1 = scipy.zeros((fluid_ndof), dtype=complex)
             press1[SolvedDofF] = sol[list(range(len(SolvedDofF)))]
@@ -455,7 +467,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             enrichment[SolvedDofA] = sol[list(
                 range(len(SolvedDofF), len(SolvedDofF)+len(SolvedDofA)))]
             ## correction of the pressure field with enrichment
-            CorrectedPressure = scipy.zeros((fluid_ndof), dtype=complex)
+            CorrectedPressure = press1.copy()
             CorrectedPressure[SolvedDofA] = press1[SolvedDofA] + \
                 enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
             ## compute and store FRF on the test volume
@@ -482,6 +494,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
                 ## solve gradient problem
                 tmp=-(dK[itP]-(omega**2)*dM[itP])*sol
                 Dsol_Dtheta_RAW = mumps.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='c16')  , tmp )
+                # Dsol_Dtheta_RAW = scipy.sparse.linalg.spsolve( scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='c16')  , tmp )
                 #####################
                 #####################
                 ## gradient of the pressure field without enrichment
@@ -499,7 +512,13 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
                 #####################
                 #####################
                 #store gradients
-                frfgradient[itP].append(silex_lib_xfem_acou_tet4.computegradientcomplexquadratiquepressure(fluid_elements5,fluid_nodes,CorrectedPressure+0j,Dpress_Dtheta[:,itP]+0j,LevelSet))                
+                frfgradient[itP].append(\
+                    silex_lib_xfem_acou_tet4.computegradientcomplexquadratiquepressure(\
+                        fluid_elements5,\
+                            fluid_nodes,\
+                                CorrectedPressure+0j,\
+                                    Dpress_Dtheta[:,itP]+0j,\
+                                        LevelSet))                
                 #####################
                 #####################
                 dpress_save[itP].append(DCorrectedPressure_Dtheta[:,itP].copy())
@@ -675,6 +694,7 @@ class defaultV:
     nbStep      = 5
     paraVal   = [1.5,1.,1.]
     gradCompute = [0,1,2]
+    nbProc=1
     #caseDef= 'thick_u'
 
 ### Run autonomous
