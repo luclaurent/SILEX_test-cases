@@ -89,10 +89,10 @@ def buildStructMesh(fileOrig,destFile,paraVal):
     for key,value in enumerate(paraVal):
         oldText="<val##"+str(key)+">"
         newText='%g'%value
-        print(oldText)
-        print(newText) 
+        #print(oldText)
+        #print(newText) 
         cmdSed="sed -i 's/"+oldText+"/"+newText+"/g' "+destFile+'.geo'
-        print(cmdSed)
+        #print(cmdSed)
         os.system(cmdSed)
         
     #run gmsh to build the mesh
@@ -143,14 +143,14 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     flag_edge_enrichment = 0
 
     # number of parameters
-    nbPara = 1 #len(paraVal)
+    nbPara = len(paraVal)
     # prepare save file
     file_extension = "{:.{}E}".format(paraVal[0], 2)
     if nbPara > 1:
         for i in range(1, nbPara):
             file_extension = file_extension+'_'+"{:.{}E}".format(paraVal[i], 2)
 
-    results_file = results_file_ini+file_extension
+    results_file = results_file_ini+'_'+file_extension
     print(results_file)
 
     ##############################################################
@@ -231,14 +231,14 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     #Compute LS gradient according to Xc
     LevelSet_gradient_tmp.append((lx3-fluid_nodes[:,0])/(LevelSet+R))
     #Compute LS gradient according to Yc
-    LevelSet_gradient_tmp.append((lx3-fluid_nodes[:,0])/(LevelSet+R))
+    LevelSet_gradient_tmp.append((ly3-fluid_nodes[:,1])/(LevelSet+R))
     #Compute LS gradient according to R
     LevelSet_gradient_tmp.append(fluid_nodes[:,0]*0.-1)
 
     #load require levelSet gradients
     LevelSetGradient=[]
     NamePara=[]
-    if len(gradValRequire)>0
+    if len(gradValRequire)>0:
         for it in gradValRequire:
             LevelSetGradient.append(LevelSet_gradient_tmp[it])
             NamePara.append(NameParaTmp[it])
@@ -256,10 +256,10 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             results_file+'_struc_air_interface', struc_nodes, struc_elements, 2)
         #export levelset and levelset gradient
         dataW=list()
-        dataW.append([LevelSet,'nodal',1,'Level set'])
+        dataW.append([[LevelSet],'nodal',1,'Level set'])
         itP=0
         for iN in NamePara:
-            dataW.append([LevelSetGradient[itP],'nodal',1,'Level Set Grad '+iN])
+            dataW.append([[LevelSetGradient[itP]],'nodal',1,'Level Set Grad '+iN])
             itP=itP+1
 
         silex_lib_gmsh.WriteResults2(results_file+'_LS_data', fluid_nodes,
@@ -389,7 +389,9 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     for itP in range(0,nbPara):
         print(' Build gradient matrices for parameter '+NamePara[itP])
         #
-        IIf,JJf,Vfak_gradient,Vfam_gradient=silex_lib_xfem_acou_tet4.globalacousticgradientmatrices(fluid_nodes,fluid_elements1,LevelSet,celerity,rho,LevelSet_gradient)
+        IIf,JJf,Vfak_gradient,Vfam_gradient=\
+            silex_lib_xfem_acou_tet4.globalacousticgradientmatrices(fluid_nodes,\
+                fluid_elements1,LevelSet,celerity,rho,LevelSetGradient[itP])
         dKFA_dtheta = scipy.sparse.csc_matrix( (Vfak_gradient,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
         dMFA_dtheta = scipy.sparse.csc_matrix( (Vfam_gradient,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
         #build full stiffness and mass gradient matrices
@@ -517,25 +519,31 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             #prepare gradient pressure field
             itG=0
             for itP in NamePara:
-                dataW.append([numpy.real(dpress_save[itG]),'nodal',1,'pressure gradient '+itP+' (real)'])
-                dataW.append([numpy.imag(dpress_save[itG]),'nodal',1,'pressure gradient '+itP+' (imaginary)'])
-                dataW.append([numpy.absolute(dpress_save[itG]),'nodal',1,'pressure gradient '+itP+' (norm)'])
+                dataW.append([scipy.real(dpress_save[itG]),'nodal',1,'pressure gradient '+itP+' (real)'])
+                dataW.append([scipy.imag(dpress_save[itG]),'nodal',1,'pressure gradient '+itP+' (imaginary)'])
+                dataW.append([scipy.absolute(dpress_save[itG]),'nodal',1,'pressure gradient '+itP+' (norm)'])
                 itG=itG+1
+            print("Write pressure field and gradients in msh file")
             silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',
                                         fluid_nodes, fluid_elements1, 4,dataW)
+            print(">>> Done!!")
 
             #export results with discontinuities on .pos files
             varExport=scipy.vstack(uncorrectedpress_save).transpose()
             varExportC=scipy.vstack(press_save).transpose()
             varExportB=scipy.vstack(enrichment_save).transpose()
+            print("Write pressure field in pos file")
             silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,varExport.real,varExportB.real,'press_plus.pos')
             silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,varExport.real,-varExportB.real,'press_moins.pos')
+            print(">>> Done!!")
             #
             itG=0
             for itP in NamePara:
                 varExport=scipy.vstack(dpress_save[itG]).transpose()
-                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,varExport.real,varExportB.real,'Gpress_plus'+itP+'.pos')
-                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,varExport.real,-varExportB.real,'Gpress_moins'+itP+'.pos')
+                print("Write gradient of pressure field in pos file (",itP,")")
+                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,varExport.real,varExportB.real,'Gpress_plus_'+itP+'.pos')
+                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,varExport.real,-varExportB.real,'Gpress_moins_'+itP+'.pos')
+                print(">>> Done!!")
                 itG=itG+1
 
         #####################
@@ -559,7 +567,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
                     Allfrequencies[k]=data[0][j]
                     Allfrf[k]=data[1][j]
                     for itP in range(0,nbPara):
-                        Allfrfgradient[k,itP]=data[2][j]#[itP][j]
+                        Allfrfgradient[k,itP]=data[2][itP][j]
                     k=k+1
             #####################
             #####################zip(*sorted(zip(Allfrequencies, Allfrf,Allfrfgradient)))
@@ -609,7 +617,7 @@ def manageOpt(argv,dV):
     freqMax     = dV.freqMax
     nbStep      = dV.nbStep
     paraVal  = scipy.array(dV.paraVal)
-    gradCompute = []
+    gradCompute = scipy.array(dV.gradCompute)
     #caseDefine = dV.caseDef
     
     #load info from MPI
@@ -664,9 +672,9 @@ def usage():
 class defaultV:
     freqMin     = 10.0
     freqMax     = 200.0
-    nbStep      = 50
-    paraVal   = [1.5,1]
-    gradCompute = []
+    nbStep      = 5
+    paraVal   = [1.5,1.,1.]
+    gradCompute = [0,1,2]
     #caseDef= 'thick_u'
 
 ### Run autonomous
