@@ -145,7 +145,7 @@ R = 1.0 # sphere radius
 
 LevelSet=scipy.sqrt((fluid_nodes[:,0]-lx3)**2+(fluid_nodes[:,1]-lx3)**2+(fluid_nodes[:,2]-0.0)**2)-R
 #Compute LS gradient according to Xc
-LevelSet_gradient=(lx3-fluid_nodes[:,0])/(2*scipy.sqrt((fluid_nodes[:,0]-lx3)**2+(fluid_nodes[:,1]-lx3)**2+(fluid_nodes[:,2]-0.0)**2))
+LevelSet_gradient=(lx3-fluid_nodes[:,0])/(scipy.sqrt((fluid_nodes[:,0]-lx3)**2+(fluid_nodes[:,1]-lx3)**2+(fluid_nodes[:,2]-0.0)**2))
 
 
 toc = time.clock()
