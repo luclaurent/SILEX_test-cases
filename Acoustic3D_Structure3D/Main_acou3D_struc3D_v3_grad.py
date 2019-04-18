@@ -34,10 +34,10 @@ import silex_lib_gmsh
 
 # manage mumps librairie
 import mumps
-from mpi4py import MPI
-comm = MPI.COMM_WORLD
-nproc = comm.Get_size()
-rank = comm.Get_rank()
+#from mpi4py import MPI
+#comm = MPI.COMM_WORLD
+#nproc = comm.Get_size()
+#rank = comm.Get_rank()
 
 from mpi4py import MPI
 
@@ -450,15 +450,16 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             F = scipy.array(omega**2*UF[SolvedDof], dtype='c16')
 
             if rank>=0:
-                print(K)
-                print(M)
-                print(omega)
-                sol = mumps.spsolve(scipy.sparse.csc_matrix(
-                    K-(omega**2)*M, dtype='c16'), F)
-                sol
-                #sol = scipy.sparse.linalg.spsolve(scipy.sparse.csc_matrix(
-                #     K-(omega**2)*M, dtype='c16'), F)
-            stop
+                 #print(K)
+                 #print(M)
+                 #print(omega)
+                 sol = mumps.spsolve(K-(omega**2)*M, F+0.j,comm=mycomm)
+                 #sol = mumps.spsolve(scipy.sparse.coo_matrix( \
+                 #   K-(omega**2)*M, dtype='complex'), F+0.j,comm=mycomm)
+                 #sol
+                 #sol = scipy.sparse.linalg.spsolve(scipy.sparse.csc_matrix(
+                 #     K-(omega**2)*M, dtype='c16'), F)
+            
             ## pressure field without enrichment
             press1 = scipy.zeros((fluid_ndof), dtype=complex)
             press1[SolvedDofF] = sol[list(range(len(SolvedDofF)))]
@@ -493,7 +494,8 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             for itP in range(0,nbPara):
                 ## solve gradient problem
                 tmp=-(dK[itP]-(omega**2)*dM[itP])*sol
-                Dsol_Dtheta_RAW = mumps.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='c16')  , tmp )
+                Dsol_Dtheta_RAW = mumps.spsolve(K-(omega**2)*M, tmp, comm=mycomm )
+                #Dsol_Dtheta_RAW = mumps.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='c16')  , tmp )
                 # Dsol_Dtheta_RAW = scipy.sparse.linalg.spsolve( scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='c16')  , tmp )
                 #####################
                 #####################
@@ -516,7 +518,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
                     silex_lib_xfem_acou_tet4.computegradientcomplexquadratiquepressure(\
                         fluid_elements5,\
                             fluid_nodes,\
-                                CorrectedPressure+0j,\
+                                press1+0j,\
                                     Dpress_Dtheta[:,itP]+0j,\
                                         LevelSet))                
                 #####################

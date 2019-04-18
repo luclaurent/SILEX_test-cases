@@ -19,12 +19,12 @@ nbStep=400
 nbProc,rank,comm=mpiInfo() 
 
 #cp.enable()
-dataFRFgrad=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,[0],0)
+dataFRFgrad=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,[0,1,2],0)
 #cp.disable()
 #cp.print_stats()
 
 #finite differences (CD2)
-dd=1e-1
+dd=1e-3
 ddVX=scipy.array([dd,0.,0.])
 paraValBX=paraVal-ddVX
 paraValFX=paraVal+ddVX
@@ -32,27 +32,36 @@ paraValFX=paraVal+ddVX
 dataFRFBX=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValBX,saveResults=0)
 dataFRFFX=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValFX,saveResults=0)
 
-# ddVY=scipy.array([0.,dd])
-# paraValBY=paraVal-ddVY
-# paraValFY=paraVal+ddVY
+ddVY=scipy.array([0.,dd,0.])
+paraValBY=paraVal-ddVY
+paraValFY=paraVal+ddVY
 
-# dataFRFBY=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValBY)
-# dataFRFFY=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValFY)
+dataFRFBY=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValBY,saveResults=0)
+dataFRFFY=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValFY,saveResults=0)
+
+ddVR=scipy.array([0.,0.,dd])
+paraValBR=paraVal-ddVY
+paraValFR=paraVal+ddVY
+
+dataFRFBR=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValBR,saveResults=0)
+dataFRFFR=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValFR,saveResults=0)
 
 
 import pickle
 
 f=open('debug'+'_results.frf','wb')
-#pickle.dump([dataFRFgrad,dataFRFBX,dataFRFFX,dataFRFBY,dataFRFFY], f)
-pickle.dump([dataFRFgrad,dataFRFBX,dataFRFFX], f)
+pickle.dump([dataFRFgrad,dataFRFBX,dataFRFFX,dataFRFBY,dataFRFFY,dataFRFBR,dataFRFFR], f)
+#pickle.dump([dataFRFgrad,dataFRFBX,dataFRFFX], f)
 f.close()
 
 FF=pickle.load(open('debug_results.frf','rb'))
 dataFRFgrad=FF[0]
 dataFRFBX=FF[1]
 dataFRFFX=FF[2]
-# dataFRFBY=FF[3]
-# dataFRFFY=FF[4]
+dataFRFBY=FF[3]
+dataFRFFY=FF[4]
+dataFRFBR=FF[5]
+dataFRFFR=FF[6]
 
 import pylab as pl
 from numpy import *
@@ -72,8 +81,54 @@ pl.legend(loc=4)
 pl.draw()
 
 pl.figure(2)
-pl.plot(dataFRFgrad[0],dataFRFgrad[2],'r-',label='grad (full)', linewidth=1)
+pl.plot(dataFRFgrad[0],dataFRFgrad[2][0],'r-',label='grad (full)', linewidth=1)
 pl.plot(dataFRFgrad[0],(dataFRFFX[1]-dataFRFBX[1])/(2*dd),'b-',label='grad (FD)', linewidth=1)
+#pl.axis([1.0, 120.0, 70, 105])
+pl.xlabel('Frequency (Hz)')
+pl.ylabel('Grad X')
+pl.grid('on')
+pl.legend(loc=4)
+
+pl.show()
+
+pl.figure(3)
+pl.plot(dataFRFgrad[0],10*log10(dataFRFgrad[1]/prefsquare),'r-',label='test 0', linewidth=1)
+pl.plot(dataFRFgrad[0],10*log10(dataFRFBY[1]/prefsquare),'b-',label='B', linewidth=1)
+pl.plot(dataFRFgrad[0],10*log10(dataFRFFY[1]/prefsquare),'b-',label='F', linewidth=1)
+#pl.axis([1.0, 120.0, 70, 105])
+pl.xlabel('Frequency (Hz)')
+pl.ylabel('Mean quadratic pressure (dB)')
+pl.grid('on')
+pl.legend(loc=4)
+
+pl.draw()
+
+pl.figure(4)
+pl.plot(dataFRFgrad[0],dataFRFgrad[2][1],'r-',label='grad (full)', linewidth=1)
+pl.plot(dataFRFgrad[0],(dataFRFFY[1]-dataFRFBY[1])/(2*dd),'b-',label='grad (FD)', linewidth=1)
+#pl.axis([1.0, 120.0, 70, 105])
+pl.xlabel('Frequency (Hz)')
+pl.ylabel('Grad X')
+pl.grid('on')
+pl.legend(loc=4)
+
+pl.show()
+
+pl.figure(5)
+pl.plot(dataFRFgrad[0],10*log10(dataFRFgrad[1]/prefsquare),'r-',label='test 0', linewidth=1)
+pl.plot(dataFRFgrad[0],10*log10(dataFRFBR[1]/prefsquare),'b-',label='B', linewidth=1)
+pl.plot(dataFRFgrad[0],10*log10(dataFRFFR[1]/prefsquare),'b-',label='F', linewidth=1)
+#pl.axis([1.0, 120.0, 70, 105])
+pl.xlabel('Frequency (Hz)')
+pl.ylabel('Mean quadratic pressure (dB)')
+pl.grid('on')
+pl.legend(loc=4)
+
+pl.draw()
+
+pl.figure(6)
+pl.plot(dataFRFgrad[0],dataFRFgrad[2][2],'r-',label='grad (full)', linewidth=1)
+pl.plot(dataFRFgrad[0],(dataFRFFR[1]-dataFRFBR[1])/(2*dd),'b-',label='grad (FD)', linewidth=1)
 #pl.axis([1.0, 120.0, 70, 105])
 pl.xlabel('Frequency (Hz)')
 pl.ylabel('Grad X')
