@@ -224,22 +224,23 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     # LS from a simple analytic shape (sphere)
     lx3 = paraVal[0] #2.0 # Xc
     ly3 = paraVal[1] #2.0 # Yc
-    R = paraVal[2] #1.0 # sphere radius
+    lz3 = paraVal[2] #0.0 # YZ
+    R = paraVal[3] #1.0 # sphere radius
     #
-    lz3 = 0.0 # fixed
-
 
     # analytic LS
     LevelSet=scipy.sqrt((fluid_nodes[:,0]-lx3)**2+(fluid_nodes[:,1]-ly3)**2+(fluid_nodes[:,2]-lz3)**2)-R
     #temprorary levelset gradients
     LevelSet_gradient_tmp=[]
-    NameParaTmp=['X','Y','R']
+    NameParaTmp=['X','Y','Z','R']
     #Compute LS gradient according to Xc
     LevelSet_gradient_tmp.append((lx3-fluid_nodes[:,0])/(LevelSet+R))
     #Compute LS gradient according to Yc
     LevelSet_gradient_tmp.append((ly3-fluid_nodes[:,1])/(LevelSet+R))
+    #Compute LS gradient according to Zc
+    LevelSet_gradient_tmp.append((lz3-fluid_nodes[:,2])/(LevelSet+R))
     #Compute LS gradient according to R
-    LevelSet_gradient_tmp.append(fluid_nodes[:,0]*0.-1)
+    LevelSet_gradient_tmp.append(fluid_nodes[:,0]*0.-1.)
 
     #load require levelSet gradients
     LevelSetGradient=[]
@@ -694,8 +695,8 @@ class defaultV:
     freqMin     = 10.0
     freqMax     = 200.0
     nbStep      = 5
-    paraVal   = [1.5,1.,1.]
-    gradCompute = [0,1,2]
+    paraVal   = [1.5,1.,0.0,1.]
+    gradCompute = [0,1,2,3]
     nbProc=1
     #caseDef= 'thick_u'
 

@@ -10,7 +10,7 @@ lx3 = 1;
 ly4 = 1.2; // structure thickness
 R = 1.0; // sphere radius
 
-ly3 = 1.001;
+ly3 = 1;
 l4 = 2.5;
 lz4 = 1.2;
 r4   = 0.5;
