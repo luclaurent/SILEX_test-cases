@@ -50,12 +50,13 @@ for key,val in scipy.ndenumerate(Xm):
     print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
     print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
     Zval=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValRun,saveResults=0)
-    Zm.append(Zval.copy())
+    if rank==0:
+        Zm.append(Zval.copy())
     it=it+1
 
-
-import pickle
-
-f=open('paraXY.pck','wb')
-pickle.dump([Xm,Ym,Zm,[freqMin,freqMax,nbStep,paraValN,nbVal]], f)
-f.close()
+if rank ==0:
+    import pickle
+    
+    f=open('paraXY.pck','wb')
+    pickle.dump([Xm,Ym,Zm,[freqMin,freqMax,nbStep,paraValN,nbVal]], f)
+    f.close()
