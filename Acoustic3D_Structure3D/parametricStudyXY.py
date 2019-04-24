@@ -10,14 +10,14 @@ cp = cProfile.Profile()
 from Main_acou3D_struc3D_v3_grad import *
 
 freqMin=10.
-freqMax=400.
+freqMax=600.
 paraValN=scipy.array([1.0,1.0,0.0,1.0])
-nbStep=800
+nbStep=2000
 
 import scipy
 
 #prepare parameters evolution
-nbVal=20
+nbVal=40
 Xmin=0.1
 Xmax=4.
 Ymin=0.1
@@ -57,6 +57,6 @@ for key,val in scipy.ndenumerate(Xm):
 if rank ==0:
     import pickle
     
-    f=open('paraXY.pck','wb')
+    f=open('paraXY'+str(nbStep)+'-'+str(nbVal**2)+'.pck','wb')
     pickle.dump([Xm,Ym,Zm,[freqMin,freqMax,nbStep,paraValN,nbVal]], f)
     f.close()
