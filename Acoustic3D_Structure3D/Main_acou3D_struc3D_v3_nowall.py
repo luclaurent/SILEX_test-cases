@@ -146,15 +146,8 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
 
     flag_edge_enrichment = 0
 
-    # number of parameters
-    nbPara = len(paraVal)
     # prepare save file
-    file_extension = "{:.{}E}".format(paraVal[0], 2)
-    if (nbPara > 1) and (rank==0):
-        for i in range(1, nbPara):
-            file_extension = file_extension+'_'+"{:.{}E}".format(paraVal[i], 2)
-
-    results_file = results_file_ini+'_'+file_extension
+    results_file = results_file_ini+'_nowall'
     print(results_file)
 
     ##############################################################
@@ -266,6 +259,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
                  #print(M)
                  #print(omega)
                  sol = mumps.spsolve(K-(omega**2)*M, F+0.j,comm=mycomm)
+                 
                  #sol = mumps.spsolve(scipy.sparse.coo_matrix( \
                  #   K-(omega**2)*M, dtype='complex'), F+0.j,comm=mycomm)
                  #sol
@@ -278,12 +272,13 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
             ## compute and store FRF on the test volume
             # frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes,CorrectedPressure))
             frf.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(
-                fluid_elements5, fluid_nodes, press1, enrichment, LevelSet, LevelSet*0-1.0))
+                fluid_elements5, fluid_nodes, press1, 0.*press1, scipy.real(0.*press1)+1., press1*0-1.0))
 
+            
             if (flag_write_gmsh_results == 1) and (rank == 0):
-                uncorrectedpress_save.append(press1)
+                press_save.append(press1)
            
-        frfsave=[frequencies,frf,]
+        frfsave=[frequencies,frf]
         if rank!=0:
             comm.send(frfsave, dest=0, tag=11)
 
@@ -292,9 +287,9 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
         if (flag_write_gmsh_results == 1) and (rank == 0):
             dataW=list()
             #prepare pressure field
-            dataW.append([scipy.real(press1),'nodal',1,'pressure (real)'])
-            dataW.append([scipy.imag(press1),'nodal',1,'pressure (imaginary)'])
-            dataW.append([scipy.absolute(press1),'nodal',1,'pressure (norm)'])            
+            dataW.append([scipy.real(press_save),'nodal',1,'pressure (real)'])
+            dataW.append([scipy.imag(press_save),'nodal',1,'pressure (imaginary)'])
+            dataW.append([scipy.absolute(press_save),'nodal',1,'pressure (norm)'])            
             print("Write pressure field and gradients in msh file")
             silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',
                                         fluid_nodes, fluid_elements1, 4,dataW)
@@ -381,14 +376,10 @@ def manageOpt(argv,dV):
     print ("Maximum frequency: ",freqMax)
     print ("Minimum frequency: ",freqMin)
     #print ("Case: ",caseDefine)
-    it=0
-    for itP in paraVal:
-        print ('Parameter num '+str(it)+': '+str(itP))
-        it=it+1
     print ("\n\n")
 
     #run computation
-    RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,gradCompute)#,caseDefine)
+    RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm)#,caseDefine)
 
 #usage definition
 def usage():
@@ -402,8 +393,8 @@ def usage():
 #default values
 class defaultV:
     freqMin     = 10.0
-    freqMax     = 200.0
-    nbStep      = 5
+    freqMax     = 600.0
+    nbStep      = 2000
     nbProc=1
     #caseDef= 'thick_u'
 
