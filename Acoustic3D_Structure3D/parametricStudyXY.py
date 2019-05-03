@@ -10,17 +10,17 @@ cp = cProfile.Profile()
 from Main_acou3D_struc3D_v3_grad import *
 
 freqMin=10.
-freqMax=600.
-paraValN=scipy.array([1.0,1.0,0.0,1.0])
-nbStep=2000
+freqMax=200.
+paraValN=scipy.array([1.0,1.0,1.,1.0])
+nbStep=800
 
 import scipy
 
 #prepare parameters evolution
-nbVal=40
-Xmin=0.1
+nbVal=30
+Xmin=0.
 Xmax=4.
-Ymin=0.1
+Ymin=0.
 Ymax=3.
 
 Xl=scipy.linspace(Xmin,Xmax,nbVal)
@@ -60,3 +60,8 @@ if rank ==0:
     f=open('paraXY'+str(nbStep)+'-'+str(nbVal**2)+'.pck','wb')
     pickle.dump([Xm,Ym,Zm,[freqMin,freqMax,nbStep,paraValN,nbVal]], f)
     f.close()
+
+    import scipy.io
+    scipy.io.savemat('paraXY'+str(nbStep)+'-'+str(nbVal**2)+'.mat',mdict={'Xm':Xm,'Ym':Ym,'FRF':FRF,'freqMin':freqMin,'freqMax':freqMax,'nbStep':nbStep,'paraValN':paraValN,'nbVal':nbVal})
+
+
