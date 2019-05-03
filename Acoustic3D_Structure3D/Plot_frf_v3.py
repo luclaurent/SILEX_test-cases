@@ -7,7 +7,8 @@ import pylab as pl
 import pickle
 
 #f=open('results/cavity_acou3D_struc_3D_v3_results.frf','rb')
-f=open('results/cavity_acou3D_struc_3D_v3_4.00E+00_3.00E+00_2.49E+00_1.00E+00_results.frf','rb')
+f=open('results/cavity_acou3D_struc_3D_v3_nowall_results.frf','rb')
+#f=open('results/cavity_acou3D_struc_3D_v3_4.00E+00_3.00E+00_2.49E+00_1.00E+00_results.frf','rb')
 frf_0=pickle.load(f)
 f.close()
 
