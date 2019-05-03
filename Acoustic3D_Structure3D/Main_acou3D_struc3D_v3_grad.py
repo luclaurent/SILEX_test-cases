@@ -227,7 +227,8 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     lz3 = paraVal[2] #0.0 # YZ
     R = paraVal[3] #1.0 # sphere radius
     #
-
+    print("Parameters values")
+    print("Xc ",lx3," Yc ",ly3," Zc ",lz3," R ",R)
     # analytic LS
     LevelSet=scipy.sqrt((fluid_nodes[:,0]-lx3)**2+(fluid_nodes[:,1]-ly3)**2+(fluid_nodes[:,2]-lz3)**2)-R
     #temprorary levelset gradients
@@ -645,7 +646,7 @@ def manageOpt(argv,dV):
     #load info from MPI
     nbProc,rank,comm=mpiInfo()
     #load options
-    opts,args = getopt.getopt(argv,"p:s:F:f:hp:c:")
+    opts,args = getopt.getopt(argv,"p:s:F:f:hp:c:g:")
     for opt,arg in opts:
         if opt == "-s":
             nbStep  = int(arg)
@@ -659,13 +660,14 @@ def manageOpt(argv,dV):
         elif opt == "-c":
             caseDefine=str(arg)
         elif opt == "-g":
-            tmp = scipy.array(arg.split(','),dtype=scipy.int)
+            tmp = scipy.array(arg.split(','),dtype=scipy.int32)
             gradCompute=tmp
         elif opt == "-h":
             usage()
             sys.exit()
     #print chosen parameters
     print ("Number of processors: ",nbProc)
+    print ("Parameters: ",paraVal)
     print ("Number of frequency steps: ",nbStep)
     print ("Maximum frequency: ",freqMax)
     print ("Minimum frequency: ",freqMin)
@@ -678,13 +680,13 @@ def manageOpt(argv,dV):
     print ("\n\n")
 
     #run computation
-    RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,gradCompute)#,caseDefine)
+    RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,gradCompute,1)#,caseDefine)
 
 #usage definition
 def usage():
     dV=defaultV
-    print("Usage: ",sys.argv[0],"-psFfh [+arg]")
-    print("\t -p : number of processors (default value ",dV.nbProc,")")
+    print("Usage: ",sys.argv[0],"-psFfhg [+arg]")
+    print("\t -p : input parameters (default value ",dV.nbProc,")")
     print("\t -s : number of steps in the frequency range (default value ",dV.nbStep,")")
     print("\t -F : maximum frequency (default value ",dV.freqMax,")")
     print("\t -f : minimum frequency (default value ",dV.freqMin,")")
@@ -695,8 +697,8 @@ class defaultV:
     freqMin     = 10.0
     freqMax     = 200.0
     nbStep      = 5
-    paraVal   = [1.5,1.,0.0,1.]
-    gradCompute = [0,1,2,3]
+    paraVal   = [4,0.5,1.,1.]
+    gradCompute = []#0,1,2,3]
     nbProc=1
     #caseDef= 'thick_u'
 
