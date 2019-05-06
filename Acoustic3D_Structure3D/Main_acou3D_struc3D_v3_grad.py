@@ -22,7 +22,7 @@ import pickle
 import sys
 import os
 from shutil import copyfile
-sys.path.append('../../librairies')
+sys.path.append('../../../librairies')
 
 import silex_lib_xfem_acou_tet4
 import silex_lib_gmsh
@@ -556,16 +556,24 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             varExportC=scipy.vstack(press_save).transpose()
             varExportB=scipy.vstack(enrichment_save).transpose()
             print("Write pressure field in pos file")
-            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,varExport.real,varExportB.real,'press_plus.pos')
-            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,varExport.real,-varExportB.real,'press_moins.pos')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.real(varExport),scipy.real(varExportB),'press_plus_real.pos')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.imag(varExport),scipy.imag(varExportB),'press_plus_imag.pos')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.absolute(varExport),scipy.absolute(varExportB),'press_plus_abs.pos')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.real(varExport),-scipy.real(varExportB),'press_moins_real.pos')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.imag(varExport),-scipy.imag(varExportB),'press_moins_imag.pos')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.absolute(varExport),-scipy.absolute(varExportB),'press_moins_abs.pos')
             print(">>> Done!!")
             #
             itG=0
             for itP in NamePara:
                 varExport=scipy.vstack(dpress_save[itG]).transpose()
                 print("Write gradient of pressure field in pos file (",itP,")")
-                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,varExport.real,varExportB.real,'Gpress_plus_'+itP+'.pos')
-                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,varExport.real,-varExportB.real,'Gpress_moins_'+itP+'.pos')
+                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.real(varExport),scipy.real(varExportB),'Gpress_plus_'+itP+'_real.pos')
+                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.imag(varExport),scipy.imag(varExportB),'Gpress_plus_'+itP+'_imag.pos')
+                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.absolute(varExport),scipy.absolute(varExportB),'Gpress_plus_'+itP+'_absolute.pos')
+                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.real(varExport),-scipy.real(varExportB),'Gpress_moins_'+itP+'_real.pos')
+                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.imag(varExport),-scipy.imag(varExportB),'Gpress_moins_'+itP+'_imag.pos')
+                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.absolute(varExport),-scipy.absolute(varExportB),'Gpress_moins_'+itP+'_absolute.pos')
                 print(">>> Done!!")
                 itG=itG+1
 
@@ -696,9 +704,9 @@ def usage():
 class defaultV:
     freqMin     = 10.0
     freqMax     = 200.0
-    nbStep      = 5
-    paraVal   = [4,0.5,1.,1.]
-    gradCompute = []#0,1,2,3]
+    nbStep      = 1000
+    paraVal   = [2.,2.,1.,1.]
+    gradCompute = [0,1,2,3]
     nbProc=1
     #caseDef= 'thick_u'
 

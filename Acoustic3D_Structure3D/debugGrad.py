@@ -10,9 +10,9 @@ cp = cProfile.Profile()
 from Main_acou3D_struc3D_v3_grad import *
 
 freqMin=10.
-freqMax=100.
-paraVal=scipy.array([1.0,1.0,1.0,1.0])
-nbStep=400
+freqMax=200.
+paraVal=scipy.array([2.0,2.0,1.0,1.0])
+nbStep=800
 
 
 #load info from MPI
