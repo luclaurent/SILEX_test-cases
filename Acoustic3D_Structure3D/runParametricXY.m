@@ -4,7 +4,7 @@ Xmax= 4.;
 Ymin=0.;
 Ymax=3.;
 
-nbVal=40;
+nbVal=50;
 
 Xl=linspace(Xmin,Xmax,nbVal);
 Yl=linspace(Ymin,Ymax,nbVal);

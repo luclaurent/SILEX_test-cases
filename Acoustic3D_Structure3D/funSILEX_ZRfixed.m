@@ -1,10 +1,10 @@
 % fun acoustic
 
 function [Z,GZ]=funSILEX_ZRfixed(X,Y)
-Wmax=103;
-Wmin=113;
+Wmax=127;
+Wmin=137;
 
-Z=0.;
+Z=1.;
 R=1.;
 
 Zs=repmat(Z,size(X));

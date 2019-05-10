@@ -22,7 +22,7 @@ import pickle
 import sys
 import os
 from shutil import copyfile
-sys.path.append('../../../librairies')
+sys.path.append('../../librairies')
 
 import silex_lib_xfem_acou_tet4
 import silex_lib_gmsh
