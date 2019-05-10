@@ -568,13 +568,13 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             varExportC=scipy.vstack(press_save).transpose()
             varExportB=scipy.vstack(enrichment_save).transpose()
             print("Write pressure field in pos file")
-            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.real(varExport),scipy.real(varExportB),'results/press_plus_real.pos')
-            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.imag(varExport),scipy.imag(varExportB),'results/press_plus_imag.pos')
-            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.absolute(varExport),scipy.absolute(varExportB),'press_plus_abs.pos')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.real(varExport),scipy.real(varExportB),'results/press_plus_real.pos','Pressure + Real')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.imag(varExport),scipy.imag(varExportB),'results/press_plus_imag.pos','Pressure + Imag')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.absolute(varExport),scipy.absolute(varExportB),'results/press_plus_abs.pos','Pressure + Abs')
             # silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.absolute(varExport)**2,scipy.absolute(varExportB)**2,'press_plus_square.pos')
-            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.real(varExport),-scipy.real(varExportB),'results/press_moins_real.pos')
-            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.imag(varExport),-scipy.imag(varExportB),'results/press_moins_imag.pos')
-            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.absolute(varExport),-scipy.absolute(varExportB),'results/press_moins_abs.pos')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.real(varExport),-scipy.real(varExportB),'results/press_moins_real.pos','Pressure - Real')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.imag(varExport),-scipy.imag(varExportB),'results/press_moins_imag.pos','Pressure - Imag')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.absolute(varExport),-scipy.absolute(varExportB),'results/press_moins_abs.pos','Pressure - Abs')
             print(">>> Done!!")
             #
             itG=0
@@ -582,10 +582,10 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
                 GvarExport=scipy.vstack(duncorrectedpress_save[key]).copy().transpose()
                 GvarExportB=scipy.vstack(denrichment_save[key]).copy().transpose()
                 print("Write gradient of pressure field in pos file (",itP,")")
-                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.real(GvarExport),scipy.real(GvarExportB),'results/Gpress_plus_'+itP+'_real.pos')
-                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.imag(GvarExport),scipy.imag(GvarExportB),'results/Gpress_plus_'+itP+'_imag.pos')
-                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.real(GvarExport),-scipy.real(GvarExportB),'results/Gpress_moins_'+itP+'_real.pos')
-                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.imag(GvarExport),-scipy.imag(GvarExportB),'results/Gpress_moins_'+itP+'_imag.pos')
+                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.real(GvarExport),scipy.real(GvarExportB),'results/Gpress_plus_'+itP+'_real.pos','Gpressure + '+itP+' Real')
+                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.imag(GvarExport),scipy.imag(GvarExportB),'results/Gpress_plus_'+itP+'_imag.pos','Gpressure + '+itP+' Imag')
+                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.real(GvarExport),-scipy.real(GvarExportB),'results/Gpress_moins_'+itP+'_real.pos','Gpressure - '+itP+' Real')
+                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.imag(GvarExport),-scipy.imag(GvarExportB),'results/Gpress_moins_'+itP+'_imag.pos','Gpressure - '+itP+' Imag')
                 #     
                 # gradPsquare=2*(scipy.real(GvarExport)*scipy.real(varExport)+scipy.imag(GvarExport)*scipy.imag(varExport))
                 # gradPsquareB=2*(scipy.real(GvarExportB)*scipy.real(varExportB)+scipy.imag(GvarExportB)*scipy.imag(varExportB))
@@ -601,8 +601,8 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
                 gradCalc[IX]=1
                 gradCalcB[IX]=1
                 #
-                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,gradCalc,gradCalcB,'results/Gpress_plus_'+itP+'_dabsolute.pos')                
-                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,gradCalc,-gradCalcB,'results/Gpress_moins_'+itP+'_dabsolute.pos')
+                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,gradCalc,gradCalcB,'results/Gpress_plus_'+itP+'_dabsolute.pos','Gpressure + '+itP+' dAbs')       
+                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,gradCalc,-gradCalcB,'results/Gpress_moins_'+itP+'_dabsolute.pos','Gpressure - '+itP+' dAbs')
                 print(">>> Done!!")
                 itG=itG+1
 
@@ -617,9 +617,9 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             for i in range(nproc):
                 if i==0:
                     data=frfsave
-                    print(data)
+                    # print(data)
                 else:
-                    print(i)
+                    # print(i)
                     data=comm.recv(source=i, tag=11)
                     #data=data_buffer
 
@@ -731,10 +731,10 @@ def usage():
 
 #default values
 class defaultV:
-    freqMin     = 127.0
-    freqMax     = 137.0
-    nbStep      = 3
-    paraVal   = [2.,2.,0.,1.]
+    freqMin     = 10.0
+    freqMax     = 150.0
+    nbStep      = 1000
+    paraVal   = [2.,2.,1.,1.]
     gradCompute =  [0,1,2,3]
     nbProc=1
     #caseDef= 'thick_u'
