@@ -57,11 +57,11 @@ for key,val in scipy.ndenumerate(Xm):
 if rank ==0:
     import pickle
     
-    f=open('paraXY'+str(nbStep)+'-'+str(nbVal**2)+'.pck','wb')
+    f=open('paraXY_'+str(freqMin)+'-'+str(freqMax)+'_'+str(nbStep)+'-'+str(nbVal**2)+'.pck','wb')
     pickle.dump([Xm,Ym,Zm,[freqMin,freqMax,nbStep,paraValN,nbVal]], f)
     f.close()
 
     import scipy.io
-    scipy.io.savemat('paraXY'+str(nbStep)+'-'+str(nbVal**2)+'.mat',mdict={'Xm':Xm,'Ym':Ym,'FRF':FRF,'freqMin':freqMin,'freqMax':freqMax,'nbStep':nbStep,'paraValN':paraValN,'nbVal':nbVal})
+    scipy.io.savemat('paraXY_'+str(freqMin)+'-'+str(freqMax)+'_'+str(nbStep)+'-'+str(nbVal**2)+'.mat',mdict={'Xm':Xm,'Ym':Ym,'FRF':FRF,'freqMin':freqMin,'freqMax':freqMax,'nbStep':nbStep,'paraValN':paraValN,'nbVal':nbVal})
 
 
