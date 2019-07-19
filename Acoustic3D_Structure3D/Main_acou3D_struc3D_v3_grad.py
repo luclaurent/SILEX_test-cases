@@ -22,10 +22,10 @@ import pickle
 import sys
 import os
 from shutil import copyfile
-sys.path.append('../../librairies')
+# sys.path.append('../../librairies')
 
-import silex_lib_xfem_acou_tet4
-import silex_lib_gmsh
+import SILEX.silex_lib_xfem_acou_tet4 as silex_lib_xfem_acou_tet4
+import SILEX.silex_lib_gmsh as silex_lib_gmsh
 #import silex_lib_dkt_fortran as silex_lib_dkt
 
 #import silex_lib_tet4_fortran_test as silex_lib_tet4
