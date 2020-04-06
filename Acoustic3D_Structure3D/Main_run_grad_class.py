@@ -12,14 +12,20 @@
 import getopt
 import string
 import time
+import logging
+from datetime import datetime 
+#
+import numpy as np
 import scipy
 import scipy.sparse
 import scipy.sparse.linalg
 import scipy.io
-from mpi4py import MPI
-
+#
+import utils
+import structTools
+#
 import pickle
-
+#
 import sys
 import os
 from shutil import copyfile
@@ -28,52 +34,7 @@ sys.path.append('../../librairies')
 import silex_lib_xfem_acou_tet4
 import silex_lib_gmsh
 
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-# function to load MUMPS library
 
-
-def loadMumps():
-    import imp
-    try:
-        imp.load_module('mump')
-        foundMumps = True
-    except ImportError:
-        foundMumps = False
-    return foundMumps
-
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-# function to obtain info concerning MPI
-
-
-def mpiInfo():
-    comm = MPI.COMM_WORLD
-    nproc = comm.Get_size()
-    rank = comm.Get_rank()
-    return nproc, rank, comm
-
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-# load communication to one processor for MUMPS
-
-
-class comm_mumps_one_proc:
-    rank = 0
-    def py2f(self):
-        return 0
 
 ###########################################################
 ###########################################################
@@ -82,8 +43,6 @@ class comm_mumps_one_proc:
 ###########################################################
 ###########################################################
 # distribution of frequencies per processor
-
-
 def computeFreqPerProc(nbStep, nbProc, freqInit, freqEnd):
     # compute integer number of freq per proc and remaining steps
     nbFreqProc = nbStep // nbProc
@@ -92,9 +51,9 @@ def computeFreqPerProc(nbStep, nbProc, freqInit, freqEnd):
     varCase = 1
     if nbFreqProcRemain == 0:
         varCase = 0
-    listFreq = scipy.zeros((nbFreqProc+varCase, nbProc))
-    listAllFreq = scipy.linspace(freqInit, freqEnd, nbStep)
-    # print(scipy.linspace(freqInit,freqEnd,nbStep))
+    listFreq = np.zeros((nbFreqProc+varCase, nbProc))
+    listAllFreq = np.linspace(freqInit, freqEnd, nbStep)
+    # print(np.linspace(freqInit,freqEnd,nbStep))
     # build array of frequencies
     itF = 0
     for itP in range(nbProc):
@@ -102,33 +61,9 @@ def computeFreqPerProc(nbStep, nbProc, freqInit, freqEnd):
             if itC*nbProc+itP < nbStep:
                 listFreq[itC, itP] = listAllFreq[itF]
                 itF += 1
-
     # print(listFreq)
     return listFreq
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-# load structure mesh fo values of parameters
 
-
-def buildStructMesh(fileOrig, destFile, paraVal):
-    # copy original file to the used one
-    copyfile(fileOrig+'.geo', destFile+'.geo')
-    # change value of parameters in the new file
-    for key, value in enumerate(paraVal):
-        oldText = "<val##"+str(key)+">"
-        newText = '%g' % value
-        # print(oldText)
-        # print(newText)
-        cmdSed = "sed -i 's/"+oldText+"/"+newText+"/g' "+destFile+'.geo'
-        # print(cmdSed)
-        os.system(cmdSed)
-
-    # run gmsh to build the mesh
-    #os.system('gmsh -3 -format msh2 '+destFile+'.geo')
 
 ###########################################################
 ###########################################################
@@ -139,105 +74,530 @@ def buildStructMesh(fileOrig, destFile, paraVal):
 # computation class
 class SILEX:
     #case properties
-    freqMax=[]
-    freqMin=[]
-    nbSteps=[]
-    gradVal=[]
+    caseProp = dict()
+    caseProp['freqMax'] = []          # maximum frequency of the range
+    caseProp['freqMin'] = []          # minimum frequency of the range
+    caseProp['nbSteps'] = []          # number of frequency steps
+    caseProp['modal'] = False         # modal version of the computation (building of modal basis and use it for gradients)
+
+    #
+    caseProp['bcdisp'] = list()       # boundary conditions on displacement
+    caseProp['bcpress'] = list()      # boundary conditions on pressure
+
+    #
+    caseProp['typeLS']=''             # type of Level-Set (FromMesh or manual)
+    caseProp['typeGEOstruct']=''      # type of geometry of the structure (in the case of manual declaration (see structTools.py))
+
+    #parameters values
+    paraData = dict()
+    paraData['oldval'] = list()       # previous values of parameters
+    paraData['val'] = []              # current values of parameters
+    paraData['name'] = []             # name of parameters
+    paraData['nb'] = []               # number of parameters
+    paraData['nameGrad'] = []         # name of parameters for gradients
+    paraData['nbGrad'] = []           # name of gradients
+    paraData['gradCompute'] = False   # compute gradients or not
+    paraData['gradValCompute'] = []   # declare which gradients will be compute (if empty all gradients will be computed)
 
     #material properties
     # air
-    celerity = 340.0
-    rho = 1.2
-    fluid_damping = (1+0.01j)
-    #data properties
-    geomFolder='geom'
-    resultsFolder='results'
-    #
-    basenameOriginalMeshFile='cavity_acou3D_struc_3D_v3_para'
-    basenameMeshFile = 'cavity_acou3D_struc_3D_v3'
-    basenameResultsFile = 'cavity_acou3D_struc_3D_v3'
-    #
-    fullOriginalMeshFile=[]
-    #
-    saveResults=True
+    mechaProp = dict()
+    mechaProp['celerity'] = 340.0
+    mechaProp['rho'] = 1.2
+    mechaProp['fluid_damping'] = (1+0.01j)
 
+    #data properties
+    data = dict()
+    data['geomFolder'] = 'geom'
+    data['resultFolder'] = 'results'
+    #
+    data['originalFluidMeshFile'] = ''
+    data['originalStructMeshFile'] = ''
+    data['currentStructMeshFile'] = ''
+    data['resultsFile'] = ''
+    #
+    fullPathOriginalMeshFile = ''
+    fullPathMeshFile = ''
+    fullPathResultsFile = ''
+    #
+    saveResults = True
 
     #architecture properties
-    commMumps=[]
-    rankMPI=[]
-    nbProcMPI=[]
+    commMPI = []
+    rankMPI = []
+    nbProcMPI = []
 
-    """
-    Constructor of the class
-    """
+    #flags
+    flags = dict()
+    flags['saveResults'] = False  # flag to save results
+    flags['edgeEnrichement'] = False  # flag to enrich the edge
+
+    ###
+    # storage variables
+    LevelSet = []             #nodal values of LS (known at fluid nodes) signed
+    LevelSetU = []            #nodal values of LS (known at fluid nodes) unsigned
+    LevelSetGradient = list() #nodal values of the parametric gradients of LS (known at fluid nodes)
+    #
+    fluidNodes = []           # coordinates of the fluid nodes
+    fluidNbNodes = []         # number of fluid nodes
+    fluidNbDof = []           # number of dofs in fluid
+    #
+    fluidElems = []           # array of elements for the fluid volume
+    idFluidNodes = []         # 
+    fluidNbElems = []         # number of elements in fluid volume
+    fluidNbNodes = []         # number of nodes in fluid volume
+    #
+    fluidElemsControl = []    # array of elements for the control volume
+    idFluidNodesControl = []  # 
+    fluidNbElemsControl = []  # number of elements in control volume
+    fluidNbNodesControl = []  # number of nodes in control volume
+    #
+    structNodes = []          # coordinates of the structure nodes 
+    structNbNodes = []        # number of structures nodes
+    #
+    structElems = []          # array of elements of structure
+    idStructNodes = []        # 
+    structNbElems = []        # number of elements for structure
+    structNbNodes = []        # number of nodes of structure
+    #enriched parts
+    EnrichedNodes = []      # nodes associated to enriched elements
+    EnrichedElems = []      # enriched elements
+    EnrichedNbElems = []    # number of enriched elements
+
+
+    ###
+
+    
     def __init__(self):
-         print("##################################################")
-            print("##################################################")
-            print("##################################################")
-            print("##    Load SILEX object   ##")
+        """
+        Constructor of the class
+        """
+        print("##################################################")
+        print("##################################################")
+        print("##################################################")
+        print("##    Load SILEX object   ##")
+        #initialize logging
+        loggingFile=datetime.now().strftime("%Y-%m-%d_%H-%M-%S")+"_SILEX.log"
+        logging.basicConfig(stream=sys.stdout,
+            filename=loggingFile,
+            format='%(asctime)s %(levelname)-8s %(message)s',
+            level=logging.INFO,
+            datefmt='%Y-%m-%d %H:%M:%S')
             #
-            self.createDatabase()
+        
 
-    """
-    method used to load openMPI information
-    """
+    
     def loadMPI(self):
-        self.nbProcMPI,self.rankMPI,self.commMumps=mpiInfo()
+        """
+        method used to load openMPI information
+        """
+        self.nbProcMPI,self.rankMPI,self.commMPI=utils.mpiInfo()
 
-    """
-    method used to create full path of folders
-    """
+    def dataOk(self,dispFlag):
+        """
+        method used to check if the data are available
+        """
+        statusData=True
+        for key in ['geomFolder','resultFolder','originalMeshFile','currentMeshFile','resultsFile']:
+            if not self.data[key]:
+                statusData=False
+            if dispFlag:
+                logging.info("Geometry folder %i"%utils.prepareStr(self.data['geomFolder']))
+                logging.info("Results folder %i"%utils.prepareStr(self.data['resultFolder']))
+                logging.info("Original mesh file %i"%utils.prepareStr(self.data['originalMeshFile']))
+                logging.info("Current mesh file %i"%utils.prepareStr(self.data['currentMeshFile']))
+                logging.info("Result mesh file %i"%utils.prepareStr(self.data['resultsFile']))        
+        return statusData
+
+
     def createDatabase(self):
-        self.fullOriginalMeshFile=self.geomFolder+'/'+self.basenameOriginalMeshFile
-        self.fullMeshFile=self.geomFolder+'/'+self.basenameMeshFile
-        self.initResultsFile=self.resultsFolder+'/'+self.basenameResultsFile
-        #create directory if not exists
-        if not os.path.exists(self.resultsFolder)
-            os.makedirs(self.resultsFolder)
+        """
+        method used to create full path of folders
+        """
+        createOk=False
+        if self.dataOk(True):
+            self.fullPathOriginalMeshFile=self.data['geomFolder']+'/'+self.data['originalMeshFile']
+            self.fullPathMeshFile=self.data['geomFolder']+'/'+self.data['currentMeshFile']
+            self.fullPathResultsFile=self.data['resultFolder']+'/'+self.data['resultsFile']
+            #create directory if not exists
+            if not os.path.exists(self.resultsFolder):
+                os.makedirs(self.resultsFolder)
+        else:
+            logging.info('Missing data to create database')
 
 
-"""
-method used to build operators
-"""
-    def buildOperator
-"""
-method used to build gradients operators
-"""
-    def buildGOperator
+    def loadMesh(self,type=None,dispFlag=True,filename=None):
+        """
+        method used to load mesh files
+        """
+        if filename is None:
+            logging.error("Filename of the mesh is missing")
+
+        if filename is not None:
+            if type=='nodesFluid':
+                logging.info("Read fluid nodes")
+                tic = time.process_time()
+                self.fluidNodes = silex_lib_gmsh.ReadGmshNodes(filename, 3)
+                self.fluidNbNodes=self.fluidNodes.shape[0]
+                self.fluidNbDof=self.fluidNbNodes
+                logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+                #
+                if dispFlag:
+                    logging.info("Fluid: %i nodes (%i dofs)"%(self.fluidNbNodes,self.fluidNbDof))
+            if type=='elemsControlFluid':
+                logging.info("Read fluid control volume elements")
+                tic = time.process_time()
+                self.fluidElemsControl, self.idFluidNodesControl = silex_lib_gmsh.ReadGmshElements(filename, 4, 5)  # air, ONLY controlled volume
+                self.fluidNbElemsControl=self.fluidElemsControl.shape[0]
+                self.fluidNbNodesControl=self.idFluidNodesControl.shape[0]
+                logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+                #
+                if dispFlag:
+                    logging.info("Fluid control volume: %i elems, %i nodes"%(self.fluidNbElemControl,self.fluidNbNodesControl))
+            if type=='elemsFluid':
+                logging.info("Read fluid volume elements")
+                tic = time.process_time()
+                self.fluidElems, self.idFluidNodes = silex_lib_gmsh.ReadGmshElements(filename, 4, 1)  # air, cavity + controlled volume
+                self.fluidNbElems=self.fluidElems.shape[0]
+                self.fluidNbNodes=self.idFluidNodes.shape[0]
+                logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+                #
+                if dispFlag:
+                    logging.info("Fluid whole volume: %i elems, %i nodes"%(self.fluidNbElem,self.fluidNbNodes))
+            if type=='nodesStruct':
+                logging.info("Read structure nodes")
+                tic = time.process_time()
+                self.structNodes = silex_lib_gmsh.ReadGmshNodes(filename, 3)
+                self.structNbNodes=self.structNodes.shape[0]    
+                logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+                #
+                if dispFlag:
+                    logging.info("Structure: %i nodes"%(self.structNbNodes))
+            if type=='elemsStruct':
+                logging.info("Read structure elements")
+                tic = time.process_time()
+                self.structElems, self.idStructNodes = silex_lib_gmsh.ReadGmshElements(filename, 2, 2)
+                self.structNbElems=self.structElems.shape[0]
+                self.structNbNodes=self.idStructNodes.shape[0]
+                logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+                #
+                if dispFlag:
+                    logging.info("Structure: %i elems, %i nodes"%(self.structNbElems,self.structNbNodes))
 
 
-"""
-Method used to solve linear problem(choose automatically the available approach)
-"""
+    
+    def loadPara(self,namePara=None,nameParaGrad=None,valPara=None,gradCompute=None,gradValCompute=None):
+        """
+        method used to load parameters data (require for gradient(s) computation(s))
+        """
+        if namePara is not None:
+            self.paraData['name']=namePara
+            self.paraData['nb']=len(self.para)
+        if nameParaGrad is not None:
+            self.paraData['nameGrad']=namePara
+            self.paraData['nbGrad']=len(namePara)
+        if valPara is not None:
+            self.paraData['val']=valPara
+        if gradCompute is not None:
+            self.paraData['gradCompute']=gradCompute
+        if gradValCompute is not None:
+            self.paraData['gradValCompute']=gradValCompute
+        #
+        
+
+
+    def showDataParaVal(self):
+        """
+        method used to show the data concerning the design parameters along the gradients will be computed
+        """
+        #check number of names vs number of parameter values
+        pName=self.paraData['name']
+        pVal=self.paraData['val']
+        if len(pName)<len(pVal):
+            logging.warning('Bad number of parameters names')
+            itP=0
+            while len(pName)<len(pVal):
+                pName.append("Temp_%i"%itP)
+                itP=+1
+        #prepare showing gradients
+        pGrad=['No'] * len(pVal)
+        if self.paraData['gradCompute']:            
+            if self.paraData['gradValCompute']:
+                for vv in self.paraData['gradValCompute']:
+                    pGrad[vv]='Yes'
+            else:
+                pGrad=['Yes'] * len(pVal)
+
+        #show information
+        logging.info('>>> Parameters values <<<')
+        itPara=1
+        for (n,p,g) in zip(pName,pVal,pGrad):
+            logging.info('>>> #%i',itPara)
+            itPara=+1
+
+    
+    def loadMechaProperties(self,dataIn=None):
+        """
+        method used to load mechanical properties
+        """
+        if dataIn is not None:
+            logging.info('>>> Load Mechanical properties <<<')
+            for key in dataIn:
+                self.mechaProp[key]=dataIn[key]
+                logging.info('%i: %g'%(key,dataIn[key]))
+        else:
+            logging.info('>>> Available Mechanical properties and current values <<<')
+            for key in self.mechaProp:
+                logging.info('%i: %g'%(key,mechaProp[key]))
+    
+    def loadComputeProperties(self,dataIn=None):
+        """
+        method used to load computation properties
+        """
+        if dataIn is not None:
+            logging.info('>>> Load properties for computation <<<')
+            for key in dataIn:
+                self.mechaProp[key]=dataIn[key]
+                logging.info('%i: %g'%(key,dataIn[key]))
+        else:
+            logging.info('>>> Available properties for computation and current values <<<')
+            for key in self.mechaProp:
+                logging.info('%i: %g'%(key,mechaProp[key]))
+
+    def loadBC(self,dataIn=None):
+        """
+        method use to declare boundary conditions
+        """
+        if dataIn is not None:
+            for key in dataIn:
+                if key=='disp':
+                    self.caseProp['bcdisp'].append(dataIn[key])
+                    logging.info('Add new bc: type displacement (nb %i)'%len(self.caseProp['bcdisp']))
+                if key=='press':
+                    self.caseProp['bcpress'].append(dataIn[key])
+                    logging.info('Add new bc: type pressure (nb %i)'%len(self.caseProp['bcpress']))
+    
+    def createResultsName(self,txt=None):
+        """
+        generate basename of the results file
+        """
+        # number of parameters
+        nbPara = len(self.paraData['val'])
+        # prepare save file
+        file_basis = "{:.{}E}".format(self.paraData['val'][0], 2)
+        if (nbPara > 1):
+            for i in range(1, nbPara):
+                file_basis = file_basis+'_'+"{:.{}E}".format(self.paraData['val'][i], 2)
+
+        results_file = data['resultsFile'] +'_'+file_basis
+        #
+        logging.debug('Results base name %s'%results_file)
+        return results_file
+
+    def exportResults(self,typeExport=None,method='gmsh'):
+        """
+        function used to export results and mesh
+        """
+        if typeExport is not None:
+            logging.info("Export results: type %s, method %s"%(typeExport,method))
+            tic = time.process_time()                
+            if typeExport is "cavitymesh":
+                #export mesh of the cavity
+                if method is "gmsh":
+                    silex_lib_gmsh.WriteResults(results_file+'_air_cavity_Mesh1', fluid_nodes, fluid_elements1, 4)
+                    
+            if typeExport is "controlvolmesh":
+                #export mesh of the control volume
+                if method is "gmsh":
+                    silex_lib_gmsh.WriteResults(results_file+'_air_controlled_volume_Mesh5', fluid_nodes, fluid_elements5, 4)
+                    
+            if typeExport is "struct":
+                #export 2D mesh of the structur
+                if method is "gmsh":
+                    silex_lib_gmsh.WriteResults2(results_file+'_struc_surface', struc_nodes, struc_elements, 2)
+            
+            if typeExport is "levelset":
+                #export level-set and gradients of the level-set
+                if method is "gmsh":
+                    #create list of data
+                    dataW = list()
+                    #level-set
+                    dataW.append([[self.LevelSet], 'nodal', 1, 'Level set'])
+                    #gradients of level-set
+                    itP = 0
+                    for iN in NamePara:
+                        dataW.append([[self.LevelSetGradient[itP]],'nodal', 1, 'Level Set Grad '+iN])
+                        itP = itP+1
+                    silex_lib_gmsh.WriteResults2(results_file+'_LS_data', fluidNodes, fluidElems, 4, dataW)
+            if typeExport is "enrichedPart":
+                if method is "gmsh":
+                    silex_lib_gmsh.WriteResults2(results_file+'_LS_enriched_elements',self.fluidNodes, self.fluidElemts[self.EnrichedElems], 4)
+            logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+
+    def buildLevelSet(self,typeLS=None,typeGEO=None,paraVal=None):
+        """
+        function used to build the LevelSet (signed) and the gradient of the level-set
+        """
+        logging.info("Build Level-set: type %s"%(typeLS))
+        tic = time.process_time()
+        if typeLS is "FromMesh":
+            # the level-set is built using the structure mesh
+            if paraVal is not None:
+                structTools.buildStructMesh(orig_mesh_file+'_struc',mesh_file+'_struc',paraVal)
+            # load mesh from file
+            self.loadMesh(type="nodesStruct",)
+            self.loadMesh(type="elemsStruct",)
+            # build Level-Set from a structure mesh
+            LevelSet,LevelSetU = silex_lib_xfem_acou_tet4.computelevelset(fluidNodes,structNodes,structElems)
+            #compute gradient of Level-Set
+            if paraData['gradCompute']:
+                pass
+        if typeLS is "manual":
+            #the level-set is built using an explicit function 
+            LSobj=structTools.LSmanual(typeGEO,fluidNodes)
+            #export values
+           self.LevelSet,self.LevelSetU=LSobj.exportLS()
+            self.loadPara(namePara=LSobj.exportParaName())
+            #compute gradient of Level-Set
+            if paraData['gradCompute']:
+                self.LevelSetGradient,self.paraData['nameGrad'] =
+                    LSobj.exportLSgrad(self.paraData['gradValCompute'])
+        #
+        logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+    
+    def buildEnrichedPart(self):
+        """
+        Find the enriched parts using the Level-set
+        """
+        logging.info("Find enriched elements and nodes using LS)
+        tic = time.process_time()
+        #
+        self.EnrichedElems, self.EnrichedNbElems =
+         silex_lib_xfem_acou_tet4.getenrichedelementsfromlevelset(self.fluidElems, self.LevelSet)
+        self.EnrichedElems = self.EnrichedElems[list(range(self.EnrichedNbElems))]
+        #
+        # self.LSEnrichedElems=self.LSEnrichedElems#[self.LSEnrichedElems-1]
+        self.EnrichedNodes = np.unique(self.fluidElems[self.EnrichedElems])
+        #
+        # tmp = []
+        # for i in LSEnrichednodes:
+        #     for j in range(4):
+        #         tmpp = scipy.where(fluid_elements1[:, j] == i)[0]
+        #         for k in range(len(tmpp)):
+        #             tmp.append(tmpp[k])
+        # tmp.append(scipy.where(fluid_elements1[:,1]==i))
+        # tmp.append(scipy.where(fluid_elements1[:,2]==i))
+        # tmp.append(scipy.where(fluid_elements1[:,3]==i))
+        #
+        # tmp = scipy.unique(scipy.array(tmp))
+        # tmp1,elttest0,tmp2=scipy.intersect1d(fluid_elements1[:,0],LSEnrichednodes,return_indices=True)
+        # silex_lib_gmsh.WriteResults2(results_file+'_enriched_elements_test0',fluid_nodes,fluid_elements1[tmp],4)
+        #[75804, 97252, 97253,34973, 93135, 93137, 93248,83787, 93136,93525]
+        # EnrichedElements0, NbEnrichedElements = silex_lib_xfem_acou_tet4.getsurfenrichedelements(
+        #     struc_nodes, struc_elements, fluid_nodes, fluid_elements1[tmp])
+        # EnrichedElements0 = scipy.unique(
+        #     EnrichedElements0[list(range(NbEnrichedElements))])
+        # EnrichedElements0 = EnrichedElements0-1
+        # EnrichedElements = tmp[EnrichedElements0]
+
+    EnrichedElements = LSEnrichedElements
+
+    toc = time.clock()
+    if rank == 0:
+        print("time to find enriched elements:", toc-tic)
+
+    tic = time.clock()
+
+    if (flag_write_gmsh_results == 1) and (rank == 0):
+        silex_lib_gmsh.WriteResults2(
+            results_file+'_enriched_elements', fluid_nodes, fluid_elements1[EnrichedElements], 4)
+        LS_moins_enriched = scipy.setdiff1d(
+            LSEnrichedElements, EnrichedElements)
+        enriched_moins_LS = scipy.setdiff1d(
+            EnrichedElements, LSEnrichedElements)
+        silex_lib_gmsh.WriteResults2(
+            results_file+'_LS_moins_enriched', fluid_nodes, fluid_elements1[LS_moins_enriched], 4)
+        silex_lib_gmsh.WriteResults2(
+            results_file+'_enriched_moins_LS', fluid_nodes, fluid_elements1[enriched_moins_LS], 4)
+
+        logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+
+
+    def buildOperator(self):
+        """
+        method used to build operators
+        """
+        pass
+
+    def buildGOperator(self):
+        """
+        method used to build gradients operators
+        """
+        pass
+
+    def preProcessMaster(self):
+        """
+        method to initialize data for master node (declare ie rank=0)
+        """
+        logging.info("##################################################")
+        logging.info("##################################################")
+        logging.info("##################################################")
+        logging.info("##    Start SILEX vibro-acoustics computation   ##")
+        if len(self.gradValRequire) > 0:
+            logging.info("##          (with gradients computations)        ##")
+            self.showDataParaVal
+        logging.info("##################################################")
+        logging.info("##################################################")
+        self.createDatabase()
+        # load fluid mesh
+        self.loadMesh(type='nodesFluid',dispFlag=True,filename=self.)
+
+    
+    def initRun(self):
+        """
+        method used to intialize the data before a run associated to a set of parameters
+        """
+
+
+
+
 
 
 def solveLinear(self, A, B):
+    """
+    Method used to solve linear problem(choose automatically the available approach)
+    """
     if self.mumpsOk:
         sol = mumps.spsolve(A, B, comm=self.commMumps)
     else:
         sol = scipy.sparse.linalg.spsolve(A, B)
     return sol
 
+    
+
+    def solvePbOneStep(self,):
     """
     Method used to solve the problem for one frequency step
     """
 
-    def solvePbOneStep(self,):
-    """
-    Method used to solve the problem along a range of steps
-    """
-
-    def solvePbSteps(self,):
-    """
-    Method used to solve the whole problem
-    """
+    def solvePbSteps(self):
+        """
+        Method used to solve the problem along a range of steps
+        """
+        
+    
 
     def solvePb(self,):
-    """
-    Method used to save results
-    """
-
+        """
+        Method used to solve the whole problem
+        """
+        self.preProcessMaster()
+        
+    
     def saveResults(self,):
+        """
+        Method used to save results
+        """
 
     
 
@@ -271,14 +631,7 @@ def solveLinear(self, A, B):
 # , caseDefine):
 def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal, gradValRequire=[], saveResults=1):
 
-    print("##################################################")
-    print("##################################################")
-    print("##################################################")
-    print("##    Start SILEX vibro-acoustics computation   ##")
-    if len(gradValRequire) > 0:
-        print("##          (with gradients computation)        ##")
-    print("##################################################")
-    print("##################################################")
+    
 
     
     listFreqPerProc = computeFreqPerProc(nbStep, nbProc, freqMin, freqMax)
@@ -289,192 +642,25 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal, gradValRequire=
 
     
 
-    nproc = comm.Get_size()
-    rank = comm.Get_rank()
-
-    flag_write_gmsh_results = saveResults
-
-    flag_edge_enrichment = 0
-
-    # number of parameters
-    nbPara = len(paraVal)
-    # prepare save file
-    file_extension = "{:.{}E}".format(paraVal[0], 2)
-    if (nbPara > 1) and (rank == 0):
-        for i in range(1, nbPara):
-            file_extension = file_extension+'_'+"{:.{}E}".format(paraVal[i], 2)
-
-    results_file = results_file_ini+'_'+file_extension
-    print(results_file)
-
     ##############################################################
     # Load fluid mesh
     ##############################################################
-
-    tic = time.clock()
-
-    fluid_nodes = silex_lib_gmsh.ReadGmshNodes(mesh_file+'_air.msh', 3)
-    fluid_elements1, IdNodes1 = silex_lib_gmsh.ReadGmshElements(
-        mesh_file+'_air.msh', 4, 1)  # air, cavity + controlled volume
-    fluid_elements5, IdNodes5 = silex_lib_gmsh.ReadGmshElements(
-        mesh_file+'_air.msh', 4, 5)  # air, ONLY controlled volume
-
-    fluid_nnodes = fluid_nodes.shape[0]
-    fluid_nelem1 = fluid_elements1.shape[0]
-    fluid_nelem5 = fluid_elements5.shape[0]
-
-    fluid_nnodes1 = IdNodes1.shape[0]
-    fluid_nnodes5 = IdNodes5.shape[0]
-
-    fluid_ndof = fluid_nnodes
-
-    if rank == 0:
-        print("Number of nodes:", fluid_nnodes)
-        print("Number of elements in air:", fluid_nelem1)
-        print("Number of nodes in air:", fluid_nnodes1)
-
-    if (flag_write_gmsh_results == 1) and (rank == 0):
-        silex_lib_gmsh.WriteResults(
-            results_file+'_air_cavity_Mesh1', fluid_nodes, fluid_elements1, 4)
-        silex_lib_gmsh.WriteResults(
-            results_file+'_air_controlled_volume_Mesh5', fluid_nodes, fluid_elements5, 4)
+        
 
     # ##############################################################
     # # Load structure mesh
     # ##############################################################
-    # #change parameters values and build mesh
-    # buildStructMesh(orig_mesh_file+'_struc',mesh_file+'_struc',paraVal)
-
-    # struc_nodes = silex_lib_gmsh.ReadGmshNodes(mesh_file+'_struc.msh', 3)
-    # struc_elements, Idnodes_S_air_interface = silex_lib_gmsh.ReadGmshElements(
-    #     mesh_file+'_struc.msh', 2, 2)
-
-    # struc_nnodes = struc_nodes.shape[0]
-    # struc_nelem = struc_elements.shape[0]
-
-    # if (flag_write_gmsh_results == 1) and (rank == 0):
-    #     silex_lib_gmsh.WriteResults2(
-    #         results_file+'_struc_surface', struc_nodes, struc_elements, 2)
-
-    # if rank == 0:
-    #     print("nnodes for structure=", struc_nnodes)
-    #     print("nelem for structure=", struc_nelem)
 
     ##################################################################
     # compute level set
     ##################################################################
-
-    tic = time.clock()
-
-    # LS from a structure mesh
-    # LevelSet_from_Mesh,distance = silex_lib_xfem_acou_tet4.computelevelset(fluid_nodes,struc_nodes,struc_elements)
-
-    # LS from a simple analytic shape (sphere)
-    lx3 = paraVal[0]  # 2.0 # Xc
-    ly3 = paraVal[1]  # 2.0 # Yc
-    lz3 = paraVal[2]  # 0.0 # YZ
-    R = paraVal[3]  # 1.0 # sphere radius
-    #
-    print("Parameters values")
-    print("Xc ", lx3, " Yc ", ly3, " Zc ", lz3, " R ", R)
-    # analytic LS
-    LevelSet = scipy.sqrt(
-        (fluid_nodes[:, 0]-lx3)**2+(fluid_nodes[:, 1]-ly3)**2+(fluid_nodes[:, 2]-lz3)**2)-R
-    # temprorary levelset gradients
-    LevelSet_gradient_tmp = []
-    NameParaTmp = ['X', 'Y', 'Z', 'R']
-    # Compute LS gradient according to Xc
-    LevelSet_gradient_tmp.append((lx3-fluid_nodes[:, 0])/(LevelSet+R))
-    # Compute LS gradient according to Yc
-    LevelSet_gradient_tmp.append((ly3-fluid_nodes[:, 1])/(LevelSet+R))
-    # Compute LS gradient according to Zc
-    LevelSet_gradient_tmp.append((lz3-fluid_nodes[:, 2])/(LevelSet+R))
-    # Compute LS gradient according to R
-    LevelSet_gradient_tmp.append(fluid_nodes[:, 0]*0.-1.)
-
-    # load require levelSet gradients
-    LevelSetGradient = []
-    NamePara = []
-    if len(gradValRequire) > 0:
-        for it in gradValRequire:
-            LevelSetGradient.append(LevelSet_gradient_tmp[it])
-            NamePara.append(NameParaTmp[it])
-
-    # number of parameters
-    nbPara = len(NamePara)
-
-    toc = time.clock()
-    if rank == 0:
-        print("time to compute level set:", toc-tic)
-
-    if (flag_write_gmsh_results == 1) and (rank == 0):
-        # silex_lib_gmsh.WriteResults2(
-        #     results_file+'_struc_air_interface', struc_nodes, struc_elements, 2)
-        # export levelset and levelset gradient
-        dataW = list()
-        dataW.append([[LevelSet], 'nodal', 1, 'Level set'])
-        itP = 0
-        for iN in NamePara:
-            dataW.append([[LevelSetGradient[itP]],
-                          'nodal', 1, 'Level Set Grad '+iN])
-            itP = itP+1
-
-        silex_lib_gmsh.WriteResults2(results_file+'_LS_data', fluid_nodes,
-                                     fluid_elements1, 4, dataW)
 
     ##################################################################
     # Get enriched nodes and elements
     ##################################################################
     tic = time.clock()
 
-    LSEnrichedElements, NbLSEnrichedElements = silex_lib_xfem_acou_tet4.getenrichedelementsfromlevelset(
-        fluid_elements1, LevelSet)
-    LSEnrichedElements = LSEnrichedElements[list(range(NbLSEnrichedElements))]
-    silex_lib_gmsh.WriteResults2(results_file+'_LS_enriched_elements',
-                                 fluid_nodes, fluid_elements1[LSEnrichedElements], 4)
-    # EnrichedElements=LSEnrichedElements#[EnrichedElements-1]
-    LSEnrichednodes = scipy.unique(fluid_elements1[LSEnrichedElements])
-
-    tmp = []
-    for i in LSEnrichednodes:
-        for j in range(4):
-            tmpp = scipy.where(fluid_elements1[:, j] == i)[0]
-            for k in range(len(tmpp)):
-                tmp.append(tmpp[k])
-    # tmp.append(scipy.where(fluid_elements1[:,1]==i))
-    # tmp.append(scipy.where(fluid_elements1[:,2]==i))
-    # tmp.append(scipy.where(fluid_elements1[:,3]==i))
-
-    tmp = scipy.unique(scipy.array(tmp))
-    # tmp1,elttest0,tmp2=scipy.intersect1d(fluid_elements1[:,0],LSEnrichednodes,return_indices=True)
-    # silex_lib_gmsh.WriteResults2(results_file+'_enriched_elements_test0',fluid_nodes,fluid_elements1[tmp],4)
-    #[75804, 97252, 97253,34973, 93135, 93137, 93248,83787, 93136,93525]
-    # EnrichedElements0, NbEnrichedElements = silex_lib_xfem_acou_tet4.getsurfenrichedelements(
-    #     struc_nodes, struc_elements, fluid_nodes, fluid_elements1[tmp])
-    # EnrichedElements0 = scipy.unique(
-    #     EnrichedElements0[list(range(NbEnrichedElements))])
-    # EnrichedElements0 = EnrichedElements0-1
-    # EnrichedElements = tmp[EnrichedElements0]
-
-    EnrichedElements = LSEnrichedElements
-
-    toc = time.clock()
-    if rank == 0:
-        print("time to find enriched elements:", toc-tic)
-
-    tic = time.clock()
-
-    if (flag_write_gmsh_results == 1) and (rank == 0):
-        silex_lib_gmsh.WriteResults2(
-            results_file+'_enriched_elements', fluid_nodes, fluid_elements1[EnrichedElements], 4)
-        LS_moins_enriched = scipy.setdiff1d(
-            LSEnrichedElements, EnrichedElements)
-        enriched_moins_LS = scipy.setdiff1d(
-            EnrichedElements, LSEnrichedElements)
-        silex_lib_gmsh.WriteResults2(
-            results_file+'_LS_moins_enriched', fluid_nodes, fluid_elements1[LS_moins_enriched], 4)
-        silex_lib_gmsh.WriteResults2(
-            results_file+'_enriched_moins_LS', fluid_nodes, fluid_elements1[enriched_moins_LS], 4)
+    
     ##############################################################
     # Compute Standard Fluid Matrices
     ##############################################################
@@ -535,7 +721,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal, gradValRequire=
 
     # To impose the load on the fluid:
     # fluid node number 1
-    UF = scipy.zeros(2*fluid_ndof, dtype=float)
+    UF = np.zeros(2*fluid_ndof, dtype=float)
     UF[9-1] = 3.1250E-05
 
     SolvedDof = scipy.hstack([SolvedDofF, SolvedDofA+fluid_ndof])
@@ -622,17 +808,17 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal, gradValRequire=
                 #     K-(omega**2)*M, dtype='c16'), F)
 
             # pressure field without enrichment
-            press1 = scipy.zeros((fluid_ndof), dtype=complex)
+            press1 = np.zeros((fluid_ndof), dtype=complex)
             press1[SolvedDofF] = sol[list(range(len(SolvedDofF)))].copy()
             # enrichment field
-            enrichment = scipy.zeros((fluid_nnodes), dtype=complex)
+            enrichment = np.zeros((fluid_nnodes), dtype=complex)
             enrichment[SolvedDofA] = sol[list(
                 range(len(SolvedDofF), len(SolvedDofF)+len(SolvedDofA)))].copy()
             # correction of the pressure field with enrichment
-            # scipy.zeros((fluid_ndof),dtype=complex) #press1.copy()
+            # np.zeros((fluid_ndof),dtype=complex) #press1.copy()
             CorrectedPressure = press1.copy()
             CorrectedPressure[SolvedDofA] = press1[SolvedDofA] + \
-                enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
+                enrichment[SolvedDofA]*np.sign(LevelSet[SolvedDofA])
 
             # compute and store FRF on the test volume
             # frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes,CorrectedPressure))
@@ -648,9 +834,9 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal, gradValRequire=
             #####################
             ######################
             #####################
-            Dpress_Dtheta = scipy.zeros([fluid_ndof, nbPara], dtype=complex)
+            Dpress_Dtheta = np.zeros([fluid_ndof, nbPara], dtype=complex)
             DCorrectedPressure_Dtheta = scipy.array(Dpress_Dtheta)
-            Denrichment_Dtheta = scipy.zeros(
+            Denrichment_Dtheta = np.zeros(
                 [fluid_ndof, nbPara], dtype=complex)
             #####################
             #####################
@@ -679,7 +865,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal, gradValRequire=
                     Dpress_Dtheta[:, itP].copy())
                 DCorrectedPressure_Dtheta[SolvedDofA, itP] = DCorrectedPressure_Dtheta[SolvedDofA, itP].T + \
                     scipy.array(
-                        Denrichment_Dtheta[SolvedDofA, itP]*scipy.sign(LevelSet[SolvedDofA]).T)
+                        Denrichment_Dtheta[SolvedDofA, itP]*np.sign(LevelSet[SolvedDofA]).T)
                 #####################
                 #####################
                 # store gradients
@@ -772,7 +958,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal, gradValRequire=
                 gradCalc = (scipy.real(GvarExport)*scipy.real(varExport)+scipy.imag(
                     GvarExport)*scipy.real(varExport))/scipy.absolute(varExport)
                 # deal with zeros values in enrichment field
-                gradCalcB = scipy.zeros([fluid_nnodes, nbStep])
+                gradCalcB = np.zeros([fluid_nnodes, nbStep])
                 gradCalcB[SolvedDofA, :] = (scipy.real(GvarExportB[SolvedDofA, :])*scipy.real(varExportB[SolvedDofA, :])+scipy.imag(
                     GvarExportB[SolvedDofA, :])*scipy.imag(varExportB[SolvedDofA, :]))/scipy.absolute(varExportB[SolvedDofA, :])
                 # remove inf value
@@ -790,9 +976,9 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal, gradValRequire=
         #####################
         #####################
         # save the FRF problem
-        Allfrequencies = scipy.zeros(nbStep)
-        Allfrf = scipy.zeros(nbStep)
-        Allfrfgradient = scipy.zeros([nbStep, nbPara])
+        Allfrequencies = np.zeros(nbStep)
+        Allfrf = np.zeros(nbStep)
+        Allfrfgradient = np.zeros([nbStep, nbPara])
         k = 0
         if rank == 0:
             for i in range(nproc):
@@ -813,9 +999,9 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal, gradValRequire=
             #####################
             #####################zip(*sorted(zip(Allfrequencies, Allfrf,Allfrfgradient)))
             IXsort = scipy.argsort(Allfrequencies)
-            AllfreqSorted = scipy.zeros(nbStep)
-            AllfrfSorted = scipy.zeros(nbStep)
-            AllfrfgradientSorted = scipy.zeros([nbStep, nbPara])
+            AllfreqSorted = np.zeros(nbStep)
+            AllfrfSorted = np.zeros(nbStep)
+            AllfrfgradientSorted = np.zeros([nbStep, nbPara])
             for itS in range(0, nbStep):
                 AllfreqSorted[itS] = Allfrequencies[IXsort[itS]]
                 AllfrfSorted[itS] = Allfrf[IXsort[itS]]

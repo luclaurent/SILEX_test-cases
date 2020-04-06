@@ -12,6 +12,7 @@
 import getopt
 import string
 import time
+import numpy as np
 import scipy
 import scipy.sparse
 import scipy.sparse.linalg
@@ -65,9 +66,9 @@ def computeFreqPerProc(nbStep, nbProc, freqInit, freqEnd):
     varCase = 1
     if nbFreqProcRemain == 0:
         varCase = 0
-    listFreq = scipy.zeros((nbFreqProc+varCase, nbProc))
-    listAllFreq = scipy.linspace(freqInit, freqEnd, nbStep)
-    # print(scipy.linspace(freqInit,freqEnd,nbStep))
+    listFreq = np.zeros((nbFreqProc+varCase, nbProc))
+    listAllFreq = np.linspace(freqInit, freqEnd, nbStep)
+    # print(np.linspace(freqInit,freqEnd,nbStep))
     # build array of frequencies
     itF = 0
     for itP in range(nbProc):
@@ -164,7 +165,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     # Load fluid mesh
     ##############################################################
 
-    tic = time.clock()
+    tic = time.process_time()
 
     fluid_nodes = silex_lib_gmsh.ReadGmshNodes(mesh_file+'_air.msh', 3)
     fluid_elements1, IdNodes1 = silex_lib_gmsh.ReadGmshElements(
@@ -217,7 +218,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     # compute level set
     ##################################################################
 
-    tic = time.clock()
+    tic = time.process_time()
 
     # LS from a structure mesh
     # LevelSet_from_Mesh,distance = silex_lib_xfem_acou_tet4.computelevelset(fluid_nodes,struc_nodes,struc_elements)
@@ -231,7 +232,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     print("Parameters values")
     print("Xc ",lx3," Yc ",ly3," Zc ",lz3," R ",R)
     # analytic LS
-    LevelSet=scipy.sqrt((fluid_nodes[:,0]-lx3)**2+(fluid_nodes[:,1]-ly3)**2+(fluid_nodes[:,2]-lz3)**2)-R
+    LevelSet=np.sqrt((fluid_nodes[:,0]-lx3)**2+(fluid_nodes[:,1]-ly3)**2+(fluid_nodes[:,2]-lz3)**2)-R
     #temprorary levelset gradients
     LevelSet_gradient_tmp=[]
     NameParaTmp=['X','Y','Z','R']
@@ -256,7 +257,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     nbPara=len(NamePara)
   
 
-    toc = time.clock()
+    toc = time.process_time()
     if rank == 0:
         print("time to compute level set:", toc-tic)
 
@@ -277,7 +278,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     ##################################################################
     # Get enriched nodes and elements
     ##################################################################
-    tic = time.clock()
+    tic = time.process_time()
 
     LSEnrichedElements, NbLSEnrichedElements = silex_lib_xfem_acou_tet4.getenrichedelementsfromlevelset(
         fluid_elements1, LevelSet)
@@ -285,25 +286,25 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     silex_lib_gmsh.WriteResults2(results_file+'_LS_enriched_elements',
                                 fluid_nodes, fluid_elements1[LSEnrichedElements], 4)
     # EnrichedElements=LSEnrichedElements#[EnrichedElements-1]
-    LSEnrichednodes = scipy.unique(fluid_elements1[LSEnrichedElements])
+    LSEnrichednodes = np.unique(fluid_elements1[LSEnrichedElements])
 
     tmp = []
     for i in LSEnrichednodes:
         for j in range(4):
-            tmpp = scipy.where(fluid_elements1[:, j] == i)[0]
+            tmpp = np.where(fluid_elements1[:, j] == i)[0]
             for k in range(len(tmpp)):
                 tmp.append(tmpp[k])
-    # tmp.append(scipy.where(fluid_elements1[:,1]==i))
-    # tmp.append(scipy.where(fluid_elements1[:,2]==i))
-    # tmp.append(scipy.where(fluid_elements1[:,3]==i))
+    # tmp.append(np.where(fluid_elements1[:,1]==i))
+    # tmp.append(np.where(fluid_elements1[:,2]==i))
+    # tmp.append(np.where(fluid_elements1[:,3]==i))
 
-    tmp = scipy.unique(scipy.array(tmp))
+    tmp = np.unique(np.array(tmp))
     # tmp1,elttest0,tmp2=scipy.intersect1d(fluid_elements1[:,0],LSEnrichednodes,return_indices=True)
     # silex_lib_gmsh.WriteResults2(results_file+'_enriched_elements_test0',fluid_nodes,fluid_elements1[tmp],4)
     #[75804, 97252, 97253,34973, 93135, 93137, 93248,83787, 93136,93525]
     # EnrichedElements0, NbEnrichedElements = silex_lib_xfem_acou_tet4.getsurfenrichedelements(
     #     struc_nodes, struc_elements, fluid_nodes, fluid_elements1[tmp])
-    # EnrichedElements0 = scipy.unique(
+    # EnrichedElements0 = np.unique(
     #     EnrichedElements0[list(range(NbEnrichedElements))])
     # EnrichedElements0 = EnrichedElements0-1
     # EnrichedElements = tmp[EnrichedElements0]
@@ -311,17 +312,17 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     EnrichedElements=LSEnrichedElements
 
 
-    toc = time.clock()
+    toc = time.process_time()
     if rank == 0:
         print("time to find enriched elements:", toc-tic)
 
-    tic = time.clock()
+    tic = time.process_time()
 
     if (flag_write_gmsh_results == 1) and (rank == 0):
         silex_lib_gmsh.WriteResults2(
             results_file+'_enriched_elements', fluid_nodes, fluid_elements1[EnrichedElements], 4)
-        LS_moins_enriched = scipy.setdiff1d(LSEnrichedElements, EnrichedElements)
-        enriched_moins_LS = scipy.setdiff1d(EnrichedElements, LSEnrichedElements)
+        LS_moins_enriched = np.setdiff1d(LSEnrichedElements, EnrichedElements)
+        enriched_moins_LS = np.setdiff1d(EnrichedElements, LSEnrichedElements)
         silex_lib_gmsh.WriteResults2(
             results_file+'_LS_moins_enriched', fluid_nodes, fluid_elements1[LS_moins_enriched], 4)
         silex_lib_gmsh.WriteResults2(
@@ -330,7 +331,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     # Compute Standard Fluid Matrices
     ##############################################################
 
-    tic = time.clock()
+    tic = time.process_time()
 
     IIf, JJf, Vffk, Vffm = silex_lib_xfem_acou_tet4.globalacousticmatrices(
         fluid_elements1, fluid_nodes, celerity, rho)
@@ -346,9 +347,9 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     ##################################################################
     # Compute Heaviside enrichment
     ##################################################################
-    tic = time.clock()
+    tic = time.process_time()
 
-    Enrichednodes = scipy.unique(fluid_elements1[EnrichedElements])
+    Enrichednodes = np.unique(fluid_elements1[EnrichedElements])
 
     IIaa, JJaa, IIaf, JJaf, Vaak, Vaam, Vafk, Vafm = silex_lib_xfem_acou_tet4.globalxfemacousticmatrices(
         fluid_elements1, fluid_nodes, LevelSet, celerity, rho)
@@ -364,7 +365,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     SolvedDofA = Enrichednodes-1
 
-    toc = time.clock()
+    toc = time.process_time()
     if rank == 0:
         print("time to compute Heaviside enrichment:", toc-tic)
 
@@ -386,10 +387,10 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     # To impose the load on the fluid:
     # fluid node number 1
-    UF = scipy.zeros(2*fluid_ndof, dtype=float)
+    UF = np.zeros(2*fluid_ndof, dtype=float)
     UF[9-1] = 3.1250E-05
 
-    SolvedDof = scipy.hstack([SolvedDofF, SolvedDofA+fluid_ndof])
+    SolvedDof = np.hstack([SolvedDofF, SolvedDofA+fluid_ndof])
 
  
     #################################################################
@@ -456,15 +457,16 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
             print("Freq. step ",it,"/",itmax," proc number", rank, "frequency=", freq)
 
-            tic = time.clock()
+            tic = time.process_time()
 
-            F = scipy.array(omega**2*UF[SolvedDof], dtype='c16')
+            F = np.array(omega**2*UF[SolvedDof], dtype='c16')
 
+            print (rank)
             if rank>=0:
                  #print(K)
                  #print(M)
                  #print(omega)
-                 sol = mumps.spsolve(K-(omega**2)*M, F+0.j,comm=mycomm)
+                 sol = mumps.spsolve(K-(omega**2)*M, F,comm=None)#mycomm)
                  #sol = mumps.spsolve(scipy.sparse.coo_matrix( \
                  #   K-(omega**2)*M, dtype='complex'), F+0.j,comm=mycomm)
                  #sol
@@ -472,16 +474,16 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
                  #     K-(omega**2)*M, dtype='c16'), F)
             
             ## pressure field without enrichment
-            press1 = scipy.zeros((fluid_ndof), dtype=complex)
+            press1 = np.zeros((fluid_ndof), dtype=complex)
             press1[SolvedDofF] = sol[list(range(len(SolvedDofF)))].copy()
             ## enrichment field
-            enrichment = scipy.zeros((fluid_nnodes), dtype=complex)
+            enrichment = np.zeros((fluid_nnodes), dtype=complex)
             enrichment[SolvedDofA] = sol[list(
                 range(len(SolvedDofF), len(SolvedDofF)+len(SolvedDofA)))].copy()
             ## correction of the pressure field with enrichment
-            CorrectedPressure =press1.copy() #scipy.zeros((fluid_ndof),dtype=complex) #press1.copy()
+            CorrectedPressure =press1.copy() #np.zeros((fluid_ndof),dtype=complex) #press1.copy()
             CorrectedPressure[SolvedDofA] = press1[SolvedDofA] + \
-                 enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
+                 enrichment[SolvedDofA]*np.sign(LevelSet[SolvedDofA])
 
             
             ## compute and store FRF on the test volume
@@ -498,9 +500,9 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             #####################
             ######################
             #####################
-            Dpress_Dtheta = scipy.zeros([fluid_ndof,nbPara],dtype=complex)
-            DCorrectedPressure_Dtheta=scipy.array(Dpress_Dtheta)
-            Denrichment_Dtheta = scipy.zeros([fluid_ndof,nbPara],dtype=complex)
+            Dpress_Dtheta = np.zeros([fluid_ndof,nbPara],dtype=complex)
+            DCorrectedPressure_Dtheta=np.array(Dpress_Dtheta)
+            Denrichment_Dtheta = np.zeros([fluid_ndof,nbPara],dtype=complex)
             #####################
             #####################
             ## compute gradients
@@ -521,9 +523,9 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
                 #####################
                 #####################
                 #compute the corrected gradient pressure field (via enrichment)
-                DCorrectedPressure_Dtheta[:,itP]=scipy.array(Dpress_Dtheta[:,itP].copy())
+                DCorrectedPressure_Dtheta[:,itP]=np.array(Dpress_Dtheta[:,itP].copy())
                 DCorrectedPressure_Dtheta[SolvedDofA,itP]=DCorrectedPressure_Dtheta[SolvedDofA,itP].T+ \
-                    scipy.array(Denrichment_Dtheta[SolvedDofA,itP]*scipy.sign(LevelSet[SolvedDofA]).T)
+                    np.array(Denrichment_Dtheta[SolvedDofA,itP]*np.sign(LevelSet[SolvedDofA]).T)
                 #####################
                 #####################
                 #store gradients
@@ -549,15 +551,15 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         if (flag_write_gmsh_results == 1) and (rank == 0):
             dataW=list()
             #prepare pressure field
-            dataW.append([scipy.real(press_save),'nodal',1,'pressure (real)'])
-            dataW.append([scipy.imag(press_save),'nodal',1,'pressure (imaginary)'])
-            dataW.append([scipy.absolute(press_save),'nodal',1,'pressure (norm)'])
+            dataW.append([np.real(press_save),'nodal',1,'pressure (real)'])
+            dataW.append([np.imag(press_save),'nodal',1,'pressure (imaginary)'])
+            dataW.append([np.absolute(press_save),'nodal',1,'pressure (norm)'])
             #prepare gradient pressure field
             itG=0
             for itP in NamePara:
-                dataW.append([scipy.real(dpress_save[itG]),'nodal',1,'pressure gradient '+itP+' (real)'])
-                dataW.append([scipy.imag(dpress_save[itG]),'nodal',1,'pressure gradient '+itP+' (imaginary)'])
-                dataW.append([scipy.absolute(dpress_save[itG]),'nodal',1,'pressure gradient '+itP+' (norm)'])
+                dataW.append([np.real(dpress_save[itG]),'nodal',1,'pressure gradient '+itP+' (real)'])
+                dataW.append([np.imag(dpress_save[itG]),'nodal',1,'pressure gradient '+itP+' (imaginary)'])
+                dataW.append([np.absolute(dpress_save[itG]),'nodal',1,'pressure gradient '+itP+' (norm)'])
                 itG=itG+1
             print("Write pressure field and gradients in msh file")
             silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',
@@ -565,22 +567,22 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             print(">>> Done!!")
 
             #export results with discontinuities on .pos files
-            varExport=scipy.vstack(uncorrectedpress_save).transpose()
-            varExportC=scipy.vstack(press_save).transpose()
-            varExportB=scipy.vstack(enrichment_save).transpose()
+            varExport=np.vstack(uncorrectedpress_save).transpose()
+            varExportC=np.vstack(press_save).transpose()
+            varExportB=np.vstack(enrichment_save).transpose()
             print("Write pressure field in pos file")
-            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.real(varExport),scipy.real(varExportB),'results/press_plus_real.pos','Pressure + Real')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,np.real(varExport),np.real(varExportB),'results/press_plus_real.pos','Pressure + Real')
             os.system('cd results&&bzip2 *.pos')
-            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.imag(varExport),scipy.imag(varExportB),'results/press_plus_imag.pos','Pressure + Imag')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,np.imag(varExport),np.imag(varExportB),'results/press_plus_imag.pos','Pressure + Imag')
             os.system('cd results&&bzip2 *.pos')
-            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.absolute(varExport),scipy.absolute(varExportB),'results/press_plus_abs.pos','Pressure + Abs')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,np.absolute(varExport),np.absolute(varExportB),'results/press_plus_abs.pos','Pressure + Abs')
             os.system('cd results&&bzip2 *.pos')
-            # silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.absolute(varExport)**2,scipy.absolute(varExportB)**2,'press_plus_square.pos')
-            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.real(varExport),-scipy.real(varExportB),'results/press_moins_real.pos','Pressure - Real')
+            # silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,np.absolute(varExport)**2,np.absolute(varExportB)**2,'press_plus_square.pos')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,np.real(varExport),-np.real(varExportB),'results/press_moins_real.pos','Pressure - Real')
             os.system('cd results&&bzip2 *.pos')
-            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.imag(varExport),-scipy.imag(varExportB),'results/press_moins_imag.pos','Pressure - Imag')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,np.imag(varExport),-np.imag(varExportB),'results/press_moins_imag.pos','Pressure - Imag')
             os.system('cd results&&bzip2 *.pos')
-            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.absolute(varExport),-scipy.absolute(varExportB),'results/press_moins_abs.pos','Pressure - Abs')
+            silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,np.absolute(varExport),-np.absolute(varExportB),'results/press_moins_abs.pos','Pressure - Abs')
             os.system('cd results&&bzip2 *.pos')
 
 
@@ -600,29 +602,29 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             #
             itG=0
             for key,itP in enumerate(NamePara):
-                GvarExport=scipy.vstack(duncorrectedpress_save[key]).copy().transpose()
-                GvarExportB=scipy.vstack(denrichment_save[key]).copy().transpose()
+                GvarExport=np.vstack(duncorrectedpress_save[key]).copy().transpose()
+                GvarExportB=np.vstack(denrichment_save[key]).copy().transpose()
                 print("Write gradient of pressure field in pos file (",itP,")")
-                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.real(GvarExport),scipy.real(GvarExportB),'results/Gpress_plus_'+itP+'_real.pos','Gpressure + '+itP+' Real')
+                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,np.real(GvarExport),np.real(GvarExportB),'results/Gpress_plus_'+itP+'_real.pos','Gpressure + '+itP+' Real')
                 os.system('cd results&&bzip2 *.pos')
-                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,scipy.imag(GvarExport),scipy.imag(GvarExportB),'results/Gpress_plus_'+itP+'_imag.pos','Gpressure + '+itP+' Imag')
+                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,np.imag(GvarExport),np.imag(GvarExportB),'results/Gpress_plus_'+itP+'_imag.pos','Gpressure + '+itP+' Imag')
                 os.system('cd results&&bzip2 *.pos')
-                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.real(GvarExport),-scipy.real(GvarExportB),'results/Gpress_moins_'+itP+'_real.pos','Gpressure - '+itP+' Real')
+                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,np.real(GvarExport),-np.real(GvarExportB),'results/Gpress_moins_'+itP+'_real.pos','Gpressure - '+itP+' Real')
                 os.system('cd results&&bzip2 *.pos')
-                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,scipy.imag(GvarExport),-scipy.imag(GvarExportB),'results/Gpress_moins_'+itP+'_imag.pos','Gpressure - '+itP+' Imag')
+                silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,np.imag(GvarExport),-np.imag(GvarExportB),'results/Gpress_moins_'+itP+'_imag.pos','Gpressure - '+itP+' Imag')
                 os.system('cd results&&bzip2 *.pos')
                 #     
-                # gradPsquare=2*(scipy.real(GvarExport)*scipy.real(varExport)+scipy.imag(GvarExport)*scipy.imag(varExport))
-                # gradPsquareB=2*(scipy.real(GvarExportB)*scipy.real(varExportB)+scipy.imag(GvarExportB)*scipy.imag(varExportB))
+                # gradPsquare=2*(np.real(GvarExport)*np.real(varExport)+np.imag(GvarExport)*np.imag(varExport))
+                # gradPsquareB=2*(np.real(GvarExportB)*np.real(varExportB)+np.imag(GvarExportB)*np.imag(varExportB))
                 # silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,gradPsquare,gradPsquareB,'results/Gpress_plus_'+itP+'_dsquare.pos')                
                 # silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,gradPsquare,-gradPsquareB,'results/Gpress_moins_'+itP+'_dsquare.pos')
                 #                          
-                gradCalc=(scipy.real(GvarExport)*scipy.real(varExport)+scipy.imag(GvarExport)*scipy.real(varExport))/scipy.absolute(varExport)
+                gradCalc=(np.real(GvarExport)*np.real(varExport)+np.imag(GvarExport)*np.real(varExport))/np.absolute(varExport)
                 #deal with zeros values in enrichment field
-                gradCalcB=scipy.zeros([fluid_nnodes,nbStep])
-                gradCalcB[SolvedDofA,:]=(scipy.real(GvarExportB[SolvedDofA,:])*scipy.real(varExportB[SolvedDofA,:])+scipy.imag(GvarExportB[SolvedDofA,:])*scipy.imag(varExportB[SolvedDofA,:]))/scipy.absolute(varExportB[SolvedDofA,:])
+                gradCalcB=np.zeros([fluid_nnodes,nbStep])
+                gradCalcB[SolvedDofA,:]=(np.real(GvarExportB[SolvedDofA,:])*np.real(varExportB[SolvedDofA,:])+np.imag(GvarExportB[SolvedDofA,:])*np.imag(varExportB[SolvedDofA,:]))/np.absolute(varExportB[SolvedDofA,:])
                 #remove inf value
-                IX = scipy.absolute(varExport)==0.
+                IX = np.absolute(varExport)==0.
                 gradCalc[IX]=1
                 gradCalcB[IX]=1
                 #
@@ -636,9 +638,9 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         #####################
         #####################
         # save the FRF problem
-        Allfrequencies=scipy.zeros(nbStep)
-        Allfrf=scipy.zeros(nbStep)
-        Allfrfgradient=scipy.zeros([nbStep,nbPara])
+        Allfrequencies=np.zeros(nbStep)
+        Allfrf=np.zeros(nbStep)
+        Allfrfgradient=np.zeros([nbStep,nbPara])
         k=0
         if rank==0:
             for i in range(nproc):
@@ -658,10 +660,10 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
                     k=k+1
             #####################
             #####################zip(*sorted(zip(Allfrequencies, Allfrf,Allfrfgradient)))
-            IXsort=scipy.argsort(Allfrequencies)
-            AllfreqSorted=scipy.zeros(nbStep)
-            AllfrfSorted=scipy.zeros(nbStep)
-            AllfrfgradientSorted=scipy.zeros([nbStep,nbPara])
+            IXsort=np.argsort(Allfrequencies)
+            AllfreqSorted=np.zeros(nbStep)
+            AllfrfSorted=np.zeros(nbStep)
+            AllfrfgradientSorted=np.zeros([nbStep,nbPara])
             for itS in range(0,nbStep):
                 AllfreqSorted[itS]=Allfrequencies[IXsort[itS]]
                 AllfrfSorted[itS]=Allfrf[IXsort[itS]]
@@ -703,8 +705,8 @@ def manageOpt(argv,dV):
     freqMin     = dV.freqMin
     freqMax     = dV.freqMax
     nbStep      = dV.nbStep
-    paraVal  = scipy.array(dV.paraVal)
-    gradCompute = scipy.array(dV.gradCompute)
+    paraVal  = np.array(dV.paraVal)
+    gradCompute = np.array(dV.gradCompute)
     #caseDefine = dV.caseDef
     
     #load info from MPI
@@ -719,12 +721,12 @@ def manageOpt(argv,dV):
         elif opt == "-f":
             freqMin = float(arg)
         elif opt == "-p":
-            tmp = scipy.array(arg.split(','),dtype=scipy.float32)
+            tmp = np.array(arg.split(','),dtype=scipy.float32)
             paraVal=tmp
         elif opt == "-c":
             caseDefine=str(arg)
         elif opt == "-g":
-            tmp = scipy.array(arg.split(','),dtype=scipy.int32)
+            tmp = np.array(arg.split(','),dtype=scipy.int32)
             gradCompute=tmp
         elif opt == "-h":
             usage()
