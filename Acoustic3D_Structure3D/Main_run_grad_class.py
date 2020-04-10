@@ -7,6 +7,17 @@
 # python -m cProfile [-o output_file] [-s sort_order] myscript.py
 
 ###########################################################
+# To run it in parallel for several frequencies:
+# export OPENBLAS_NUM_THREADS=1
+# mpirun -np 20 python3 Main_xfem_CB_fluid_porous_7-v4.py
+#
+# To run it in sequentiel frequency per frequency with openblas in parrallel:
+# export OPENBLAS_NUM_THREADS=10
+# python3 Main_toto.py
+#
+###########################################################
+
+###########################################################
 # Libraries
 ###########################################################
 import getopt
@@ -79,7 +90,7 @@ class SILEX:
     caseProp['freqMin'] = []          # minimum frequency of the range
     caseProp['nbSteps'] = []          # number of frequency steps
     caseProp['modal'] = False         # modal version of the computation (building of modal basis and use it for gradients)
-
+    caseProp['computeFRF'] = True     # computation of the FRF in control volume
     #
     caseProp['bcdisp'] = list()       # boundary conditions on displacement
     caseProp['bcpress'] = list()      # boundary conditions on pressure
@@ -95,9 +106,8 @@ class SILEX:
     paraData['name'] = []             # name of parameters
     paraData['nb'] = []               # number of parameters
     paraData['nameGrad'] = []         # name of parameters for gradients
-    paraData['nbGrad'] = []           # name of gradients
+    paraData['nbGrad'] = []           # number of gradients
     paraData['gradCompute'] = False   # compute gradients or not
-    paraData['gradValCompute'] = []   # declare which gradients will be compute (if empty all gradients will be computed)
 
     #material properties
     # air
@@ -108,13 +118,18 @@ class SILEX:
 
     #data properties
     data = dict()
-    data['geomFolder'] = 'geom'
-    data['resultFolder'] = 'results'
+    data['geomFolder'] = 'geom'             # folder of geometry and meshes
+    data['resultFolder'] = 'results'        # folder of results
     #
-    data['originalFluidMeshFile'] = ''
-    data['originalStructMeshFile'] = ''
-    data['currentStructMeshFile'] = ''
-    data['resultsFile'] = ''
+    data['originalFluidMeshFile'] = ''      # provided fluid mesh file
+    data['originalStructGeoFile'] = ''      # provided structure geometry file (parametric, gmsh format...)
+    data['originalStructMeshFile'] = ''     # provided structure mesh file
+    data['currentStructMeshFile'] = ''      # build structure mesh file (generated from geometry)
+    data['resultsFile'] = ''                # current results file basename
+    data['prefixResults'] = 'SILEX'         # prefix use on results files
+    #
+    data['exportData'] = 'mat'              # default format to export data (as FRF, mat or pickle)
+    data['exportMesh'] = 'msh'              # default format to export fields and mesh (msh, msh+, vtk)
     #
     fullPathOriginalMeshFile = ''
     fullPathMeshFile = ''
@@ -134,43 +149,91 @@ class SILEX:
 
     ###
     # storage variables
-    LevelSet = []             #nodal values of LS (known at fluid nodes) signed
-    LevelSetU = []            #nodal values of LS (known at fluid nodes) unsigned
-    LevelSetGradient = list() #nodal values of the parametric gradients of LS (known at fluid nodes)
+    LevelSet = []               # nodal values of LS (known at fluid nodes) signed
+    LevelSetU = []              # nodal values of LS (known at fluid nodes) unsigned
+    LevelSetGradient = list()   # nodal values of the parametric gradients of LS (known at fluid nodes)
     #
-    fluidNodes = []           # coordinates of the fluid nodes
-    fluidNbNodes = []         # number of fluid nodes
-    fluidNbDof = []           # number of dofs in fluid
+    fluidNodes = []             # coordinates of the fluid nodes
+    fluidNbNodes = []           # number of fluid nodes
+    fluidNbDof = []             # number of dofs in fluid
     #
-    fluidElems = []           # array of elements for the fluid volume
-    idFluidNodes = []         # 
-    fluidNbElems = []         # number of elements in fluid volume
-    fluidNbNodes = []         # number of nodes in fluid volume
+    fluidElems = []             # array of elements for the fluid volume
+    idFluidNodes = []           # 
+    fluidNbElems = []           # number of elements in fluid volume
+    fluidNbNodes = []           # number of nodes in fluid volume
     #
-    fluidElemsControl = []    # array of elements for the control volume
-    idFluidNodesControl = []  # 
-    fluidNbElemsControl = []  # number of elements in control volume
-    fluidNbNodesControl = []  # number of nodes in control volume
+    fluidElemsControl = []      # array of elements for the control volume
+    idFluidNodesControl = []    # 
+    fluidNbElemsControl = []    # number of elements in control volume
+    fluidNbNodesControl = []    # number of nodes in control volume
     #
-    structNodes = []          # coordinates of the structure nodes 
-    structNbNodes = []        # number of structures nodes
+    structNodes = []            # coordinates of the structure nodes 
+    structNbNodes = []          # number of structures nodes
     #
-    structElems = []          # array of elements of structure
-    idStructNodes = []        # 
-    structNbElems = []        # number of elements for structure
-    structNbNodes = []        # number of nodes of structure
+    structElems = []            # array of elements of structure
+    idStructNodes = []          # 
+    structNbElems = []          # number of elements for structure
+    structNbNodes = []          # number of nodes of structure
     #enriched parts
-    EnrichedNodes = []      # nodes associated to enriched elements
-    EnrichedElems = []      # enriched elements
-    EnrichedNbElems = []    # number of enriched elements
+    EnrichedNodes = []          # nodes associated to enriched elements
+    EnrichedElems = []          # enriched elements
+    EnrichedNbElems = []        # number of enriched elements
+    ##############
+    #operators for fluid part
+    KFF = []                    # fluid rigidity matrix
+    MFF = []                    # fluid mass matrix
+    dKFF = list()               # gradient matrices
+    dMFF = list()               # gradient matrices
+    SolvedDofF = []             # list of solved fluid dofs
+    ##############
+    #operators for enriched part
+    KAA = []                    # rigidity matrix associated to full enriched dofs
+    KFA = []                    # rigidity matrix associated to mixed enriched dofs
+    MAA = []                    # mass matrix associated to full enriched dofs
+    MFA = []                    # mass matrix associated to mixed enriched dofs
+    dKAA = list()               # gradient matrices
+    dKFA = list()               # gradient matrices
+    dMAA = list()               # gradient matrices
+    dMFA = list()               # gradient matrices
+    SolvedDofA = []             # list of solved enriched dofs
+    ##############
+    #operators for the whole coupled problem
+    K = []                      # rigidity matrix
+    M = []                      # mass matrix
+    dK = list()                 # gradient matrices
+    dM = list()                 # gradients matrices
+    UF = []                     # second member
+    dUF = list()                # gradients of second member
+    SolvedDof = []
+    ##############
+    #operators for results of the whole coupled problem
+    pressure = []               # pressure field (corrected with enrichment field)
+    pressureEnrichment = []    # enrichment part of the pressure field
+    pressureUncorrect = []      # uncorrected part of the pressure field
+    #
+    pressureGrad = list()               # gradient of the pressure field (corrected with enrichment field)
+    pressureEnrichmentGrad = list()    # gradient of the enrichment part of the pressure field
+    pressureUncorrectGrad = list()      # gradient of the uncorrected part of the pressure field
 
+    ##############
+    #operators for FRF
+    Frequencies = []            # frequencies for computation
+    FRF = []                    # results of frequency response function
+    FRFgrad = list()            # gradients of the FRF
 
-    ###
+    ##############
+    #others data
+    nbRuns = 0                   # number of runs
 
-    
+    ##################################################################
+    ##################################################################
+    ##################################################################
+    ##################################################################
     def __init__(self):
         """
-        Constructor of the class
+        ##################################################################
+        # Constructor of the class
+        ##################################################################
         """
         print("##################################################")
         print("##################################################")
@@ -185,34 +248,70 @@ class SILEX:
             datefmt='%Y-%m-%d %H:%M:%S')
             #
         
+    def loadType(self):
+        """
+        ##################################################################
+        # Load the type of variable (float or complex)
+        ##################################################################
+        """
+        if np.imag(self.mechaProp['fluid_damping'])==0:
+            typeRun=np.dtype('float')
+        else:
+            typeRun=np.dtype('complex')
+        return typeRun
+
+    def resultFile(self,detPara=False,addTxt=None,ext=None)
+        """
+        ##################################################################
+        # Build result file depending on status
+        ##################################################################
+        """
+        fileName = data['prefixResults']
+        if detPara:
+            fileName += '_'+self.formatPara(nospace=True)+'_'
+        if addTxt is not None:
+            if addTxt[0] != '_':
+                fileName += '_' + addTxt
+            else:
+                fileName += addTxt
+        if ext is not None:
+            fileName += ext
+
+        return fileName
 
     
     def loadMPI(self):
         """
-        method used to load openMPI information
+        ##################################################################
+        # method used to load openMPI information
+        ##################################################################
         """
         self.nbProcMPI,self.rankMPI,self.commMPI=utils.mpiInfo()
 
-    def dataOk(self,dispFlag):
+    def dataOk(self,dispFlag=None):
         """
-        method used to check if the data are available
+        ##################################################################
+        # method used to check if the data are available
+        ##################################################################
         """
         statusData=True
         for key in ['geomFolder','resultFolder','originalMeshFile','currentMeshFile','resultsFile']:
             if not self.data[key]:
                 statusData=False
-            if dispFlag:
-                logging.info("Geometry folder %i"%utils.prepareStr(self.data['geomFolder']))
-                logging.info("Results folder %i"%utils.prepareStr(self.data['resultFolder']))
-                logging.info("Original mesh file %i"%utils.prepareStr(self.data['originalMeshFile']))
-                logging.info("Current mesh file %i"%utils.prepareStr(self.data['currentMeshFile']))
-                logging.info("Result mesh file %i"%utils.prepareStr(self.data['resultsFile']))        
+        if dispFlag:
+            logging.info("Geometry folder %i"%utils.prepareStr(self.data['geomFolder']))
+            logging.info("Results folder %i"%utils.prepareStr(self.data['resultFolder']))
+            logging.info("Original mesh file %i"%utils.prepareStr(self.data['originalMeshFile']))
+            logging.info("Current mesh file %i"%utils.prepareStr(self.data['currentMeshFile']))
+            logging.info("Result mesh file %i"%utils.prepareStr(self.data['resultsFile']))        
         return statusData
 
 
     def createDatabase(self):
         """
-        method used to create full path of folders
+        ##################################################################
+        # method used to create full path of folders
+        ##################################################################
         """
         createOk=False
         if self.dataOk(True):
@@ -228,7 +327,9 @@ class SILEX:
 
     def loadMesh(self,type=None,dispFlag=True,filename=None):
         """
-        method used to load mesh files
+        ##################################################################
+        # method used to load mesh files
+        ##################################################################
         """
         if filename is None:
             logging.error("Filename of the mesh is missing")
@@ -288,7 +389,9 @@ class SILEX:
     
     def loadPara(self,namePara=None,nameParaGrad=None,valPara=None,gradCompute=None,gradValCompute=None):
         """
-        method used to load parameters data (require for gradient(s) computation(s))
+        ##################################################################
+        # method used to load parameters data (require for gradient(s) computation(s))
+        ##################################################################
         """
         if namePara is not None:
             self.paraData['name']=namePara
@@ -308,7 +411,10 @@ class SILEX:
 
     def showDataParaVal(self):
         """
-        method used to show the data concerning the design parameters along the gradients will be computed
+        ##################################################################
+        # method used to show the data concerning the design parameters along 
+        # the gradients will be computed
+        ##################################################################
         """
         #check number of names vs number of parameter values
         pName=self.paraData['name']
@@ -338,7 +444,9 @@ class SILEX:
     
     def loadMechaProperties(self,dataIn=None):
         """
-        method used to load mechanical properties
+        ##################################################################
+        # method used to load mechanical properties
+        ##################################################################
         """
         if dataIn is not None:
             logging.info('>>> Load Mechanical properties <<<')
@@ -352,7 +460,9 @@ class SILEX:
     
     def loadComputeProperties(self,dataIn=None):
         """
-        method used to load computation properties
+        ##################################################################
+        # method used to load computation properties
+        ##################################################################
         """
         if dataIn is not None:
             logging.info('>>> Load properties for computation <<<')
@@ -366,7 +476,9 @@ class SILEX:
 
     def loadBC(self,dataIn=None):
         """
-        method use to declare boundary conditions
+        ##################################################################
+        # method use to declare boundary conditions
+        ##################################################################
         """
         if dataIn is not None:
             for key in dataIn:
@@ -379,7 +491,9 @@ class SILEX:
     
     def createResultsName(self,txt=None):
         """
-        generate basename of the results file
+        ##################################################################
+        # generate basename of the results file
+        ##################################################################
         """
         # number of parameters
         nbPara = len(self.paraData['val'])
@@ -394,31 +508,85 @@ class SILEX:
         logging.debug('Results base name %s'%results_file)
         return results_file
 
-    def exportResults(self,typeExport=None,method='gmsh'):
+    def exportResults(self,typeExport=None,method='msh',dictFields = None,fileName = None):
         """
-        function used to export results and mesh
+        ##################################################################
+        # function used to export results and mesh
+        ##################################################################
         """
         if typeExport is not None:
             logging.info("Export results: type %s, method %s"%(typeExport,method))
             tic = time.process_time()                
+            if typeExport is "manuFields":
+                #export many fields with details
+                if dictFields is None:
+                    logging.info("Fields are missing")
+                else:
+                    if method is "msh":
+                        if dictFields is dict:
+                            dictFields=[dictFields]
+                        #prepare data to export
+                        dataExport= list()
+                        for fields in dictFields:
+                            dataOneField = list()
+                            dataOneField.append(fields['field'])
+                            if fields['type'] is "nodal":
+                                dataOneField.append('nodal')
+                            dataOneField.append(1)
+                            dataOneField.append(fields['name'])
+                            #display
+                            logging.info("Prepare to write field: %s"%fields['name'])
+                            #fill list to export
+                            dictExport.append(dictOneField)
+                        #export data
+                        if fileName is not None:
+                            fileName = fileName+".msh"
+                            logging.info("Write: %s"%fileName)
+                            silex_lib_gmsh.WriteResults2(fileName,
+                                         self.fluidNodes,
+                                         self.fluidElems,
+                                         4,
+                                         dataExport)
+                            logging.info('File size: %s'%utils.file_size(fileName))
+                        else:
+                            logging.info("Unable to write file: filename is missing")
+                    #
+                    if method is "pos":
+                        #write a pos files (gmsh syntax) which include the discontinuities
+                        # one file per field
+                        if dictFields is dict:
+                            dictFields=[dictFields]
+                        #prepare data to export
+                        for fields in dictFields:
+                            fileName = fields['filename']+'.pos'
+                            logging.info("Prepare to write field: %s in "%(fields['name'],fileName))
+                            silex_lib_xfem_acou_tet4.makexfemposfilefreq(self.fluidNodes,
+                             self.fluidElems, 
+                             fields['levelsetmod'],
+                             fields['fielduncorrected'],
+                             fields['fieldenrichment'],
+                             fileName,
+                             fields['name'])
+                             logging.info('File size: %s'%utils.file_size(fileName))
+
+
             if typeExport is "cavitymesh":
                 #export mesh of the cavity
-                if method is "gmsh":
+                if method is "msh":
                     silex_lib_gmsh.WriteResults(results_file+'_air_cavity_Mesh1', fluid_nodes, fluid_elements1, 4)
                     
             if typeExport is "controlvolmesh":
                 #export mesh of the control volume
-                if method is "gmsh":
+                if method is "msh":
                     silex_lib_gmsh.WriteResults(results_file+'_air_controlled_volume_Mesh5', fluid_nodes, fluid_elements5, 4)
                     
             if typeExport is "struct":
                 #export 2D mesh of the structur
-                if method is "gmsh":
+                if method is "msh":
                     silex_lib_gmsh.WriteResults2(results_file+'_struc_surface', struc_nodes, struc_elements, 2)
-            
             if typeExport is "levelset":
                 #export level-set and gradients of the level-set
-                if method is "gmsh":
+                if method is "msh":
                     #create list of data
                     dataW = list()
                     #level-set
@@ -430,13 +598,15 @@ class SILEX:
                         itP = itP+1
                     silex_lib_gmsh.WriteResults2(results_file+'_LS_data', fluidNodes, fluidElems, 4, dataW)
             if typeExport is "enrichedPart":
-                if method is "gmsh":
+                if method is "msh":
                     silex_lib_gmsh.WriteResults2(results_file+'_LS_enriched_elements',self.fluidNodes, self.fluidElemts[self.EnrichedElems], 4)
             logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
 
     def buildLevelSet(self,typeLS=None,typeGEO=None,paraVal=None):
         """
-        function used to build the LevelSet (signed) and the gradient of the level-set
+        ##################################################################
+        # function used to build the LevelSet (signed) and the gradient of the level-set
+        ##################################################################
         """
         logging.info("Build Level-set: type %s"%(typeLS))
         tic = time.process_time()
@@ -452,28 +622,29 @@ class SILEX:
             #compute gradient of Level-Set
             if paraData['gradCompute']:
                 pass
+
         if typeLS is "manual":
             #the level-set is built using an explicit function 
             LSobj=structTools.LSmanual(typeGEO,fluidNodes)
             #export values
-           self.LevelSet,self.LevelSetU=LSobj.exportLS()
+            self.LevelSet,self.LevelSetU=LSobj.exportLS()
             self.loadPara(namePara=LSobj.exportParaName())
             #compute gradient of Level-Set
             if paraData['gradCompute']:
-                self.LevelSetGradient,self.paraData['nameGrad'] =
-                    LSobj.exportLSgrad(self.paraData['gradValCompute'])
+                self.LevelSetGradient,self.paraData['nameGrad'] = LSobj.exportLSgrad(self.paraData['gradValCompute'])
         #
         logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
     
     def buildEnrichedPart(self):
         """
-        Find the enriched parts using the Level-set
+        ##################################################################
+        # Find the enriched parts using the Level-set
+        ##################################################################
         """
-        logging.info("Find enriched elements and nodes using LS)
+        logging.info("Find enriched elements and nodes using LS")
         tic = time.process_time()
         #
-        self.EnrichedElems, self.EnrichedNbElems =
-         silex_lib_xfem_acou_tet4.getenrichedelementsfromlevelset(self.fluidElems, self.LevelSet)
+        self.EnrichedElems, self.EnrichedNbElems = silex_lib_xfem_acou_tet4.getenrichedelementsfromlevelset(self.fluidElems, self.LevelSet)
         self.EnrichedElems = self.EnrichedElems[list(range(self.EnrichedNbElems))]
         #
         # self.LSEnrichedElems=self.LSEnrichedElems#[self.LSEnrichedElems-1]
@@ -499,105 +670,561 @@ class SILEX:
         #     EnrichedElements0[list(range(NbEnrichedElements))])
         # EnrichedElements0 = EnrichedElements0-1
         # EnrichedElements = tmp[EnrichedElements0]
-
-    EnrichedElements = LSEnrichedElements
-
-    toc = time.clock()
-    if rank == 0:
-        print("time to find enriched elements:", toc-tic)
-
-    tic = time.clock()
-
-    if (flag_write_gmsh_results == 1) and (rank == 0):
-        silex_lib_gmsh.WriteResults2(
-            results_file+'_enriched_elements', fluid_nodes, fluid_elements1[EnrichedElements], 4)
-        LS_moins_enriched = scipy.setdiff1d(
-            LSEnrichedElements, EnrichedElements)
-        enriched_moins_LS = scipy.setdiff1d(
-            EnrichedElements, LSEnrichedElements)
-        silex_lib_gmsh.WriteResults2(
-            results_file+'_LS_moins_enriched', fluid_nodes, fluid_elements1[LS_moins_enriched], 4)
-        silex_lib_gmsh.WriteResults2(
-            results_file+'_enriched_moins_LS', fluid_nodes, fluid_elements1[enriched_moins_LS], 4)
-
         logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
 
+    def getFormatBC(self,bcIn):
+        """
+        ##############################################################
+        # Prepare BC from data
+        ##############################################################
+        # bcIn list of dictionaries syntax:
+        # - type: nodes, bbx (key)
+        # - for nodes: value(s) is a list of nodes
+        # - for bbx: value(s) are a declaration of boundary box (6 coordinates in 3D)
+        # - value(s): values of the bc (many values could be given in the case of nodes (1 per nodes))
+        # ex: {'type':{'nodes':[12,3,14]},'values':[xx,yy,zz]} or
+        # ex: {'type':{'bbx':[[xm,XM],[ym,YM],[zm,ZM]]},'values':[uu]}
+        # notice that 'bbx' could be also declared using 'bbx':[xm,XM,ym,YM,zm,ZM]
+        """
+        if 'bbx' in bcIn['type'].keys():
+            nodesList=utils.getNodesBBX(self.fluidNodes,bcIn['type']['bbx'])
+            nbNodes=len(nodesList)
+        if 'nodes' in bcIn['type'].keys():
+            # number of given nodes
+            nbNodes=len(bcIn['type']['nodes'])
+            nodesList=bcIn['type']['nodes']
+        #deal with value(s) of bc: two cases
+        if len(bcIn['values'])==1:
+            valuesOut=np.zeros([nbNodes])
+            valuesOut[:]=np.array(bcIn['values'])
+        elif len(bcIn['values'])==nbNodes:
+            valuesOut=np.array(bcIn['values'])
+        else:
+            logging.info('ERROR: bad statement of boundary condition')
+        
+        return nodesList,valuesOut
 
-    def buildOperator(self):
-        """
-        method used to build operators
-        """
-        pass
 
-    def buildGOperator(self):
+
+
+
+    def buildSecondMember(self):
         """
-        method used to build gradients operators
+        ##############################################################
+        # Build second member
+        ##############################################################
+        """    
+        logging.info("Build second member")
+        tic = time.process_time()
+        #fluid vector second member
+        UF = np.zeros(2*self.fluidNbDof, dtype=float)
+        # apply bc in displacement using data
+        for bc in caseProp['bcdisp']:
+            #get number of dofs and values to apply
+            numDofs,valbc = self.getFormatBC(bc)
+            UF[numDofs]=valbc
+        #UF[9-1] = 3.1250E-05
+
+        self.SolvedDof = np.hstack([self.SolvedDofF, self.SolvedDofA+self.fluidNbDof])
+        logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+
+        if self.paraData['gradCompute']:
+            logging.info("Build gradient of second member")
+            tic = time.process_time()
+            for it in self.paraData['nameGrad']:
+                self.dUF.append(None) 
+            logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+
+    def buildFluidOperators(self):
         """
-        pass
+        ##############################################################
+        # Compute Standard Fluid Matrices
+        ##############################################################
+        """
+        logging.info("Build fluid operators")
+        tic = time.process_time()   
+        # build matrices using vector description
+        IIf, JJf, Vffk, Vffm = silex_lib_xfem_acou_tet4.globalacousticmatrices(
+            self.fluidElems, 
+            self.fluidNodes, 
+            self.mechaProp['celerity'], 
+            self.mechaProp['rho'])
+
+        self.KFF = scipy.sparse.csc_matrix(
+            (Vffk, (IIf, JJf)),
+            shape=(self.fluidNbDof, self.fluidNbDof))
+        self.MFF = scipy.sparse.csc_matrix(
+            (Vffm, (IIf, JJf)), 
+            shape=(self.fluidNbDof, self.fluidNbDof))
+
+        self.SolvedDofF = list(range(self.fluidNbDof))
+        logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+        #
+        if self.paraData['gradCompute']:
+            logging.info("Build fluid gradient operators")
+            tic = time.process_time()
+            for it in self.paraData['nameGrad']:
+                self.dKFF.append(None) 
+                self.dMFF.append(None) 
+            logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+    
+    def buildEnrichedOperators(self):
+        """
+        ##################################################################
+        # Compute Heaviside enrichment
+        ##################################################################
+        """
+        logging.info("Build enriched operators")
+        tic = time.process_time()  
+        # build matrices using vector description
+        IIaa, JJaa, IIaf, JJaf, Vaak, Vaam, Vafk, Vafm = silex_lib_xfem_acou_tet4.globalxfemacousticmatrices(
+            self.fluidElems, 
+            self.fluidNodes, 
+            self.LevelSet, 
+            self.paraData['celerity'], 
+            self.paraData['rho'])
+
+        self.KAA = scipy.sparse.csc_matrix(
+            (Vaak, (IIaa, JJaa)), 
+            shape=(self.fluidNbDof, self.fluidNbDof))
+        self.MAA = scipy.sparse.csc_matrix(
+            (Vaam, (IIaa, JJaa)), 
+            shape=(self.fluidNbDof, self.fluidNbDof))
+        self.KAF = scipy.sparse.csc_matrix(
+            (Vafk, (IIaf, JJaf)), 
+            shape=(self.fluidNbDof, self.fluidNbDof))
+        self.MAF = scipy.sparse.csc_matrix(
+            (Vafm, (IIaf, JJaf)), 
+            shape=(self.fluidNbDof, self.fluidNbDof))
+
+        self.SolvedDofA = self.EnrichedNodes-1
+        logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+
+        if self.paraData['gradCompute']:
+            logging.info("Build gradient of enriched operators")
+            tic = time.process_time()
+            for it in range(0,self.paraData['nbGrad']):
+                #compute gradients matrices for each selected parameter
+                dKAAx,dKFAx,dMAAx,dMFAx=self.buildGoperator(self,it)
+                #store
+                self.dKAA.append(dKAAx) 
+                self.dKFA.append(dKAAx) 
+                self.dMAA.append(dKAAx) 
+                self.dMFA.append(dKAAx) 
+            logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+
+    def buildOperators(self):
+        """
+        #################################################################
+        # Construct the whole system
+        #################################################################
+        """
+        logging.info("Assembly of operators of the whole problem")
+        tic = time.process_time()  
+        #
+        fd=self.paraData['fluid_damping']
+        #
+        self.K = scipy.sparse.construct.bmat([
+            [fd*self.KFF[self.SolvedDofF, :][:, self.SolvedDofF], fd*self.KAF[self.SolvedDofF, :][:, self.SolvedDofA]],
+            [fd*self.KAF[self.SolvedDofA, :][:, self.SolvedDofF], fd*self.KAA[self.SolvedDofA, :][:, self.SolvedDofA]]])
+        #
+        self.M = scipy.sparse.construct.bmat([
+            [self.MFF[self.SolvedDofF, :][:, self.SolvedDofF], self.MAF[self.SolvedDofF, :][:, self.SolvedDofA]],
+            [self.MAF[self.SolvedDofA, :][:, self.SolvedDofF], self.MAA[self.SolvedDofA, :][:, self.SolvedDofA]]])
+        #
+        logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+        logging.info("Assembly of gradient operators of the whole problem")
+        tic = time.process_time()  
+        
+        #
+        logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+
+        if self.paraData['gradCompute']:
+            logging.info("Build gradient of the assembled operators")
+            tic = time.process_time()            
+            for it in range(0,self.paraData['nbGrad']):
+                # build full stiffness and mass gradient matrices
+                dK.append(scipy.sparse.construct.bmat([
+                    [fd*self.dKFF[it][self.SolvedDofF, :][:, self.SolvedDofF], fd*self.dKFA[it][self.SolvedDofF, :][:, self.SolvedDofA]],
+                    [fd*self.dKFA[it][self.SolvedDofA, :][:, self.SolvedDofF], fd*self.dKAA[it][self.SolvedDofA, :][:, self.SolvedDofA]]]))
+                dM.append(scipy.sparse.construct.bmat([
+                    [self.dMFF[it][self.SolvedDofF, :][:, self.SolvedDofF], self.dMFA[it][self.SolvedDofF, :][:, self.SolvedDofA]],
+                    [self.dMFA[it][self.SolvedDofA, :][:, self.SolvedDofF], self.dMAA[it][self.SolvedDofA, :][:, self.SolvedDofA]]]))
+            #
+            logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+
+    def buildGOperator(self,itG):
+        """
+        ##################################################################
+        # Build gradients operators one by one
+        ##################################################################
+        """
+        logging.info(' Build gradient matrices for parameter '+self.paraData['NameGrad'][itG])
+        #compute gradients matrices and indices
+        # print(silex_lib_xfem_acou_tet4.globalacousticgradientmatrices.__doc__)
+        IIf, JJf, Vfak_gradient, Vfam_gradient =\
+            silex_lib_xfem_acou_tet4.globalacousticgradientmatrices(self.fluidNodes,
+                                                                    self.fluidElems,
+                                                                    self.LevelSet,
+                                                                    self.paraData['celerity'],
+                                                                    self.paraData['rho'],
+                                                                    self.LevelSetGradient[itG])
+        #build sparse matrices
+        dKAA_dtheta=None
+        dMAA_dtheta=None
+        dKFA_dtheta = scipy.sparse.csc_matrix(
+            (Vfak_gradient, (IIf, JJf)),
+            shape=(self.fluidNbDof, self.fluidNbDof))
+        dMFA_dtheta = scipy.sparse.csc_matrix(
+            (Vfam_gradient, (IIf, JJf)),
+             hape=(self.fluidNbDof, self.fluidNbDof))
+        #
+        return dKAA_dtheta,dKFA_dtheta,dMAA_dtheta,dMFA_dtheta
+        
+        
 
     def preProcessMaster(self):
         """
-        method to initialize data for master node (declare ie rank=0)
+        ##################################################################
+        # method to initialize data for master node (declare ie rank=0) and 
+        # operators that will remain constant for all parameters
+        ##################################################################
         """
         logging.info("##################################################")
         logging.info("##################################################")
         logging.info("##################################################")
         logging.info("##    Start SILEX vibro-acoustics computation   ##")
-        if len(self.gradValRequire) > 0:
-            logging.info("##          (with gradients computations)        ##")
-            self.showDataParaVal
+        if self.paraData['gradCompute']:
+            logging.info("##          (with gradients computations)        ##")            
         logging.info("##################################################")
         logging.info("##################################################")
         self.createDatabase()
         # load fluid mesh
         self.loadMesh(type='nodesFluid',dispFlag=True,filename=self.)
+        #build fluid operators
+        self.buildFluidOperators() 
+        #generate the list of frequencies
+        self.Frequencies=computeFreqPerProc(\
+            self.caseProp['nbSteps'],
+            self.nbProcMPI,
+            self.caseProp['freqMin'],
+            self.caseProp['freqMax'])
 
     
     def initRun(self):
         """
-        method used to intialize the data before a run associated to a set of parameters
+        ##################################################################
+        # method used to intialize the data before a run associated to a set of parameters
+        ##################################################################
         """
+        # initialize data
+        self.initDataSolve()
+        #
+        self.showDataParaVal()
+        #build operators
 
 
 
 
 
 
-def solveLinear(self, A, B):
-    """
-    Method used to solve linear problem(choose automatically the available approach)
-    """
-    if self.mumpsOk:
-        sol = mumps.spsolve(A, B, comm=self.commMumps)
-    else:
-        sol = scipy.sparse.linalg.spsolve(A, B)
-    return sol
+
+    def solveLinear(self, A, B):
+        """
+        Method used to solve linear problem (choose automatically the available approach)
+        """
+        if self.mumpsOk:
+            sol = mumps.spsolve(A, B, comm=self.commMumps)
+        else:
+            sol = scipy.sparse.linalg.spsolve(A, B)
+        return sol
 
     
 
-    def solvePbOneStep(self,):
-    """
-    Method used to solve the problem for one frequency step
-    """
+    def solvePbOneStep(self,itF,itMax,freq):
+        """
+        Method used to solve the problem for one frequency step
+        """
+        tic = time.process_time()
+        #
+        logging.info("Rank: %i - Solve whole problem for frequency %g (step %i/%i)"%(self.rank,freq,itF,itMax))
+        # compute natural frequency
+        omega=2*np.pi*freq
+        #Build full second member
+        F=(omega**2)*numpy.array(UF[self.solvedDof],dtype=self.loadType)
+        #solve the whole problem on pressure
+        ticB = time.process_time()
+        sol = self.solveLinear(self.K-(omega**2)*self.M,F)
+        logging.info("Rank: %i - Solve linear problem - Done - %g s"%(self.rank,time.process_time()-ticB))
+        ##### build the fields
+        ticB = time.process_time()
+        # uncorrected pressure field        
+        self.pressureUncorrect[itF][self.solvedDofF] = sol[list(range(len(self.solveDofF)))].copy()
+        # enrichment field
+        self.pressureUncorrect[itF][self.solvedDofA] = sol[list(range(len(self.solveDofF),len(self.solveDofF)+len(self.solveDofA)))].copy()
+        # corrected pressure field
+        self.pressure[itF] = self.pressureUncorrect.copy()
+        self.pressure[itF][self.solvedDofA] += self.pressureEnrichment[itF][self.solvedDofA]*np.sign(self.LevelSet[self.solvedDofA])
+        logging.info("Rank: %i - Fields computation - Done - %g s"%(self.rank,time.process_time()-ticB))
+        #compute and store FRF on the control volume
+        if caseProp['computeFRF']:
+            self.FRF[itF] = silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(
+                self.fluidElemsControl,
+                self.fluidNodes,
+                self.pressureUncorrect[itF],
+                self.pressureEnrichment[itF],
+                self.LevelSet,
+                self.LevelSet*0-1.0)
+        #Compute gradients of fields
+        if paraData['gradCompute']:
+            #initialize variables
+            
+            # along the parameters
+            logging.info("Rank: %i - Start gradients computation"%(self.rank))
+            ticC = time.process_time()
+            for itG in range(0,self.paraData['nbGrad']):
+                ticB = time.process_time()
+                #prepare data
+                tmp = -(self.dK[itG]-(omega**2)*self.dM[itG])*sol
+                Dsol = self.solveLinear(self.K-(omega**2)*self.M,tmp)
+                logging.info("Rank: %i - Prepare and solve linear problem for grad (var: %s/num: %i) - Done - %g s"%(self.rank,self.paraData['nameGrad'],itG,time.process_time()-ticB))
+                # gradient of uncorrected pressure field
+                self.pressureUncorrectGrad[itG][self.solvedDofF,itF] = Dsol[list(range(len(self.solveDofF)))].copy()
+                # gradient of enrichment field
+                self.pressureUncorrectGrad[itG][self.solvedDofA,itF] = Dsol[list(range(len(self.solveDofF),len(self.solveDofF)+len(self.solveDofA)))].copy()
+                # gradient of corrected pressure field
+                self.pressureGrad[itG][:,itF] = self.pressureUncorrectGrad.copy()
+                self.pressureGrad[itG][self.solvedDofA,itG] += self.pressureEnrichmentGrad[itF][self.solvedDofA,itG]*np.sign(self.LevelSet[self.solvedDofA].T)
+                #compute and store gradient of FRF on the control volume
+                if caseProp['computeFRF']:
+                    self.FRFgrad[itG][itF] = silex_lib_xfem_acou_tet4.computegradientcomplexquadratiquepressure(
+                        self.fluidElemsControl,
+                        self.fluidNodes,
+                        self.pressureUncorrect[itF],
+                        self.pressureUncorrectGrad[itG][:,itF],
+                        self.LevelSet)
+            logging.info("Rank: %i - Gradients computation - Done - %g s"%(self.rank,time.process_time()-ticC))
 
-    def solvePbSteps(self):
-        """
-        Method used to solve the problem along a range of steps
-        """
-        
-    
+        logging.info("Rank: %i - Done - Solve whole problem for frequency %g (step %i/%i) in %g s"%(self.rank,freq,itF,itMax,time.process_time()-tic))
 
-    def solvePb(self,):
+    def initDataSolve(self):
         """
-        Method used to solve the whole problem
+        ##################################################################
+        # Initialize storage for computation
+        ##################################################################
         """
-        self.preProcessMaster()
+        self.pressureUncorrect = [np.zeros((self.fluidNbDof),dtype=self.loadType)] * self.caseProp['nbSteps']
+        self.pressureEnrichment = [np.zeros((self.fluidNbDof),dtype=self.loadType)] * self.caseProp['nbSteps']
+        self.pressure = [None] * self.caseProp['nbSteps']
+        #
+        self.pressureUncorrectGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType)] * self.paraData['nbGrad']
+        self.pressureEnrichmentGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType)] * self.paraData['nbGrad']
+        self.pressureGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType)] * self.paraData['nbGrad']
+
+    def formatPara(valIn=None,nospace=False):
+        """
+        ##################################################################
+        # Format parameters as string
+        ##################################################################
+        """
+        #if necessary load the current values of parameters
+        if valIn is None:
+            valU = self.paraData['val']
+        dispPara = ''
+        for itV in range(0,len(valU)):
+            dispPara = dispPara+paraData['name'][itV]+' '+valU[itV].astype(str)+' 'a
+        if nospace:
+            dispPara = dispPara.replace(' ','_')
+        return dispPara
+
+    def solvePb(self,paraVal=None):
+        """
+        ##################################################################
+        # Method used to solve the whole problem
+        ##################################################################
+        """
+        ticS = time.process_time()
+        if self.nbRuns == 0:
+            self.preProcessMaster()
+        if paraVal is not None:
+            paraVal=np.array(paraVal)
+        #
+        # along the parameters
+        itP = 0
+        for valU in paraVal:
+            itP += 1
+            ticV = time.process_time()
+            logging.info("##################################################")
+            txtPara=self.formatPara(valIn=valU)
+            logging.info('Start compute for parameters (nb %i): %s'%(itP,txtPara))
+            #initialization for run
+            self.initRun()
+
+            # along the frequencies
+            for itF,Freq in np.ndenumerate(self.Frequencies):
+                # solve the problem
+                self.solvePbOneStep(itF,len(self.Frequencies),Freq)
+            #export results (FRF, pressure fields and gradients)
+            if self.flags['saveResults']:
+                self.exportFieldsOnePara(paraName=True)
+                self.saveFRF(paraName=True)
+            #
+            logging.info("Time to solve the whole problem for set of parameters nb %i - %g s"%(itP,time.process_time()-ticS))
+        #
+        logging.info("Time to solve the whole problem along sets of parameters - %g s"%(time.process_time()-ticS))
         
+    def exportFieldsOnePara(self,typeSave=None,paraName=False):
+        """
+        ##################################################################
+        # Export fields in mesh file for one set of parameters
+        ##################################################################
+        """
+        if typeSave is None:
+            typeSave = self.data['exportMesh']
+            logging.info('Use default format:  %s'%(typeSave))
+        #
+        # information concerning parameters
+        txtPara=self.formatPara(valIn=valU)
+        #create database to export
+        dataW = list()
+        dataW.append({'field':np.real(self.pressure),'type':'nodal','name':'Pressure (real) ('+txtPara+')'})
+        dataW.append({'field':np.imag(self.pressure),'type':'nodal','name':'Pressure (imaginary) ('+txtPara+')'})
+        dataW.append({'field':np.absolute(self.pressure),'type':'nodal','name':'Pressure (norm) ('+txtPara+')'})
+        #
+        if self.paraData['gradCompute']:
+            for itG,txtP in np.ndenumerate(self.paraData['nameGrad']):
+                dataW.append({'field':np.real(self.pressureGrad),'type':'nodal','name':'Grad. '+txtP+' Pressure (real) ('+txtPara+')'})
+                dataW.append({'field':np.imag(self.pressureGrad),'type':'nodal','name':'Grad. '+txtP+' Pressure (imaginary) ('+txtPara+')'})
+                dataW.append({'field':np.absolute(self.pressureGrad),'type':'nodal','name':'Grad. '+txtP+' Pressure (norm) ('+txtPara+')'})
+        #write the file
+        self.exportResults(typeExport="manuFields",method=typeSave,dictFields = dataW,fileName = self.resultFile(detPara=paraName,addTxt='results_fluid',ext=None)):
+        #write the discontinuties of the field in file
+        #new database to export
+        dataW = list()
+        #
+        dataW.append({'fielduncorrected':np.real(self.pressureUncorrect),
+        'fieldenrichment':np.real(self.pressureEnrichment),
+        'levelsetmod':None,
+        'filename':self.resultFile(detPara=paraName,addTxt='plus_real',ext=None),
+        'name':'Pressure + (real) ('+txtPara+')'})
+        dataW.append({'fielduncorrected':np.imag(self.pressureUncorrect),
+        'fieldenrichment':np.imag(self.pressureEnrichment),
+        'levelsetmod':None,
+        'filename':self.resultFile(detPara=paraName,addTxt='plus_imag',ext=None),
+        'name':'Pressure + (imaginary) ('+txtPara+')'})
+        dataW.append({'fielduncorrected':np.absolute(self.pressureUncorrect),
+        'fieldenrichment':np.absolute(self.pressureEnrichment),
+        'levelsetmod':None,
+        'filename':self.resultFile(detPara=paraName,addTxt='plus_abs',ext=None),
+        'name':'Pressure + (norm) ('+txtPara+')'})
+        #
+        dataW.append({'fielduncorrected':np.real(self.pressureUncorrect),
+        'fieldenrichment':-np.real(self.pressureEnrichment),
+        'levelsetmod':-self.LevelSet,
+        'filename':self.resultFile(detPara=paraName,addTxt='moins_real',ext=None),
+        'name':'Pressure - (real) ('+txtPara+')'})
+        dataW.append({'fielduncorrected':np.imag(self.pressureUncorrect),
+        'fieldenrichment':-np.imag(self.pressureEnrichment),
+        'levelsetmod':-self.LevelSet,
+        'filename':self.resultFile(detPara=paraName,addTxt='moins_imag',ext=None),
+        'name':'Pressure - (imaginary) ('+txtPara+')'})
+        dataW.append({'fielduncorrected':np.absolute(self.pressureUncorrect),
+        'fieldenrichment':-np.absolute(self.pressureEnrichment),
+        'levelsetmod':-self.LevelSet,
+        'filename':self.resultFile(detPara=paraName,addTxt='moins_abs',ext=None),
+        'name':'Pressure - (norm) ('+txtPara+')'})
+        #
+        if self.paraData['gradCompute']:
+            for itG,txtP in np.ndenumerate(self.paraData['nameGrad']):
+                dataW.append({'fielduncorrected':np.real(self.pressureUncorrectGrad[itG]),
+                'fieldenrichment':np.real(self.pressureEnrichmentGrad[itG]),
+                'levelsetmod':self.LevelSet,
+                'filename':self.resultFile(detPara=paraName,addTxt='_grad_'+str(itG)+'plus_real',ext=None),
+                'name':'Pressure + (real) ('+txtPara+')'})
+                dataW.append({'fielduncorrected':np.imag(self.pressureUncorrectGrad[itG]),
+                'fieldenrichment':np.imag(self.pressureEnrichmentGrad[itG]),
+                'levelsetmod':self.LevelSet,
+                'filename':self.resultFile(detPara=paraName,addTxt='_grad_'+str(itG)+'plus_imag',ext=None),
+                'name':'Pressure + (imaginary) ('+txtPara+')'})
+                #
+                dataW.append({'fielduncorrected':np.real(self.pressureUncorrectGrad[itG]),
+                'fieldenrichment':-np.real(self.pressureEnrichmentGrad[itG]),
+                'levelsetmod':-self.LevelSet,
+                'filename':self.resultFile(detPara=paraName,addTxt='_grad_'+str(itG)+'moins_real',ext=None),
+                'name':'Pressure - (real) ('+txtPara+')'})
+                dataW.append({'fielduncorrected':np.imag(self.pressureUncorrectGrad[itG]),
+                'fieldenrichment':-np.imag(self.pressureEnrichmentGrad[itG]),
+                'levelsetmod':-self.LevelSet,
+                'filename':self.resultFile(detPara=paraName,addTxt='_grad_'+str(itG)+'moins_imag',ext=None),
+                'name':'Pressure - (imaginary) ('+txtPara+')'})
+                #compute gradients of absolute values
+                gradAbsUncorrect = (np.real(self.pressureUncorrectGrad[itG])*np.real(self.pressureUncorrect)+\
+                    np.imag(self.pressureUncorrectGrad[itG])*np.real(self.pressureUncorrect))/np.absolute(self.pressureUncorrect)
+                # deal with zeros values in enrichment field
+                gradAbsEnrichment = np.zeros([self.fluidNodes, self.caseProp['nbSteps']])
+                gradAbsEnrichment[self.SolvedDofA, :] = (np.real(self.pressureEnrichmentGrad[self.SolvedDofA, :])*np.real(self.pressureEnrichment[self.SolvedDofA, :])+\
+                    np.imag(self.pressureEnrichmentGrad[self.SolvedDofA, :])*np.imag(self.pressureEnrichment[self.SolvedDofA, :]))/np.absolute(self.pressureEnrichment[self.SolvedDofA, :])
+                # remove inf value
+                IX = scipy.absolute(self.pressureUncorrect) == 0.
+                gradAbsUncorrect[IX] = 1
+                gradAbsEnrichment[IX] = 1
+                #
+                dataW.append({'fielduncorrected':self.gradAbsUncorrect[itG],
+                'fieldenrichment':self.gradAbsEnrichment[itG],
+                'levelsetmod':self.LevelSet,
+                'filename':self.resultFile(detPara=paraName,addTxt='_grad_'+str(itG)+'plus_abs',ext=None),
+                'name':'Pressure + (norm) ('+txtPara+')'})
+                dataW.append({'fielduncorrected':self.gradAbsUncorrect[itG],
+                'fieldenrichment':-self.gradAbsEnrichment[itG],
+                'levelsetmod':-self.LevelSet,
+                'filename':self.resultFile(detPara=paraName,addTxt='_grad_'+str(itG)+'moins_abs',ext=None),
+                'name':'Pressure - (norm) ('+txtPara+')'})
+
+        #write the file
+        self.exportResults(typeExport="manuFields",method='pos',dictFields = dataW,fileName = self.resultFile(detPara=paraName,addTxt='results_fluid',ext=None)):
+
+
+    def saveFRF(self,typeSave=None,paraName=False,allData=False):
+        """
+        ##################################################################
+        # Function used to solve FRF in mat file or pickle
+        ##################################################################
+        """
+        if typeSave is None:
+            typesave = self.data['exportData']
+            logging.info('Use default format:  %s'%(typeSave))
+        if self.caseProp['computeFRF']:            
+            #build dictionary
+            dictOut=self.paraData
+            dictOut['frequencies']=self.Frequencies
+            dictOut['FRF']=self.FRF
+            dictOut['FRFgrad']=self.FRFgrad
+            if typeSave is 'mat':
+                #export data
+                scipy.io.savemat(self.resultFile(detPara=paraName,addTxt='results',ext='mat'),mdict=dictOut)
+                logging.info('Export data in %s'%(self.resultFile(detPara=paraName,addTxt='results',ext='mat')))
+            if typeSave is 'pickle':
+                #export data
+                f = open(self.resultFile(detPara=paraName,addTxt='results',ext='pck'),mdict=dictOut))
+                pickle.dump(dictOut,f)
+                f.close()
+                logging.info('Export data in %s'%(self.resultFile(detPara=paraName,addTxt='results',ext='pck')))
+        else:
+            logging.info('Nothing to export (FRF not computed)')
+
+    def plotFRF(self)
+        """
+        ##################################################################
+        # Function used to plot FRF
+        ##################################################################
+        """
+        pass
     
     def saveResults(self,):
         """
         Method used to save results
         """
+        pass
 
     
 
@@ -610,31 +1237,8 @@ def solveLinear(self, A, B):
 ###########################################################
 ###########################################################
 
-###########################################################
-# To run it in parallel for several frequencies:
-# export OPENBLAS_NUM_THREADS=1
-# mpirun -np 20 python3 Main_xfem_CB_fluid_porous_7-v4.py
-#
-# To run it in sequentiel frequency per frequency with openblas in parrallel:
-# export OPENBLAS_NUM_THREADS=10
-# python3 Main_toto.py
-#
-###########################################################
-
-##############################################################
-##############################################################
-#              S T A R T   M A I N   P R O B L E M
-##############################################################
-##############################################################
 
 
-# , caseDefine):
-def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal, gradValRequire=[], saveResults=1):
-
-    
-
-    
-    listFreqPerProc = computeFreqPerProc(nbStep, nbProc, freqMin, freqMax)
 
     ##############################################################
     # Material, Boundary conditions
@@ -658,62 +1262,9 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal, gradValRequire=
     ##################################################################
     # Get enriched nodes and elements
     ##################################################################
-    tic = time.clock()
+   
 
     
-    ##############################################################
-    # Compute Standard Fluid Matrices
-    ##############################################################
-
-    tic = time.clock()
-
-    IIf, JJf, Vffk, Vffm = silex_lib_xfem_acou_tet4.globalacousticmatrices(
-        fluid_elements1, fluid_nodes, celerity, rho)
-
-    KFF = scipy.sparse.csc_matrix(
-        (Vffk, (IIf, JJf)), shape=(fluid_ndof, fluid_ndof))
-    MFF = scipy.sparse.csc_matrix(
-        (Vffm, (IIf, JJf)), shape=(fluid_ndof, fluid_ndof))
-
-    SolvedDofF = list(range(fluid_ndof))
-
-    ##################################################################
-    # Compute Heaviside enrichment
-    ##################################################################
-    tic = time.clock()
-
-    Enrichednodes = scipy.unique(fluid_elements1[EnrichedElements])
-
-    IIaa, JJaa, IIaf, JJaf, Vaak, Vaam, Vafk, Vafm = silex_lib_xfem_acou_tet4.globalxfemacousticmatrices(
-        fluid_elements1, fluid_nodes, LevelSet, celerity, rho)
-
-    KAA = scipy.sparse.csc_matrix(
-        (Vaak, (IIaa, JJaa)), shape=(fluid_ndof, fluid_ndof))
-    MAA = scipy.sparse.csc_matrix(
-        (Vaam, (IIaa, JJaa)), shape=(fluid_ndof, fluid_ndof))
-    KAF = scipy.sparse.csc_matrix(
-        (Vafk, (IIaf, JJaf)), shape=(fluid_ndof, fluid_ndof))
-    MAF = scipy.sparse.csc_matrix(
-        (Vafm, (IIaf, JJaf)), shape=(fluid_ndof, fluid_ndof))
-
-    SolvedDofA = Enrichednodes-1
-
-    toc = time.clock()
-    if rank == 0:
-        print("time to compute Heaviside enrichment:", toc-tic)
-
-    ##################################################################
-    # Construct the whole system
-    #################################################################
-
-    K = scipy.sparse.construct.bmat([
-        [fluid_damping*KFF[SolvedDofF, :][:, SolvedDofF],
-            fluid_damping*KAF[SolvedDofF, :][:, SolvedDofA]],
-        [fluid_damping*KAF[SolvedDofA, :][:, SolvedDofF], fluid_damping*KAA[SolvedDofA, :][:, SolvedDofA]]])
-
-    M = scipy.sparse.construct.bmat([
-        [MFF[SolvedDofF, :][:, SolvedDofF], MAF[SolvedDofF, :][:, SolvedDofA]],
-        [MAF[SolvedDofA, :][:, SolvedDofF], MAA[SolvedDofA, :][:, SolvedDofA]]])
 
     ##################################################################
     # Build Second member
@@ -721,34 +1272,14 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal, gradValRequire=
 
     # To impose the load on the fluid:
     # fluid node number 1
-    UF = np.zeros(2*fluid_ndof, dtype=float)
-    UF[9-1] = 3.1250E-05
-
-    SolvedDof = scipy.hstack([SolvedDofF, SolvedDofA+fluid_ndof])
+    
 
     #################################################################
     # Compute gradients with respect to parameters
     ##################################################################
     # print(silex_lib_xfem_acou_tet4.globalacousticgradientmatrices.__doc__)
-    dK = list()
-    dM = list()
-    for itP in range(0, nbPara):
-        print(' Build gradient matrices for parameter '+NamePara[itP])
-        #
-        IIf, JJf, Vfak_gradient, Vfam_gradient =\
-            silex_lib_xfem_acou_tet4.globalacousticgradientmatrices(fluid_nodes,
-                                                                    fluid_elements1, LevelSet, celerity, rho, LevelSetGradient[itP])
-        dKFA_dtheta = scipy.sparse.csc_matrix(
-            (Vfak_gradient, (IIf, JJf)), shape=(fluid_ndof, fluid_ndof))
-        dMFA_dtheta = scipy.sparse.csc_matrix(
-            (Vfam_gradient, (IIf, JJf)), shape=(fluid_ndof, fluid_ndof))
-        # build full stiffness and mass gradient matrices
-        dK.append(scipy.sparse.construct.bmat([
-            [None, fluid_damping*dKFA_dtheta[SolvedDofF, :][:, SolvedDofA]],
-            [fluid_damping*dKFA_dtheta[SolvedDofA, :][:, SolvedDofF], None]]))
-        dM.append(scipy.sparse.construct.bmat([
-            [None, dMFA_dtheta[SolvedDofF, :][:, SolvedDofA]],
-            [dMFA_dtheta[SolvedDofA, :][:, SolvedDofF], None]]))
+
+        
 
     ##############################################################
     # FRF computation
@@ -973,64 +1504,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal, gradValRequire=
                 print(">>> Done!!")
                 itG = itG+1
 
-        #####################
-        #####################
-        # save the FRF problem
-        Allfrequencies = np.zeros(nbStep)
-        Allfrf = np.zeros(nbStep)
-        Allfrfgradient = np.zeros([nbStep, nbPara])
-        k = 0
-        if rank == 0:
-            for i in range(nproc):
-                if i == 0:
-                    data = frfsave
-                    # print(data)
-                else:
-                    # print(i)
-                    data = comm.recv(source=i, tag=11)
-                    # data=data_buffer
-
-                for j in range(len(data[0])):
-                    Allfrequencies[k] = data[0][j]
-                    Allfrf[k] = data[1][j]
-                    for itP in range(0, nbPara):
-                        Allfrfgradient[k, itP] = data[2][itP][j]
-                    k = k+1
-            #####################
-            #####################zip(*sorted(zip(Allfrequencies, Allfrf,Allfrfgradient)))
-            IXsort = scipy.argsort(Allfrequencies)
-            AllfreqSorted = np.zeros(nbStep)
-            AllfrfSorted = np.zeros(nbStep)
-            AllfrfgradientSorted = np.zeros([nbStep, nbPara])
-            for itS in range(0, nbStep):
-                AllfreqSorted[itS] = Allfrequencies[IXsort[itS]]
-                AllfrfSorted[itS] = Allfrf[IXsort[itS]]
-                for itP in range(0, nbPara):
-                    AllfrfgradientSorted[itS,
-                                         itP] = Allfrfgradient[IXsort[itS], itP]
-
-            #Allfrequencies, Allfrf,Allfrfgradient = zip(*sorted(zip(Allfrequencies, Allfrf,Allfrfgradient)))
-            Allfrfsave = list()
-            Allfrfsave.append(AllfreqSorted)
-            Allfrfsave.append(AllfrfSorted)
-            for itP in range(0, nbPara):
-                Allfrfsave.append(AllfrfgradientSorted[:, itP])
-
-            f = open(results_file+'_results.frf', 'wb')
-            pickle.dump(Allfrfsave, f)
-            # print(Allfrfsave)
-            f.close()
-            #####################
-            #####################
-            # save on mat file
-            scipy.io.savemat(results_file+'_results.mat',
-                             mdict={'AllFRF': Allfrfsave})
-            scipy.io.savemat(results_file_ini+'results.mat',
-                             mdict={'AllFRF': Allfrfsave})
-            #####################
-            #####################
-            return Allfrfsave
-
+        
 
 #####################
 #####################
