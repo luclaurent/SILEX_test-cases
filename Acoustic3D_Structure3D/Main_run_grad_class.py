@@ -277,7 +277,7 @@ class SILEX:
         if ext is not None:
             fileName += ext
 
-        return fileName
+        return os.path.join(data['resultFolder'],fileName)
 
     
     def loadMPI(self):
