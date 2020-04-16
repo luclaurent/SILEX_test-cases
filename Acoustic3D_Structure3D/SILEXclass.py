@@ -32,18 +32,17 @@ import scipy.sparse
 import scipy.sparse.linalg
 import scipy.io
 #
-import utils
-import structTools
-#
 import pickle
 #
 import sys
 import os
 from shutil import copyfile
-sys.path.append('../../librairies')
+#
+import utils
+import structTools
 
-import silex_lib_xfem_acou_tet4
-import silex_lib_gmsh
+from SILEX import silex_lib_xfem_acou_tet4
+from SILEX import silex_lib_gmsh
 
 
 
@@ -94,10 +93,11 @@ class SILEX:
     #
     caseProp['bcdisp'] = list()       # boundary conditions on displacement
     caseProp['bcpress'] = list()      # boundary conditions on pressure
-
     #
-    caseProp['typeLS']=''             # type of Level-Set (FromMesh or manual)
-    caseProp['typeGEOstruct']=''      # type of geometry of the structure (in the case of manual declaration (see structTools.py))
+    caseProp['name'] = ''             # name of the case
+    #
+    caseProp['typeLS'] = ''           # type of Level-Set (FromMesh or manual)
+    caseProp['typeGEOstruct'] = ''    # type of geometry of the structure (in the case of manual declaration (see structTools.py))
 
     #parameters values
     paraData = dict()
@@ -119,7 +119,7 @@ class SILEX:
     #data properties
     data = dict()
     data['geomFolder'] = 'geom'             # folder of geometry and meshes
-    data['resultFolder'] = 'results'        # folder of results
+    data['resultsFolder'] = 'results'        # folder of results
     #
     data['originalFluidMeshFile'] = ''      # provided fluid mesh file
     data['originalStructGeoFile'] = ''      # provided structure geometry file (parametric, gmsh format...)
@@ -131,7 +131,9 @@ class SILEX:
     data['exportData'] = 'mat'              # default format to export data (as FRF, mat or pickle)
     data['exportMesh'] = 'msh'              # default format to export fields and mesh (msh, msh+, vtk)
     #
-    fullPathOriginalMeshFile = ''
+    fullPathCurrentResultsFolder = ''
+    fullPathFluidMeshFile = ''
+    fullPathStructMeshFile = ''
     fullPathMeshFile = ''
     fullPathResultsFile = ''
     #
@@ -234,19 +236,22 @@ class SILEX:
         ##################################################################
         # Constructor of the class
         ##################################################################
-        """
-        print("##################################################")
-        print("##################################################")
-        print("##################################################")
-        print("##    Load SILEX object   ##")
+        """        
         #initialize logging
-        loggingFile=datetime.now().strftime("%Y-%m-%d_%H-%M-%S")+"_SILEX.log"
-        logging.basicConfig(stream=sys.stdout,
-            filename=loggingFile,
+        loggingFile = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")+"_SILEX.log"
+        logging.basicConfig(
+            handlers=[
+                logging.FileHandler(loggingFile),
+                logging.StreamHandler(sys.stdout)
+                ],
             format='%(asctime)s %(levelname)-8s %(message)s',
             level=logging.INFO,
             datefmt='%Y-%m-%d %H:%M:%S')
             #
+        print("##################################################")
+        print("##################################################")
+        print("##################################################")
+        print("##    Load SILEX object   ##")
         
     def loadType(self):
         """
@@ -260,26 +265,55 @@ class SILEX:
             typeRun=np.dtype('complex')
         return typeRun
 
-    def resultFile(self,detPara=False,addTxt=None,ext=None):
+    def getResultFile(self,detPara=False,addTxt=None,ext=None):
         """
         ##################################################################
         # Build result file depending on status
         ##################################################################
         """
         fileName = data['prefixResults']
+        #add parameters value in filename
         if detPara:
             fileName += '_'+self.formatPara(nospace=True)+'_'
+        #add given text in filename
         if addTxt is not None:
             if addTxt[0] != '_':
                 fileName += '_' + addTxt
             else:
                 fileName += addTxt
+        #add extension in filename
         if ext is not None:
             fileName += ext
+        #store the full path of the file
+        if self.fullPathCurrentResultsFolder == '':
+            folder = data['resultsFolder']
+        else:
+            folder = self.fullPathCurrentResultsFolder
+        self.fullPathResultsFile = os.path.join(folder,fileName)
+        #
+        return self.fullPathResultsFile
 
-        return os.path.join(data['resultFolder'],fileName)
+    def getDatafile(self,typeFile=None):
+        """
+        ##################################################################
+        # Get data file (mesh, geometry,...)
+        ##################################################################
+        """
+        filepath = None
+        if typeFile is not None:
+            if typeFile == 'fluidmesh':
+                filepath = os.path.join(self.data['geomFolder'],self.data['originalFluidMeshFile'])
+                self.fullPathFluidMeshFile = filepath
+            if typeFile == 'structmesh':
+                filepath = os.path.join(self.data['geomFolder'],self.data['originalStructMeshFile'])
+                self.fullPathStructMeshFile = filepath
+            if typeFile == 'geo':
+                filepath = os.path.join(self.data['geomFolder'],self.data['originalStructGeoFile'])
+        else:
+            logging.info('no type of file given')
+        #
+        return filepath
 
-    
     def loadMPI(self):
         """
         ##################################################################
@@ -295,15 +329,15 @@ class SILEX:
         ##################################################################
         """
         statusData=True
-        for key in ['geomFolder','resultFolder','originalMeshFile','currentMeshFile','resultsFile']:
+        for key in ['geomFolder','resultsFolder','originalFluidMeshFile','currentStructMeshFile','resultsFile']:
             if not self.data[key]:
                 statusData=False
         if dispFlag:
-            logging.info("Geometry folder %i"%utils.prepareStr(self.data['geomFolder']))
-            logging.info("Results folder %i"%utils.prepareStr(self.data['resultFolder']))
-            logging.info("Original mesh file %i"%utils.prepareStr(self.data['originalMeshFile']))
-            logging.info("Current mesh file %i"%utils.prepareStr(self.data['currentMeshFile']))
-            logging.info("Result mesh file %i"%utils.prepareStr(self.data['resultsFile']))        
+            logging.info("Geometry folder: %s"%utils.prepareStr(self.data['geomFolder']))
+            logging.info("Results folder: %s"%utils.prepareStr(self.data['resultsFolder']))
+            logging.info("Original mesh file: %s"%utils.prepareStr(self.data['originalStructMeshFile']))
+            logging.info("Current mesh file: %s"%utils.prepareStr(self.data['currentStructMeshFile']))
+            logging.info("Result mesh file: %s"%utils.prepareStr(self.data['resultsFile']))        
         return statusData
 
 
@@ -313,14 +347,24 @@ class SILEX:
         # method used to create full path of folders
         ##################################################################
         """
+        #create a specific folder for the results
+        baseFolderName = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        if self.caseProp['name']:
+            baseFolderName += '_'+self.caseProp['name']
+        else:
+            baseFolderName += '_'+data['originalFluidMeshFile']
+        #initialize folders and files name (could change along the runs)
         createOk=False
         if self.dataOk(True):
-            self.fullPathOriginalMeshFile=self.data['geomFolder']+'/'+self.data['originalMeshFile']
-            self.fullPathMeshFile=self.data['geomFolder']+'/'+self.data['currentMeshFile']
-            self.fullPathResultsFile=self.data['resultFolder']+'/'+self.data['resultsFile']
+            self.fullPathCurrentResultsFolder = os.path.join(self.data['resultsFolder'],baseFolderName)
+            self.fullPathOriginalMeshFile = os.path.join(self.data['geomFolder'],self.data['originalMeshFile'])
+            self.fullPathMeshFile = os.path.join(self.data['geomFolder'],self.data['currentMeshFile'])
+            self.fullPathResultsFile = os.path.join(self.data['resultsFolder'],self.data['resultsFile'])
             #create directory if not exists
-            if not os.path.exists(self.resultsFolder):
-                os.makedirs(self.resultsFolder)
+            if not os.path.exists(self.fullPathCurrentResultsFolder):
+                os.makedirs(self.fullPathCurrentResultsFolder)
+            #display
+            logging.info('Folder for results: %s'%(self.fullPathCurrentResultsFolder))
         else:
             logging.info('Missing data to create database')
 
@@ -369,7 +413,7 @@ class SILEX:
                 logging.info("Read structure nodes")
                 tic = time.process_time()
                 self.structNodes = silex_lib_gmsh.ReadGmshNodes(filename, 3)
-                self.structNbNodes=self.structNodes.shape[0]    
+                self.structNbNodes = self.structNodes.shape[0]    
                 logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
                 #
                 if dispFlag:
@@ -378,8 +422,8 @@ class SILEX:
                 logging.info("Read structure elements")
                 tic = time.process_time()
                 self.structElems, self.idStructNodes = silex_lib_gmsh.ReadGmshElements(filename, 2, 2)
-                self.structNbElems=self.structElems.shape[0]
-                self.structNbNodes=self.idStructNodes.shape[0]
+                self.structNbElems = self.structElems.shape[0]
+                self.structNbNodes = self.idStructNodes.shape[0]
                 logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
                 #
                 if dispFlag:
@@ -452,11 +496,27 @@ class SILEX:
             logging.info('>>> Load Mechanical properties <<<')
             for key in dataIn:
                 self.mechaProp[key]=dataIn[key]
-                logging.info('%i: %g'%(key,dataIn[key]))
+                logging.info('>> %s: %s'%(key,dataIn[key]))
         else:
             logging.info('>>> Available Mechanical properties and current values <<<')
             for key in self.mechaProp:
-                logging.info('%i: %g'%(key,mechaProp[key]))
+                logging.info('>>>> %s: %s'%(key,mechaProp[key]))
+
+    def loadData(self,dataIn=None):
+        """
+        ##################################################################
+        # load data for the case (mesh file, directories,...)
+        ##################################################################
+        """
+        if dataIn is not None:
+            logging.info('>>> Load data  <<<')
+            for key in dataIn:
+                self.mechaProp[key]=dataIn[key]
+                logging.info('>> %s: %s'%(key,dataIn[key]))
+        else:
+            logging.info('>>> Available data and current values <<<')
+            for key in self.mechaProp:
+                logging.info('>>>> %s: %s'%(key,mechaProp[key]))
     
     def loadComputeProperties(self,dataIn=None):
         """
@@ -467,12 +527,12 @@ class SILEX:
         if dataIn is not None:
             logging.info('>>> Load properties for computation <<<')
             for key in dataIn:
-                self.mechaProp[key]=dataIn[key]
-                logging.info('%i: %g'%(key,dataIn[key]))
+                self.caseProp[key]=dataIn[key]
+                logging.info('>> %s: %s'%(key,dataIn[key]))
         else:
             logging.info('>>> Available properties for computation and current values <<<')
-            for key in self.mechaProp:
-                logging.info('%i: %g'%(key,mechaProp[key]))
+            for key in self.caseProp:
+                logging.info('>>>> %s: %s'%(key,mechaProp[key]))
 
     def loadBC(self,dataIn=None):
         """
@@ -481,13 +541,14 @@ class SILEX:
         ##################################################################
         """
         if dataIn is not None:
+            logging.info('>>> Load boundary condition(s) <<<')
             for key in dataIn:
                 if key=='disp':
                     self.caseProp['bcdisp'].append(dataIn[key])
-                    logging.info('Add new bc: type displacement (nb %i)'%len(self.caseProp['bcdisp']))
+                    logging.info('>> Add new bc: type displacement (nb %i)'%len(self.caseProp['bcdisp']))
                 if key=='press':
                     self.caseProp['bcpress'].append(dataIn[key])
-                    logging.info('Add new bc: type pressure (nb %i)'%len(self.caseProp['bcpress']))
+                    logging.info('>> Add new bc: type pressure (nb %i)'%len(self.caseProp['bcpress']))
     
     def createResultsName(self,txt=None):
         """
@@ -537,7 +598,7 @@ class SILEX:
                             #display
                             logging.info("Prepare to write field: %s"%fields['name'])
                             #fill list to export
-                            dictExport.append(dictOneField)
+                            dataExport.append(dataOneField)
                         #export data
                         if fileName is not None:
                             fileName = fileName+".msh"
@@ -559,32 +620,44 @@ class SILEX:
                         #prepare data to export
                         for fields in dictFields:
                             fileName = fields['filename']+'.pos'
-                            logging.info("Prepare to write field: %s in "%(fields['name'],fileName))
-                            silex_lib_xfem_acou_tet4.makexfemposfilefreq(self.fluidNodes,
-                             self.fluidElems, 
-                             fields['levelsetmod'],
-                             fields['fielduncorrected'],
-                             fields['fieldenrichment'],
-                             fileName,
-                             fields['name'])
-                             logging.info('File size: %s'%utils.file_size(fileName))
+                            logging.info("Prepare to write field: %s in %s"%(fields['name'],fileName))
+                            silex_lib_xfem_acou_tet4.makexfemposfilefreq(
+                                self.fluidNodes,
+                                self.fluidElems, 
+                                fields['levelsetmod'],
+                                fields['fielduncorrected'],
+                                fields['fieldenrichment'],
+                                fileName,
+                                fields['name'])
+                            logging.info('File size: %s'%utils.file_size(fileName))
 
+            fileOk = None
+            if fileName is not None:
+                fileOk = fileName
 
-            if typeExport is "cavitymesh":
+            if typeExport is "cavitymesh":                
+                if not fileOk:
+                    fileOk = self.getResultFile(detPara=True,addTxt='_air_cavity_Mesh',ext=None)
                 #export mesh of the cavity
                 if method is "msh":
-                    silex_lib_gmsh.WriteResults(results_file+'_air_cavity_Mesh1', fluid_nodes, fluid_elements1, 4)
+                    silex_lib_gmsh.WriteResults(fileOk, self.fluidNodes, self.fluidElems, 4)
                     
             if typeExport is "controlvolmesh":
+                if not fileOk:
+                    fileOk = self.getResultFile(detPara=True,addTxt='_air_controlled_volume_Mesh',ext=None)
                 #export mesh of the control volume
-                if method is "msh":
-                    silex_lib_gmsh.WriteResults(results_file+'_air_controlled_volume_Mesh5', fluid_nodes, fluid_elements5, 4)
+                if method is "msh":                    
+                    silex_lib_gmsh.WriteResults(fileOk, self.fluidNodes, self.fluidElemsControl, 4)
                     
             if typeExport is "struct":
+                if not fileOk:
+                    fileOk = self.getResultFile(detPara=True,addTxt='_struc_surface',ext=None)
                 #export 2D mesh of the structur
-                if method is "msh":
-                    silex_lib_gmsh.WriteResults2(results_file+'_struc_surface', struc_nodes, struc_elements, 2)
+                if method is "msh":                    
+                    silex_lib_gmsh.WriteResults2(fileOk, self.structNodes, self.structElems, 2)
             if typeExport is "levelset":
+                if not fileOk:
+                    fileOk = self.getResultFile(detPara=True,addTxt='_LS_data',ext=None)
                 #export level-set and gradients of the level-set
                 if method is "msh":
                     #create list of data
@@ -593,13 +666,15 @@ class SILEX:
                     dataW.append([[self.LevelSet], 'nodal', 1, 'Level set'])
                     #gradients of level-set
                     itP = 0
-                    for iN in NamePara:
+                    for iN in self.paraData['nameGrad']:
                         dataW.append([[self.LevelSetGradient[itP]],'nodal', 1, 'Level Set Grad '+iN])
                         itP = itP+1
-                    silex_lib_gmsh.WriteResults2(results_file+'_LS_data', fluidNodes, fluidElems, 4, dataW)
+                    silex_lib_gmsh.WriteResults2(fileOk, self.fluidNodes, self.fluidElems, 4, dataW)
             if typeExport is "enrichedPart":
+                if not fileOk:
+                    fileOk = self.getResultFile(detPara=True,addTxt='_LS_enriched_elements',ext=None)
                 if method is "msh":
-                    silex_lib_gmsh.WriteResults2(results_file+'_LS_enriched_elements',self.fluidNodes, self.fluidElemts[self.EnrichedElems], 4)
+                    silex_lib_gmsh.WriteResults2(fileOk,self.fluidNodes, self.fluidElems[self.EnrichedElems], 4)
             logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
 
     def buildLevelSet(self,typeLS=None,typeGEO=None,paraVal=None):
@@ -613,12 +688,17 @@ class SILEX:
         if typeLS is "FromMesh":
             # the level-set is built using the structure mesh
             if paraVal is not None:
-                structTools.buildStructMesh(orig_mesh_file+'_struc',mesh_file+'_struc',paraVal)
+                fileOrigGeo = self.getDatafile(typeFile='geo')
+                fileDestMesh = self.getResultFile(detPara=True,addTxt=True,ext=None)
+                structTools.buildStructMesh(fileOrigGeo,fileDestMesh,paraVal)
             # load mesh from file
-            self.loadMesh(type="nodesStruct",)
-            self.loadMesh(type="elemsStruct",)
+            self.loadMesh(type='nodesStruct')
+            self.loadMesh(type='elemsStruct')
             # build Level-Set from a structure mesh
-            LevelSet,LevelSetU = silex_lib_xfem_acou_tet4.computelevelset(fluidNodes,structNodes,structElems)
+            LevelSet,LevelSetU = silex_lib_xfem_acou_tet4.computelevelset(
+                self.fluidNodes,
+                self.structNodes,
+                self.structElems)
             #compute gradient of Level-Set
             if paraData['gradCompute']:
                 pass
@@ -682,17 +762,17 @@ class SILEX:
         # - for nodes: value(s) is a list of nodes
         # - for bbx: value(s) are a declaration of boundary box (6 coordinates in 3D)
         # - value(s): values of the bc (many values could be given in the case of nodes (1 per nodes))
-        # ex: {'type':{'nodes':[12,3,14]},'values':[xx,yy,zz]} or
-        # ex: {'type':{'bbx':[[xm,XM],[ym,YM],[zm,ZM]]},'values':[uu]}
+        # ex: {'type':'nodes','data':[12,3,14],'values':[xx,yy,zz]} or
+        # ex: {'type':'bbx','data':[[xm,XM],[ym,YM],[zm,ZM]],'values':[uu]}
         # notice that 'bbx' could be also declared using 'bbx':[xm,XM,ym,YM,zm,ZM]
         """
-        if 'bbx' in bcIn['type'].keys():
-            nodesList=utils.getNodesBBX(self.fluidNodes,bcIn['type']['bbx'])
+        if 'bbx' in bcIn['type']:
+            nodesList=utils.getNodesBBX(self.fluidNodes,bcIn['data'])
             nbNodes=len(nodesList)
-        if 'nodes' in bcIn['type'].keys():
+        if 'nodes' in bcIn['type']:
             # number of given nodes
-            nbNodes=len(bcIn['type']['nodes'])
-            nodesList=bcIn['type']['nodes']
+            nbNodes=len(bcIn['data'])
+            nodesList=bcIn['type']
         #deal with value(s) of bc: two cases
         if len(bcIn['values'])==1:
             valuesOut=np.zeros([nbNodes])
@@ -900,7 +980,7 @@ class SILEX:
         logging.info("##################################################")
         self.createDatabase()
         # load fluid mesh
-        self.loadMesh(type='nodesFluid',dispFlag=True,filename=self.)
+        self.loadMesh(type='nodesFluid',dispFlag=True,filename=self.getDatafile('fluidmesh'))
         #build fluid operators
         self.buildFluidOperators() 
         #generate the list of frequencies
@@ -935,6 +1015,7 @@ class SILEX:
         """
         if self.mumpsOk:
             sol = mumps.spsolve(A, B, comm=self.commMumps)
+            # mumps is globally defined
         else:
             sol = scipy.sparse.linalg.spsolve(A, B)
         return sol
@@ -951,7 +1032,7 @@ class SILEX:
         # compute natural frequency
         omega=2*np.pi*freq
         #Build full second member
-        F=(omega**2)*numpy.array(UF[self.solvedDof],dtype=self.loadType)
+        F=(omega**2)*np.array(UF[self.solvedDof],dtype=self.loadType)
         #solve the whole problem on pressure
         ticB = time.process_time()
         sol = self.solveLinear(self.K-(omega**2)*self.M,F)
@@ -1017,11 +1098,11 @@ class SILEX:
         self.pressureEnrichment = [np.zeros((self.fluidNbDof),dtype=self.loadType)] * self.caseProp['nbSteps']
         self.pressure = [None] * self.caseProp['nbSteps']
         #
-        self.pressureUncorrectGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType)] * self.paraData['nbGrad']
+        self.pressureUncorrectGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType)] * self.paraData['nbGrad']
         self.pressureEnrichmentGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType)] * self.paraData['nbGrad']
-        self.pressureGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType)] * self.paraData['nbGrad']
+        self.pressureGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType)] * self.paraData['nbGrad']
 
-    def formatPara(valIn=None,nospace=False):
+    def formatPara(self,valIn=None,nospace=False):
         """
         ##################################################################
         # Format parameters as string
@@ -1032,7 +1113,7 @@ class SILEX:
             valU = self.paraData['val']
         dispPara = ''
         for itV in range(0,len(valU)):
-            dispPara = dispPara+paraData['name'][itV]+' '+valU[itV].astype(str)+' 'a
+            dispPara = dispPara+paraData['name'][itV]+' '+valU[itV].astype(str)+' '
         if nospace:
             dispPara = dispPara.replace(' ','_')
         return dispPara
@@ -1050,13 +1131,12 @@ class SILEX:
             paraVal=np.array(paraVal)
         #
         # along the parameters
-        itP = 0
         for valU in paraVal:
-            itP += 1
+            self.nbRuns += 1
             ticV = time.process_time()
             logging.info("##################################################")
             txtPara=self.formatPara(valIn=valU)
-            logging.info('Start compute for parameters (nb %i): %s'%(itP,txtPara))
+            logging.info('Start compute for parameters (nb %i): %s'%(self.nbRuns,txtPara))
             #initialization for run
             self.initRun()
 
@@ -1069,7 +1149,7 @@ class SILEX:
                 self.exportFieldsOnePara(paraName=True)
                 self.saveFRF(paraName=True)
             #
-            logging.info("Time to solve the whole problem for set of parameters nb %i - %g s"%(itP,time.process_time()-ticS))
+            logging.info("Time to solve the whole problem for set of parameters nb %i - %g s"%(self.nbRuns,time.process_time()-ticS))
         #
         logging.info("Time to solve the whole problem along sets of parameters - %g s"%(time.process_time()-ticS))
         
@@ -1084,7 +1164,7 @@ class SILEX:
             logging.info('Use default format:  %s'%(typeSave))
         #
         # information concerning parameters
-        txtPara=self.formatPara(valIn=valU)
+        txtPara=self.formatPara()
         #create database to export
         dataW = list()
         dataW.append({'field':np.real(self.pressure),'type':'nodal','name':'Pressure (real) ('+txtPara+')'})
@@ -1097,7 +1177,7 @@ class SILEX:
                 dataW.append({'field':np.imag(self.pressureGrad),'type':'nodal','name':'Grad. '+txtP+' Pressure (imaginary) ('+txtPara+')'})
                 dataW.append({'field':np.absolute(self.pressureGrad),'type':'nodal','name':'Grad. '+txtP+' Pressure (norm) ('+txtPara+')'})
         #write the file
-        self.exportResults(typeExport="manuFields",method=typeSave,dictFields = dataW,fileName = self.resultFile(detPara=paraName,addTxt='results_fluid',ext=None)):
+        self.exportResults(typeExport="manuFields",method=typeSave,dictFields = dataW,fileName = self.resultFile(detPara=paraName,addTxt='results_fluid',ext=None))
         #write the discontinuties of the field in file
         #new database to export
         dataW = list()
@@ -1181,7 +1261,7 @@ class SILEX:
                 'name':'Pressure - (norm) ('+txtPara+')'})
 
         #write the file
-        self.exportResults(typeExport="manuFields",method='pos',dictFields = dataW,fileName = self.resultFile(detPara=paraName,addTxt='results_fluid',ext=None)):
+        self.exportResults(typeExport='manuFields',method='pos',dictFields = dataW,fileName = self.resultFile(detPara=paraName,addTxt='results_fluid',ext=None))
 
 
     def saveFRF(self,typeSave=None,paraName=False,allData=False):
@@ -1205,14 +1285,14 @@ class SILEX:
                 logging.info('Export data in %s'%(self.resultFile(detPara=paraName,addTxt='results',ext='mat')))
             if typeSave is 'pickle':
                 #export data
-                f = open(self.resultFile(detPara=paraName,addTxt='results',ext='pck'),mdict=dictOut))
+                f = open(self.resultFile(detPara=paraName,addTxt='results',ext='pck'))
                 pickle.dump(dictOut,f)
                 f.close()
                 logging.info('Export data in %s'%(self.resultFile(detPara=paraName,addTxt='results',ext='pck')))
         else:
             logging.info('Nothing to export (FRF not computed)')
 
-    def plotFRF(self)
+    def plotFRF(self):
         """
         ##################################################################
         # Function used to plot FRF
@@ -1506,91 +1586,91 @@ class SILEX:
 
         
 
-#####################
-#####################
-#####################
-#####################
-#####################
-#####################
-#####################
-#####################
-# function for dealing with options
-def manageOpt(argv, dV):
-    # load default values
-    freqMin = dV.freqMin
-    freqMax = dV.freqMax
-    nbStep = dV.nbStep
-    paraVal = scipy.array(dV.paraVal)
-    gradCompute = scipy.array(dV.gradCompute)
-    #caseDefine = dV.caseDef
+# #####################
+# #####################
+# #####################
+# #####################
+# #####################
+# #####################
+# #####################
+# #####################
+# # function for dealing with options
+# def manageOpt(argv, dV):
+#     # load default values
+#     freqMin = dV.freqMin
+#     freqMax = dV.freqMax
+#     nbStep = dV.nbStep
+#     paraVal = scipy.array(dV.paraVal)
+#     gradCompute = scipy.array(dV.gradCompute)
+#     #caseDefine = dV.caseDef
 
-    # load info from MPI
-    nbProc, rank, comm = mpiInfo()
-    # load options
-    opts, args = getopt.getopt(argv, "p:s:F:f:hp:c:g:")
-    for opt, arg in opts:
-        if opt == "-s":
-            nbStep = int(arg)
-        elif opt == "-F":
-            freqMax = float(arg)
-        elif opt == "-f":
-            freqMin = float(arg)
-        elif opt == "-p":
-            tmp = scipy.array(arg.split(','), dtype=scipy.float32)
-            paraVal = tmp
-        elif opt == "-c":
-            caseDefine = str(arg)
-        elif opt == "-g":
-            tmp = scipy.array(arg.split(','), dtype=scipy.int32)
-            gradCompute = tmp
-        elif opt == "-h":
-            usage()
-            sys.exit()
-    # print chosen parameters
-    print("Number of processors: ", nbProc)
-    print("Parameters: ", paraVal)
-    print("Number of frequency steps: ", nbStep)
-    print("Maximum frequency: ", freqMax)
-    print("Minimum frequency: ", freqMin)
-    print("Components of grad: ", gradCompute)
-    #print ("Case: ",caseDefine)
-    it = 0
-    for itP in paraVal:
-        print('Parameter num '+str(it)+': '+str(itP))
-        it = it+1
-    print("\n\n")
+#     # load info from MPI
+#     nbProc, rank, comm = mpiInfo()
+#     # load options
+#     opts, args = getopt.getopt(argv, "p:s:F:f:hp:c:g:")
+#     for opt, arg in opts:
+#         if opt == "-s":
+#             nbStep = int(arg)
+#         elif opt == "-F":
+#             freqMax = float(arg)
+#         elif opt == "-f":
+#             freqMin = float(arg)
+#         elif opt == "-p":
+#             tmp = scipy.array(arg.split(','), dtype=scipy.float32)
+#             paraVal = tmp
+#         elif opt == "-c":
+#             caseDefine = str(arg)
+#         elif opt == "-g":
+#             tmp = scipy.array(arg.split(','), dtype=scipy.int32)
+#             gradCompute = tmp
+#         elif opt == "-h":
+#             usage()
+#             sys.exit()
+#     # print chosen parameters
+#     print("Number of processors: ", nbProc)
+#     print("Parameters: ", paraVal)
+#     print("Number of frequency steps: ", nbStep)
+#     print("Maximum frequency: ", freqMax)
+#     print("Minimum frequency: ", freqMin)
+#     print("Components of grad: ", gradCompute)
+#     #print ("Case: ",caseDefine)
+#     it = 0
+#     for itP in paraVal:
+#         print('Parameter num '+str(it)+': '+str(itP))
+#         it = it+1
+#     print("\n\n")
 
-    # run computation
-    RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm,
-          paraVal, gradCompute, 1)  # ,caseDefine)
+#     # run computation
+#     RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm,
+#           paraVal, gradCompute, 1)  # ,caseDefine)
 
-# usage definition
-
-
-def usage():
-    dV = defaultV
-    print("Usage: ", sys.argv[0], "-psFfhg [+arg]")
-    print("\t -p : input parameters (default value ", dV.nbProc, ")")
-    print("\t -s : number of steps in the frequency range (default value ", dV.nbStep, ")")
-    print("\t -F : maximum frequency (default value ", dV.freqMax, ")")
-    print("\t -f : minimum frequency (default value ", dV.freqMin, ")")
-    print("\t -g : Components of grad (default value ", dV.gradCompute, ")")
-
-# default values
+# # usage definition
 
 
-class defaultV:
-    freqMin = 10.0
-    freqMax = 150.0
-    nbStep = 1000
-    paraVal = [2., 2., 1., 1.]
-    gradCompute = [0, 1, 2, 3]
-    nbProc = 1
-    #caseDef= 'thick_u'
+# def usage():
+#     dV = defaultV
+#     print("Usage: ", sys.argv[0], "-psFfhg [+arg]")
+#     print("\t -p : input parameters (default value ", dV.nbProc, ")")
+#     print("\t -s : number of steps in the frequency range (default value ", dV.nbStep, ")")
+#     print("\t -F : maximum frequency (default value ", dV.freqMax, ")")
+#     print("\t -f : minimum frequency (default value ", dV.freqMin, ")")
+#     print("\t -g : Components of grad (default value ", dV.gradCompute, ")")
+
+# # default values
 
 
-# Run autonomous
-if __name__ == '__main__':
-    # run with options
-    dV = defaultV
-    manageOpt(sys.argv[1:], dV)
+# class defaultV:
+#     freqMin = 10.0
+#     freqMax = 150.0
+#     nbStep = 1000
+#     paraVal = [2., 2., 1., 1.]
+#     gradCompute = [0, 1, 2, 3]
+#     nbProc = 1
+#     #caseDef= 'thick_u'
+
+
+# # Run autonomous
+# if __name__ == '__main__':
+#     # run with options
+#     dV = defaultV
+#     manageOpt(sys.argv[1:], dV)
