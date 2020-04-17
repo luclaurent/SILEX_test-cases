@@ -96,7 +96,7 @@ def getNodesBBX(coordinateIn,bbxIn):
         zmin=bbxF[4]
         zmax=bbxF[5]
     # find nodes
-    epsM=np.finfo(float).eps
+    epsM=10*np.finfo(float).eps
     if flag3d:
         nodeslist=np.where(
             (coordinateIn[:,0]>xmin-epsM)*
@@ -112,7 +112,7 @@ def getNodesBBX(coordinateIn,bbxIn):
             (coordinateIn[:,1]>ymin-epsM)*
             (coordinateIn[:,1]<ymax+epsM))
     #
-    return nodeslist
+    return np.array(nodeslist).flatten()
 
 ###########################################################
 ###########################################################

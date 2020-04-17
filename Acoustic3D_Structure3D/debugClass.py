@@ -56,7 +56,7 @@ PB.loadData(dataBD)
 
 #load boundary conditions
 bcdef= dict()
-bcdef['disp']={'type':'bbx','data':[0,0,0,0,0,0],'values':3.1250E-05}
+bcdef['disp']={'type':'bbx','data':[0,0,5,5,0,0],'values':3.1250E-05}
 PB.loadBC(bcdef)
 
 #solve the problem

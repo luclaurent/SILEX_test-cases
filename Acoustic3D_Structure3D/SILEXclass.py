@@ -834,14 +834,15 @@ class SILEX:
             nbNodes=len(bcIn['data'])
             nodesList=bcIn['type']
         #deal with value(s) of bc: two cases
-        if len(bcIn['values'])==1:
+        val=np.array(bcIn['values'])
+        if len(val.shape)==0 or len(val.shape)==1:
             valuesOut=np.zeros([nbNodes])
-            valuesOut[:]=np.array(bcIn['values'])
+            valuesOut[:]=val
         elif len(bcIn['values'])==nbNodes:
-            valuesOut=np.array(bcIn['values'])
+            valuesOut=val
         else:
-            logging.info('ERROR: bad statement of boundary condition')
-        
+            logging.error('Bad statement of boundary condition')
+        #
         return nodesList,valuesOut
 
 
@@ -857,12 +858,12 @@ class SILEX:
         logging.info("Build second member")
         tic = time.process_time()
         #fluid vector second member
-        UF = np.zeros(2*self.fluidNbDofs, dtype=float)
+        self.UF = np.zeros(2*self.fluidNbDofs, dtype=float)
         # apply bc in displacement using data
-        for bc in caseProp['bcdisp']:
+        for bc in self.caseProp['bcdisp']:
             #get number of dofs and values to apply
             numDofs,valbc = self.getFormatBC(bc)
-            UF[numDofs]=valbc
+            self.UF[numDofs]=valbc
         #UF[9-1] = 3.1250E-05
 
         self.SolvedDof = np.hstack([self.SolvedDofF, self.SolvedDofA+self.fluidNbDofs])
@@ -1061,6 +1062,8 @@ class SILEX:
         self.loadMesh(typeData='elemsFluid',dispFlag=True,filename=self.getDatafile('fluidmesh'))
         #build fluid operators
         self.buildFluidOperators() 
+        #build second member
+        self.buildSecondMember()
         #generate the list of frequencies
         self.Frequencies=computeFreqPerProc(\
             self.caseProp['nbSteps'],
@@ -1106,11 +1109,11 @@ class SILEX:
         """
         tic = time.process_time()
         #
-        logging.info("Rank: %i - Solve whole problem for frequency %g (step %i/%i)"%(self.rank,freq,itF,itMax))
+        logging.info("Rank: %i - Solve whole problem for frequency %g (step %i/%i)"%(self.rankMPI,freq,itF,itMax))
         # compute natural frequency
         omega=2*np.pi*freq
         #Build full second member
-        F=(omega**2)*np.array(UF[self.solvedDof],dtype=self.loadType())
+        F=(omega**2)*np.array(self.UF[self.solvedDof],dtype=self.loadType())
         #solve the whole problem on pressure
         ticB = time.process_time()
         sol = self.solveLinear(self.K-(omega**2)*self.M,F)
@@ -1252,7 +1255,7 @@ class SILEX:
             self.initRun()
 
             # along the frequencies
-            for itF,Freq in np.ndenumerate(self.Frequencies):
+            for (itF,Freq) in enumerate(self.Frequencies):
                 # solve the problem
                 self.solvePbOneStep(itF,len(self.Frequencies),Freq)
             #export results (FRF, pressure fields and gradients)
