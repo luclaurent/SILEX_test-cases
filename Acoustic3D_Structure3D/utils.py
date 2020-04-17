@@ -120,6 +120,23 @@ def getNodesBBX(coordinateIn,bbxIn):
 ###########################################################
 ###########################################################
 ###########################################################
+# check if file exists
+def checkFile(filename = None,typeCheck=None):
+    flagStatus = filename
+    if filename is not None:
+        flagStatus = os.path.exists(filename)
+        if typeCheck is 'file':
+            flagStatus = os.path.isfile(filename)
+        if typeCheck is 'dir':
+            flagStatus = os.path.isdir(filename)
+    return flagStatus
+
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
 # tools to obtain the size of a file
 def convert_bytes(num):
     """

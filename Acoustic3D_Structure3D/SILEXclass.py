@@ -102,11 +102,11 @@ class SILEX:
     #parameters values
     paraData = dict()
     paraData['oldval'] = list()       # previous values of parameters
-    paraData['val'] = []              # current values of parameters
-    paraData['name'] = []             # name of parameters
-    paraData['nb'] = []               # number of parameters
-    paraData['nameGrad'] = []         # name of parameters for gradients
-    paraData['nbGrad'] = []           # number of gradients
+    paraData['val'] = None            # current values of parameters
+    paraData['name'] = None           # name of parameters
+    paraData['nb'] = None             # number of parameters
+    paraData['nameGrad'] = None       # name of parameters for gradients
+    paraData['nbGrad'] = None         # number of gradients
     paraData['gradCompute'] = False   # compute gradients or not
 
     #material properties
@@ -140,9 +140,9 @@ class SILEX:
     saveResults = True
 
     #architecture properties
-    commMPI = []
-    rankMPI = []
-    nbProcMPI = []
+    commMPI = None
+    rankMPI = 0
+    nbProcMPI = 0
 
     #flags
     flags = dict()
@@ -156,30 +156,30 @@ class SILEX:
     LevelSetGradient = list()   # nodal values of the parametric gradients of LS (known at fluid nodes)
     #
     fluidNodes = []             # coordinates of the fluid nodes
-    fluidNbNodes = []           # number of fluid nodes
-    fluidNbDof = []             # number of dofs in fluid
+    fluidNbNodes = 0            # number of fluid nodes
+    fluidNbDofs = 0             # number of dofs in fluid
     #
     fluidElems = []             # array of elements for the fluid volume
     idFluidNodes = []           # 
-    fluidNbElems = []           # number of elements in fluid volume
-    fluidNbNodes = []           # number of nodes in fluid volume
+    fluidNbElems = 0            # number of elements in fluid volume
+    fluidNbNodes = 0            # number of nodes in fluid volume
     #
     fluidElemsControl = []      # array of elements for the control volume
     idFluidNodesControl = []    # 
-    fluidNbElemsControl = []    # number of elements in control volume
-    fluidNbNodesControl = []    # number of nodes in control volume
+    fluidNbElemsControl = 0     # number of elements in control volume
+    fluidNbNodesControl = 0     # number of nodes in control volume
     #
     structNodes = []            # coordinates of the structure nodes 
     structNbNodes = []          # number of structures nodes
     #
     structElems = []            # array of elements of structure
     idStructNodes = []          # 
-    structNbElems = []          # number of elements for structure
-    structNbNodes = []          # number of nodes of structure
+    structNbElems = 0           # number of elements for structure
+    structNbNodes = 0           # number of nodes of structure
     #enriched parts
     EnrichedNodes = []          # nodes associated to enriched elements
     EnrichedElems = []          # enriched elements
-    EnrichedNbElems = []        # number of enriched elements
+    EnrichedNbElems = 0        # number of enriched elements
     ##############
     #operators for fluid part
     KFF = []                    # fluid rigidity matrix
@@ -248,10 +248,10 @@ class SILEX:
             level=logging.INFO,
             datefmt='%Y-%m-%d %H:%M:%S')
             #
-        print("##################################################")
-        print("##################################################")
-        print("##################################################")
-        print("##    Load SILEX object   ##")
+        logging.info("##################################################")
+        logging.info("##################################################")
+        logging.info("##################################################")
+        logging.info("##               Load SILEX object              ##")
         
     def loadType(self):
         """
@@ -335,8 +335,9 @@ class SILEX:
         if dispFlag:
             logging.info("Geometry folder: %s"%utils.prepareStr(self.data['geomFolder']))
             logging.info("Results folder: %s"%utils.prepareStr(self.data['resultsFolder']))
-            logging.info("Original mesh file: %s"%utils.prepareStr(self.data['originalStructMeshFile']))
-            logging.info("Current mesh file: %s"%utils.prepareStr(self.data['currentStructMeshFile']))
+            logging.info("Original fluid mesh file: %s"%utils.prepareStr(self.data['originalFluidMeshFile']))
+            logging.info("Original structure mesh file: %s"%utils.prepareStr(self.data['originalStructMeshFile']))
+            logging.info("Current structure mesh file: %s"%utils.prepareStr(self.data['currentStructMeshFile']))
             logging.info("Result mesh file: %s"%utils.prepareStr(self.data['resultsFile']))        
         return statusData
 
@@ -369,69 +370,121 @@ class SILEX:
             logging.info('Missing data to create database')
 
 
-    def loadMesh(self,type=None,dispFlag=True,filename=None):
+    def loadMesh(self,typeData=None,dispFlag=True,filename=None):
         """
         ##################################################################
         # method used to load mesh files
         ##################################################################
         """
+        #dictionary of kind of data
+        textDict = dict()
+        textDict['nodesFluid'] = 'nodes of the fluid'
+        textDict['elemsControlFluid'] = 'elements of the control volume in the fluid'
+        textDict['elemsFluid'] = 'elements in the fluid'
+        textDict['nodesStruct'] = 'nodes of the structure'
+        textDict['elemsStruct'] = 'elements in the structure'
+        #
         if filename is None:
-            logging.error("Filename of the mesh is missing")
+            logging.error("Filename of the mesh is missing")            
 
         if filename is not None:
-            if type=='nodesFluid':
-                logging.info("Read fluid nodes")
-                tic = time.process_time()
-                self.fluidNodes = silex_lib_gmsh.ReadGmshNodes(filename, 3)
-                self.fluidNbNodes=self.fluidNodes.shape[0]
-                self.fluidNbDof=self.fluidNbNodes
-                logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
-                #
-                if dispFlag:
-                    logging.info("Fluid: %i nodes (%i dofs)"%(self.fluidNbNodes,self.fluidNbDof))
-            if type=='elemsControlFluid':
-                logging.info("Read fluid control volume elements")
-                tic = time.process_time()
-                self.fluidElemsControl, self.idFluidNodesControl = silex_lib_gmsh.ReadGmshElements(filename, 4, 5)  # air, ONLY controlled volume
-                self.fluidNbElemsControl=self.fluidElemsControl.shape[0]
-                self.fluidNbNodesControl=self.idFluidNodesControl.shape[0]
-                logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
-                #
-                if dispFlag:
-                    logging.info("Fluid control volume: %i elems, %i nodes"%(self.fluidNbElemControl,self.fluidNbNodesControl))
-            if type=='elemsFluid':
-                logging.info("Read fluid volume elements")
-                tic = time.process_time()
-                self.fluidElems, self.idFluidNodes = silex_lib_gmsh.ReadGmshElements(filename, 4, 1)  # air, cavity + controlled volume
-                self.fluidNbElems=self.fluidElems.shape[0]
-                self.fluidNbNodes=self.idFluidNodes.shape[0]
-                logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
-                #
-                if dispFlag:
-                    logging.info("Fluid whole volume: %i elems, %i nodes"%(self.fluidNbElem,self.fluidNbNodes))
-            if type=='nodesStruct':
-                logging.info("Read structure nodes")
-                tic = time.process_time()
-                self.structNodes = silex_lib_gmsh.ReadGmshNodes(filename, 3)
-                self.structNbNodes = self.structNodes.shape[0]    
-                logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
-                #
-                if dispFlag:
-                    logging.info("Structure: %i nodes"%(self.structNbNodes))
-            if type=='elemsStruct':
-                logging.info("Read structure elements")
-                tic = time.process_time()
-                self.structElems, self.idStructNodes = silex_lib_gmsh.ReadGmshElements(filename, 2, 2)
-                self.structNbElems = self.structElems.shape[0]
-                self.structNbNodes = self.idStructNodes.shape[0]
-                logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
-                #
-                if dispFlag:
-                    logging.info("Structure: %i elems, %i nodes"%(self.structNbElems,self.structNbNodes))
+            #check if file exist
+            if utils.checkFile(filename,'file'):
+                # deal with types
+                if typeData=='nodesFluid':
+                    logging.info('>> Read %s'%textDict[typeData])
+                    tic = time.process_time()
+                    self.fluidNodes = silex_lib_gmsh.ReadGmshNodes(filename, 3)
+                    self.fluidNbNodes=self.fluidNodes.shape[0]
+                    self.fluidNbDofs=self.fluidNbNodes
+                    logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+                    #
+                    if dispFlag:
+                        logging.info("Fluid: %i nodes (%i dofs)"%(self.fluidNbNodes,self.fluidNbDofs))
+                if typeData=='elemsControlFluid':
+                    logging.info('>> Read %s'%textDict[typeData])
+                    tic = time.process_time()
+                    self.fluidElemsControl, self.idFluidNodesControl = silex_lib_gmsh.ReadGmshElements(filename, 4, 5)  # air, ONLY controlled volume
+                    self.fluidNbElemsControl=self.fluidElemsControl.shape[0]
+                    self.fluidNbNodesControl=self.idFluidNodesControl.shape[0]
+                    logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+                    #
+                    if dispFlag:
+                        logging.info("Fluid control volume: %i elems, %i nodes"%(self.fluidNbElemControl,self.fluidNbNodesControl))
+                if typeData=='elemsFluid':
+                    logging.info('>> Read %s'%textDict[typeData])
+                    tic = time.process_time()
+                    self.fluidElems, self.idFluidNodes = silex_lib_gmsh.ReadGmshElements(filename, 4, 1)  # air, cavity + controlled volume
+                    self.fluidNbElems=self.fluidElems.shape[0]
+                    self.fluidNbNodes=self.idFluidNodes.shape[0]
+                    logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+                    #
+                    if dispFlag:
+                        logging.info("Fluid whole volume: %i elems, %i nodes"%(self.fluidNbElems,self.fluidNbNodes))
+                if typeData=='nodesStruct':
+                    logging.info('>>Read %s'%textDict[typeData])
+                    tic = time.process_time()
+                    self.structNodes = silex_lib_gmsh.ReadGmshNodes(filename, 3)
+                    self.structNbNodes = self.structNodes.shape[0]    
+                    logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+                    #
+                    if dispFlag:
+                        logging.info("Structure: %i nodes"%(self.structNbNodes))
+                if typeData=='elemsStruct':
+                    logging.info('>> Read %s'%textDict[typeData])
+                    tic = time.process_time()
+                    self.structElems, self.idStructNodes = silex_lib_gmsh.ReadGmshElements(filename, 2, 2)
+                    self.structNbElems = self.structElems.shape[0]
+                    self.structNbNodes = self.idStructNodes.shape[0]
+                    logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+                    #
+                    if dispFlag:
+                        logging.info("Structure: %i elems, %i nodes"%(self.structNbElems,self.structNbNodes))
+            else:
+                logging.error('Unable to read data: %s'%textDict[typeData])
+                logging.error('>>> Unable to read file \'%s\' (file does not exist)'%filename)
+                raise
+    def getNbGrad(self):
+        """
+        ##################################################################
+        # obtain the number of computed gradients
+        ##################################################################
+        """
+        nbG = self.paraData['nbGrad']
+        if not nbG:
+            nbG = len(self.paraData['name'])
+        return nbG
+
+    def getNameGrad(self):
+        """
+        ##################################################################
+        # obtain the name of computed gradients parameters names
+        ##################################################################
+        """
+        nbG = self.paraData['nameGrad']
+        if not nbG:
+            nbG = self.paraData['name']
+        return nbG
 
 
+    def loadPara(self,dataIn=None,force=False):
+        """
+        ##################################################################
+        # method used to load parameters data with dictionary
+        ##################################################################
+        """
+        if dataIn is not None:
+            logging.info('>>> Load parameters properties <<<')
+            for key in dataIn:
+                if dataIn[key] or force:
+                    self.paraData[key]=dataIn[key]
+                    logging.info('>> %s: %s'%(key,dataIn[key]))
+        else:
+            logging.info('>>> Available parameters properties and current values <<<')
+            for key in self.paraData:
+                logging.info('>>>> %s: %s'%(key,paraData[key]))
     
-    def loadPara(self,namePara=None,nameParaGrad=None,valPara=None,gradCompute=None,gradValCompute=None):
+    def loadParaU(self,namePara=None,nameParaGrad=None,valPara=None,gradCompute=None,nameGrad=None,forceGradName = False):
         """
         ##################################################################
         # method used to load parameters data (require for gradient(s) computation(s))
@@ -439,16 +492,17 @@ class SILEX:
         """
         if namePara is not None:
             self.paraData['name']=namePara
-            self.paraData['nb']=len(self.para)
+            self.paraData['nb']=len(namePara)
         if nameParaGrad is not None:
-            self.paraData['nameGrad']=namePara
-            self.paraData['nbGrad']=len(namePara)
+            if self.paraData['nameGrad'] is None or forceGradName:
+                self.paraData['nameGrad']=namePara
+                self.paraData['nbGrad']=len(namePara)
         if valPara is not None:
             self.paraData['val']=valPara
         if gradCompute is not None:
             self.paraData['gradCompute']=gradCompute
-        if gradValCompute is not None:
-            self.paraData['gradValCompute']=gradValCompute
+        if nameGrad is not None:
+            self.paraData['nameGrad']=nameGrad
         #
         
 
@@ -472,8 +526,8 @@ class SILEX:
         #prepare showing gradients
         pGrad=['No'] * len(pVal)
         if self.paraData['gradCompute']:            
-            if self.paraData['gradValCompute']:
-                for vv in self.paraData['gradValCompute']:
+            if self.getNameGrad():
+                for vv in self.getNameGrad():
                     pGrad[vv]='Yes'
             else:
                 pGrad=['Yes'] * len(pVal)
@@ -482,11 +536,11 @@ class SILEX:
         logging.info('>>> Parameters values <<<')
         itPara=1
         for (n,p,g) in zip(pName,pVal,pGrad):
-            logging.info('>>> #%i',itPara)
+            logging.info('>>> #%i| name: %s - value: %s - grad: %s',itPara,n,p,g)
             itPara=+1
 
     
-    def loadMechaProperties(self,dataIn=None):
+    def loadMechaProperties(self,dataIn=None,force=False):
         """
         ##################################################################
         # method used to load mechanical properties
@@ -495,14 +549,15 @@ class SILEX:
         if dataIn is not None:
             logging.info('>>> Load Mechanical properties <<<')
             for key in dataIn:
-                self.mechaProp[key]=dataIn[key]
-                logging.info('>> %s: %s'%(key,dataIn[key]))
+                if dataIn[key] or force:
+                    self.mechaProp[key]=dataIn[key]
+                    logging.info('>> %s: %s'%(key,dataIn[key]))
         else:
             logging.info('>>> Available Mechanical properties and current values <<<')
             for key in self.mechaProp:
                 logging.info('>>>> %s: %s'%(key,mechaProp[key]))
 
-    def loadData(self,dataIn=None):
+    def loadData(self,dataIn=None,force=False):
         """
         ##################################################################
         # load data for the case (mesh file, directories,...)
@@ -511,14 +566,15 @@ class SILEX:
         if dataIn is not None:
             logging.info('>>> Load data  <<<')
             for key in dataIn:
-                self.mechaProp[key]=dataIn[key]
-                logging.info('>> %s: %s'%(key,dataIn[key]))
+                if dataIn[key] or force:
+                    self.data[key]=dataIn[key]
+                    logging.info('>> %s: %s'%(key,dataIn[key]))
         else:
             logging.info('>>> Available data and current values <<<')
-            for key in self.mechaProp:
+            for key in self.data:
                 logging.info('>>>> %s: %s'%(key,mechaProp[key]))
     
-    def loadComputeProperties(self,dataIn=None):
+    def loadComputeProperties(self,dataIn=None,force=False):
         """
         ##################################################################
         # method used to load computation properties
@@ -527,12 +583,15 @@ class SILEX:
         if dataIn is not None:
             logging.info('>>> Load properties for computation <<<')
             for key in dataIn:
-                self.caseProp[key]=dataIn[key]
-                logging.info('>> %s: %s'%(key,dataIn[key]))
+                if dataIn[key] or force:
+                    self.caseProp[key]=dataIn[key]
+                    logging.info('>> %s: %s'%(key,dataIn[key]))
         else:
             logging.info('>>> Available properties for computation and current values <<<')
             for key in self.caseProp:
                 logging.info('>>>> %s: %s'%(key,mechaProp[key]))
+        # try to prepare the case
+        self.prepCase()
 
     def loadBC(self,dataIn=None):
         """
@@ -705,13 +764,14 @@ class SILEX:
 
         if typeLS is "manual":
             #the level-set is built using an explicit function 
-            LSobj=structTools.LSmanual(typeGEO,fluidNodes)
+            LSobj=structTools.LSmanual(typeGEO,self.fluidNodes)
             #export values
             self.LevelSet,self.LevelSetU=LSobj.exportLS()
-            self.loadPara(namePara=LSobj.exportParaName())
+            self.loadParaU(namePara=LSobj.exportParaName())
             #compute gradient of Level-Set
             if paraData['gradCompute']:
-                self.LevelSetGradient,self.paraData['nameGrad'] = LSobj.exportLSgrad(self.paraData['gradValCompute'])
+                self.LevelSetGradient,nameGrad= LSobj.exportLSgrad(self.getNameGrad())
+                self.loadParaU(nameParaGrad=nameGrad)
         #
         logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
     
@@ -797,7 +857,7 @@ class SILEX:
         logging.info("Build second member")
         tic = time.process_time()
         #fluid vector second member
-        UF = np.zeros(2*self.fluidNbDof, dtype=float)
+        UF = np.zeros(2*self.fluidNbDofs, dtype=float)
         # apply bc in displacement using data
         for bc in caseProp['bcdisp']:
             #get number of dofs and values to apply
@@ -805,7 +865,7 @@ class SILEX:
             UF[numDofs]=valbc
         #UF[9-1] = 3.1250E-05
 
-        self.SolvedDof = np.hstack([self.SolvedDofF, self.SolvedDofA+self.fluidNbDof])
+        self.SolvedDof = np.hstack([self.SolvedDofF, self.SolvedDofA+self.fluidNbDofs])
         logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
 
         if self.paraData['gradCompute']:
@@ -832,12 +892,12 @@ class SILEX:
 
         self.KFF = scipy.sparse.csc_matrix(
             (Vffk, (IIf, JJf)),
-            shape=(self.fluidNbDof, self.fluidNbDof))
+            shape=(self.fluidNbDofs, self.fluidNbDofs))
         self.MFF = scipy.sparse.csc_matrix(
             (Vffm, (IIf, JJf)), 
-            shape=(self.fluidNbDof, self.fluidNbDof))
+            shape=(self.fluidNbDofs, self.fluidNbDofs))
 
-        self.SolvedDofF = list(range(self.fluidNbDof))
+        self.SolvedDofF = list(range(self.fluidNbDofs))
         logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
         #
         if self.paraData['gradCompute']:
@@ -866,16 +926,16 @@ class SILEX:
 
         self.KAA = scipy.sparse.csc_matrix(
             (Vaak, (IIaa, JJaa)), 
-            shape=(self.fluidNbDof, self.fluidNbDof))
+            shape=(self.fluidNbDofs, self.fluidNbDofs))
         self.MAA = scipy.sparse.csc_matrix(
             (Vaam, (IIaa, JJaa)), 
-            shape=(self.fluidNbDof, self.fluidNbDof))
+            shape=(self.fluidNbDofs, self.fluidNbDofs))
         self.KAF = scipy.sparse.csc_matrix(
             (Vafk, (IIaf, JJaf)), 
-            shape=(self.fluidNbDof, self.fluidNbDof))
+            shape=(self.fluidNbDofs, self.fluidNbDofs))
         self.MAF = scipy.sparse.csc_matrix(
             (Vafm, (IIaf, JJaf)), 
-            shape=(self.fluidNbDof, self.fluidNbDof))
+            shape=(self.fluidNbDofs, self.fluidNbDofs))
 
         self.SolvedDofA = self.EnrichedNodes-1
         logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
@@ -883,7 +943,7 @@ class SILEX:
         if self.paraData['gradCompute']:
             logging.info("Build gradient of enriched operators")
             tic = time.process_time()
-            for it in range(0,self.paraData['nbGrad']):
+            for it in range(0,self.getNbGrad()):
                 #compute gradients matrices for each selected parameter
                 dKAAx,dKFAx,dMAAx,dMFAx=self.buildGoperator(self,it)
                 #store
@@ -922,7 +982,7 @@ class SILEX:
         if self.paraData['gradCompute']:
             logging.info("Build gradient of the assembled operators")
             tic = time.process_time()            
-            for it in range(0,self.paraData['nbGrad']):
+            for it in range(0,self.getNbGrad()):
                 # build full stiffness and mass gradient matrices
                 dK.append(scipy.sparse.construct.bmat([
                     [fd*self.dKFF[it][self.SolvedDofF, :][:, self.SolvedDofF], fd*self.dKFA[it][self.SolvedDofF, :][:, self.SolvedDofA]],
@@ -954,14 +1014,27 @@ class SILEX:
         dMAA_dtheta=None
         dKFA_dtheta = scipy.sparse.csc_matrix(
             (Vfak_gradient, (IIf, JJf)),
-            shape=(self.fluidNbDof, self.fluidNbDof))
+            shape=(self.fluidNbDofs, self.fluidNbDofs))
         dMFA_dtheta = scipy.sparse.csc_matrix(
             (Vfam_gradient, (IIf, JJf)),
-             hape=(self.fluidNbDof, self.fluidNbDof))
+             hape=(self.fluidNbDofs, self.fluidNbDofs))
         #
         return dKAA_dtheta,dKFA_dtheta,dMAA_dtheta,dMFA_dtheta
         
         
+    def prepCase(self):
+        """
+        ##################################################################
+        # method to initialize case's data
+        ##################################################################
+        """
+        if self.caseProp['typeLS'] == 'manual':
+            #load the object to build LS
+            LSobj=structTools.LSmanual(self.caseProp['typeGEOstruct'])
+            #export values
+            self.loadParaU(namePara=LSobj.exportParaName())
+
+
 
     def preProcessMaster(self):
         """
@@ -978,9 +1051,14 @@ class SILEX:
             logging.info("##          (with gradients computations)        ##")            
         logging.info("##################################################")
         logging.info("##################################################")
+        
+        # check & create folders/files 
         self.createDatabase()
+        # load MPI info
+        self.loadMPI()
         # load fluid mesh
-        self.loadMesh(type='nodesFluid',dispFlag=True,filename=self.getDatafile('fluidmesh'))
+        self.loadMesh(typeData='nodesFluid',dispFlag=True,filename=self.getDatafile('fluidmesh'))
+        self.loadMesh(typeData='elemsFluid',dispFlag=True,filename=self.getDatafile('fluidmesh'))
         #build fluid operators
         self.buildFluidOperators() 
         #generate the list of frequencies
@@ -1032,7 +1110,7 @@ class SILEX:
         # compute natural frequency
         omega=2*np.pi*freq
         #Build full second member
-        F=(omega**2)*np.array(UF[self.solvedDof],dtype=self.loadType)
+        F=(omega**2)*np.array(UF[self.solvedDof],dtype=self.loadType())
         #solve the whole problem on pressure
         ticB = time.process_time()
         sol = self.solveLinear(self.K-(omega**2)*self.M,F)
@@ -1094,13 +1172,13 @@ class SILEX:
         # Initialize storage for computation
         ##################################################################
         """
-        self.pressureUncorrect = [np.zeros((self.fluidNbDof),dtype=self.loadType)] * self.caseProp['nbSteps']
-        self.pressureEnrichment = [np.zeros((self.fluidNbDof),dtype=self.loadType)] * self.caseProp['nbSteps']
+        self.pressureUncorrect = [np.zeros((self.fluidNbDofs),dtype=self.loadType())] * self.caseProp['nbSteps']
+        self.pressureEnrichment = [np.zeros((self.fluidNbDofs),dtype=self.loadType())] * self.caseProp['nbSteps']
         self.pressure = [None] * self.caseProp['nbSteps']
         #
-        self.pressureUncorrectGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType)] * self.paraData['nbGrad']
-        self.pressureEnrichmentGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType)] * self.paraData['nbGrad']
-        self.pressureGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType)] * self.paraData['nbGrad']
+        self.pressureUncorrectGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType())] * self.getNbGrad()
+        self.pressureEnrichmentGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType())] * self.getNbGrad()
+        self.pressureGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType())] * self.getNbGrad()
 
     def formatPara(self,valIn=None,nospace=False):
         """
@@ -1111,12 +1189,39 @@ class SILEX:
         #if necessary load the current values of parameters
         if valIn is None:
             valU = self.paraData['val']
+        else:
+            valU=valIn
         dispPara = ''
-        for itV in range(0,len(valU)):
-            dispPara = dispPara+paraData['name'][itV]+' '+valU[itV].astype(str)+' '
+        #condition valU
+        if len(valU.shape) == 0:
+            valU=[valU]
+        #
+        if self.paraData:
+            for itV in range(0,len(valU)):
+                dispPara += self.paraData['name'][itV]+' '+valU[itV].astype(str)+' '
+        else:
+            for itV in range(0,len(valU)):
+                dispPara += valU[itV].astype(str)+' '
+        #
         if nospace:
             dispPara = dispPara.replace(' ','_')
         return dispPara
+    
+    def prepPara(self,valIn):
+        """
+        ##################################################################
+        # prepare parameters values to be ran
+        ##################################################################
+        """
+        #if necessary load the current values of parameters
+        if len(valIn.shape)==1:
+            if self.paraData['nb']==1:
+                paraArray = valIn
+            else:
+                paraArray = np.array([valIn])
+        else:
+            paraArray = valIn
+        return paraArray
 
     def solvePb(self,paraVal=None):
         """
@@ -1129,12 +1234,18 @@ class SILEX:
             self.preProcessMaster()
         if paraVal is not None:
             paraVal=np.array(paraVal)
+        else:
+            logging.error('>> Unable to start computation due to no given parameters values')
+            raise
+        #prepare parameters values to run
+        paraValOk=self.prepPara(paraVal)
         #
         # along the parameters
-        for valU in paraVal:
+        for valU in paraValOk:
             self.nbRuns += 1
             ticV = time.process_time()
             logging.info("##################################################")
+            self.paraData['val']=valU
             txtPara=self.formatPara(valIn=valU)
             logging.info('Start compute for parameters (nb %i): %s'%(self.nbRuns,txtPara))
             #initialization for run
