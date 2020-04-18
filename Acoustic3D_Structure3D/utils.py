@@ -13,37 +13,14 @@ import os
 ###########################################################
 ###########################################################
 ###########################################################
-# function to load MUMPS library
-def loadMumps():
-    mumps_loader=importlib.util.find_spec('mumps')
-    foundMumps=mumps_loader is not None
-    if foundMumps:
-        import mumps
-    return foundMumps
-
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-# function to obtain info concerning MPI
-def mpiInfo():
-    # default values
-    nproc=1
-    rank=0
-    comm=None
-    #try to import MPI    
-    mpi4py_loader=importlib.util.find_spec('mpi4py')
-    if mpi4py_loader is not None:
-        from mpi4py import MPI
-        comm = MPI.COMM_WORLD
-        nproc = comm.Get_size()
-        rank = comm.Get_rank()
-    else:
-        print('No mpi4py.MPI module found')
-        pass    
-    return nproc, rank, comm
+# function to import module as global
+def global_imports(modulename,shortname = None, asfunction = False):
+    if shortname is None: 
+        shortname = modulename
+    if asfunction is False:
+        globals()[shortname] = __import__(modulename)
+    else:        
+        globals()[shortname] = eval(modulename + "." + shortname)
 
 ###########################################################
 ###########################################################

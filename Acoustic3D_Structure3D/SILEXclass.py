@@ -21,6 +21,7 @@
 # Libraries
 ###########################################################
 import getopt
+import importlib
 import string
 import time
 import logging
@@ -44,7 +45,43 @@ import structTools
 from SILEX import silex_lib_xfem_acou_tet4
 from SILEX import silex_lib_gmsh
 
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+# function to obtain info concerning MPI
+def mpiInfo():
+    # default values
+    nproc=1
+    rank=0
+    comm=None
+    #try to import MPI    
+    mpi4py_loader=importlib.util.find_spec('mpi4py')
+    if mpi4py_loader is not None:
+        from mpi4py import MPI
+        comm = MPI.COMM_WORLD
+        nproc = comm.Get_size()
+        rank = comm.Get_rank()
+    else:
+        print('No mpi4py.MPI module found')
+        pass    
+    return nproc, rank, comm
 
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+# function to load MUMPS library
+def loadMumps():
+    mumps_loader=importlib.util.find_spec('mumps')
+    foundMumps=mumps_loader is not None
+    if foundMumps:
+        globals()['mumps'] = __import__('mumps')
+    return foundMumps
 
 ###########################################################
 ###########################################################
@@ -143,6 +180,8 @@ class SILEX:
     commMPI = None
     rankMPI = 0
     nbProcMPI = 0
+    #
+    mumpsOk = False
 
     #flags
     flags = dict()
@@ -320,7 +359,15 @@ class SILEX:
         # method used to load openMPI information
         ##################################################################
         """
-        self.nbProcMPI,self.rankMPI,self.commMPI=utils.mpiInfo()
+        self.nbProcMPI,self.rankMPI,self.commMPI=mpiInfo()
+
+    def loadMUMPS(self):
+        """
+        ##################################################################
+        # method used to load openMPI information
+        ##################################################################
+        """
+        self.mumpsOk=loadMumps()
 
     def dataOk(self,dispFlag=None):
         """
@@ -864,9 +911,7 @@ class SILEX:
             #get number of dofs and values to apply
             numDofs,valbc = self.getFormatBC(bc)
             self.UF[numDofs]=valbc
-        #UF[9-1] = 3.1250E-05
-
-        self.SolvedDof = np.hstack([self.SolvedDofF, self.SolvedDofA+self.fluidNbDofs])
+        #
         logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
 
         if self.paraData['gradCompute']:
@@ -973,13 +1018,11 @@ class SILEX:
             [self.MFF[self.SolvedDofF, :][:, self.SolvedDofF], self.MAF[self.SolvedDofF, :][:, self.SolvedDofA]],
             [self.MAF[self.SolvedDofA, :][:, self.SolvedDofF], self.MAA[self.SolvedDofA, :][:, self.SolvedDofA]]])
         #
-        logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
-        logging.info("Assembly of gradient operators of the whole problem")
-        tic = time.process_time()  
-        
+        #list of all dofs
+        self.SolvedDof = np.hstack([self.SolvedDofF, self.SolvedDofA+self.fluidNbDofs])
         #
         logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
-
+        #
         if self.paraData['gradCompute']:
             logging.info("Build gradient of the assembled operators")
             tic = time.process_time()            
@@ -1057,6 +1100,8 @@ class SILEX:
         self.createDatabase()
         # load MPI info
         self.loadMPI()
+        # load MUMPS
+        self.loadMUMPS()
         # load fluid mesh
         self.loadMesh(typeData='nodesFluid',dispFlag=True,filename=self.getDatafile('fluidmesh'))
         self.loadMesh(typeData='elemsFluid',dispFlag=True,filename=self.getDatafile('fluidmesh'))
@@ -1095,7 +1140,7 @@ class SILEX:
         Method used to solve linear problem (choose automatically the available approach)
         """
         if self.mumpsOk:
-            sol = mumps.spsolve(A, B, comm=self.commMumps)
+            sol = mumps.spsolve(A, B, comm=self.commMPI)
             # mumps is globally defined
         else:
             sol = scipy.sparse.linalg.spsolve(A, B)
@@ -1113,7 +1158,7 @@ class SILEX:
         # compute natural frequency
         omega=2*np.pi*freq
         #Build full second member
-        F=(omega**2)*np.array(self.UF[self.solvedDof],dtype=self.loadType())
+        F=(omega**2)*np.array(self.UF[self.SolvedDof],dtype=self.loadType())
         #solve the whole problem on pressure
         ticB = time.process_time()
         sol = self.solveLinear(self.K-(omega**2)*self.M,F)
@@ -1158,7 +1203,7 @@ class SILEX:
                 self.pressureGrad[itG][:,itF] = self.pressureUncorrectGrad.copy()
                 self.pressureGrad[itG][self.solvedDofA,itG] += self.pressureEnrichmentGrad[itF][self.solvedDofA,itG]*np.sign(self.LevelSet[self.solvedDofA].T)
                 #compute and store gradient of FRF on the control volume
-                if caseProp['computeFRF']:
+                if self.caseProp['computeFRF']:
                     self.FRFgrad[itG][itF] = silex_lib_xfem_acou_tet4.computegradientcomplexquadratiquepressure(
                         self.fluidElemsControl,
                         self.fluidNodes,
@@ -1179,9 +1224,10 @@ class SILEX:
         self.pressureEnrichment = [np.zeros((self.fluidNbDofs),dtype=self.loadType())] * self.caseProp['nbSteps']
         self.pressure = [None] * self.caseProp['nbSteps']
         #
-        self.pressureUncorrectGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType())] * self.getNbGrad()
-        self.pressureEnrichmentGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType())] * self.getNbGrad()
-        self.pressureGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType())] * self.getNbGrad()
+        if self.paraData['gradCompute']:
+            self.pressureUncorrectGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType())] * self.getNbGrad()
+            self.pressureEnrichmentGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType())] * self.getNbGrad()
+            self.pressureGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType())] * self.getNbGrad()
 
     def formatPara(self,valIn=None,nospace=False):
         """
