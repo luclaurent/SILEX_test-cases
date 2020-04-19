@@ -143,10 +143,6 @@ class SILEX:
     data['exportMesh'] = 'msh'              # default format to export fields and mesh (msh, msh+, vtk)
     #
     fullPathCurrentResultsFolder = ''
-    fullPathFluidMeshFile = ''
-    fullPathStructMeshFile = ''
-    fullPathMeshFile = ''
-    fullPathResultsFile = ''
     #
     saveResults = True
 
@@ -159,7 +155,7 @@ class SILEX:
 
     #flags
     flags = dict()
-    flags['saveResults'] = False  # flag to save results
+    flags['saveResults'] = True  # flag to save results
     flags['edgeEnrichement'] = False  # flag to enrich the edge
 
     ###
@@ -284,13 +280,13 @@ class SILEX:
         # Build result file depending on status
         ##################################################################
         """
-        fileName = data['prefixResults']
+        fileName = self.data['prefixResults']
         #add parameters value in filename
         if detPara:
-            fileName += '_'+self.formatPara(nospace=True)+'_'
+            fileName += '_'+self.formatPara(nospace=True)
         #add given text in filename
         if addTxt is not None:
-            if addTxt[0] != '_':
+            if addTxt[0] != '_' and fileName[-1] != '_':
                 fileName += '_' + addTxt
             else:
                 fileName += addTxt
@@ -369,26 +365,29 @@ class SILEX:
         # method used to create full path of folders
         ##################################################################
         """
+        #name of the symlink
+        symlinkname='last'
         #create a specific folder for the results
         baseFolderName = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         if self.caseProp['name']:
             baseFolderName += '_'+self.caseProp['name']
         else:
             baseFolderName += '_'+data['originalFluidMeshFile']
-        #initialize folders and files name (could change along the runs)
-        createOk=False
-        if self.dataOk(True):
-            self.fullPathCurrentResultsFolder = os.path.join(self.data['resultsFolder'],baseFolderName)
-            self.fullPathOriginalMeshFile = os.path.join(self.data['geomFolder'],self.data['originalMeshFile'])
-            self.fullPathMeshFile = os.path.join(self.data['geomFolder'],self.data['currentMeshFile'])
-            self.fullPathResultsFile = os.path.join(self.data['resultsFolder'],self.data['resultsFile'])
-            #create directory if not exists
-            if not os.path.exists(self.fullPathCurrentResultsFolder):
-                os.makedirs(self.fullPathCurrentResultsFolder)
-            #display
-            logging.info('Folder for results: %s'%(self.fullPathCurrentResultsFolder))
-        else:
-            logging.info('Missing data to create database')
+        #initialize folders and files (could change along the runs)
+        self.fullPathCurrentResultsFolder = os.path.join(self.data['resultsFolder'],baseFolderName)
+        #create directory if not exists
+        if not os.path.exists(self.fullPathCurrentResultsFolder):
+            os.makedirs(self.fullPathCurrentResultsFolder)
+        #remove symlink if exists
+        fullpathSymLink = os.path.join(self.data['resultsFolder'],symlinkname)
+        if os.path.islink(fullpathSymLink):
+            os.unlink(fullpathSymLink)
+        # create symlink to the folder
+        os.symlink(os.path.relpath(self.fullPathCurrentResultsFolder,self.data['resultsFolder']),fullpathSymLink)
+
+        #display
+        logging.info('Folder for results: %s'%(self.fullPathCurrentResultsFolder))
+
 
 
     def loadMesh(self,typeData=None,dispFlag=True,filename=None):
@@ -715,12 +714,33 @@ class SILEX:
                         for fields in dictFields:
                             fileName = fields['filename']+'.pos'
                             logging.info("Prepare to write field: %s in %s"%(fields['name'],fileName))
+                            #check if data are well shaped
+                            dataLS = fields['levelsetmod']
+                            dataUnc = fields['fielduncorrected']
+                            dataEnr = fields['fieldenrichment']
+                            #
+                            if dataUnc.shape[1] == self.fluidNbNodes:
+                                funU=lambda x: x.transpose()
+                                logging.warning("Change shape of uncorrected fields")
+                            elif dataUnc.shape[0] == self.fluidNbNodes:
+                                funU=lambda x: x
+                            else:
+                                logging.error("Bad dimension of uncorrected fields to be exported")
+                            #
+                            if dataEnr.shape[1] == self.fluidNbNodes:
+                                funE=lambda x: x.transpose()
+                                logging.warning("Change shape of enrichment fields")
+                            elif dataEnr.shape[0] == self.fluidNbNodes:
+                                funE=lambda x: x
+                            else:
+                                logging.error("Bad dimension of enrichment fields to be exported")
+                            #
                             silex_lib_xfem_acou_tet4.makexfemposfilefreq(
                                 self.fluidNodes,
                                 self.fluidElems, 
-                                fields['levelsetmod'],
-                                fields['fielduncorrected'],
-                                fields['fieldenrichment'],
+                                dataLS,
+                                funU(dataUnc),
+                                funE(dataEnr),
                                 fileName,
                                 fields['name'])
                             logging.info('File size: %s'%utils.file_size(fileName))
@@ -1245,6 +1265,8 @@ class SILEX:
         else:
             for itV in range(0,len(valU)):
                 dispPara += valU[itV].astype(str)+' '
+        #remove last space
+        dispPara=dispPara[:-1]
         #
         if nospace:
             dispPara = dispPara.replace(' ','_')
@@ -1331,41 +1353,41 @@ class SILEX:
                 dataW.append({'field':np.imag(self.pressureGrad),'type':'nodal','name':'Grad. '+txtP+' Pressure (imaginary) ('+txtPara+')'})
                 dataW.append({'field':np.absolute(self.pressureGrad),'type':'nodal','name':'Grad. '+txtP+' Pressure (norm) ('+txtPara+')'})
         #write the file
-        self.exportResults(typeExport="manuFields",method=typeSave,dictFields = dataW,fileName = self.resultFile(detPara=paraName,addTxt='results_fluid',ext=None))
+        self.exportResults(typeExport="manuFields",method=typeSave,dictFields = dataW,fileName = self.getResultFile(detPara=paraName,addTxt='results_fluid',ext=None))
         #write the discontinuties of the field in file
         #new database to export
         dataW = list()
         #
         dataW.append({'fielduncorrected':np.real(self.pressureUncorrect),
         'fieldenrichment':np.real(self.pressureEnrichment),
-        'levelsetmod':None,
-        'filename':self.resultFile(detPara=paraName,addTxt='plus_real',ext=None),
+        'levelsetmod':self.LevelSet,
+        'filename':self.getResultFile(detPara=paraName,addTxt='plus_real',ext=None),
         'name':'Pressure + (real) ('+txtPara+')'})
         dataW.append({'fielduncorrected':np.imag(self.pressureUncorrect),
         'fieldenrichment':np.imag(self.pressureEnrichment),
-        'levelsetmod':None,
-        'filename':self.resultFile(detPara=paraName,addTxt='plus_imag',ext=None),
+        'levelsetmod':self.LevelSet,
+        'filename':self.getResultFile(detPara=paraName,addTxt='plus_imag',ext=None),
         'name':'Pressure + (imaginary) ('+txtPara+')'})
         dataW.append({'fielduncorrected':np.absolute(self.pressureUncorrect),
         'fieldenrichment':np.absolute(self.pressureEnrichment),
-        'levelsetmod':None,
-        'filename':self.resultFile(detPara=paraName,addTxt='plus_abs',ext=None),
+        'levelsetmod':self.LevelSet,
+        'filename':self.getResultFile(detPara=paraName,addTxt='plus_abs',ext=None),
         'name':'Pressure + (norm) ('+txtPara+')'})
         #
         dataW.append({'fielduncorrected':np.real(self.pressureUncorrect),
         'fieldenrichment':-np.real(self.pressureEnrichment),
         'levelsetmod':-self.LevelSet,
-        'filename':self.resultFile(detPara=paraName,addTxt='moins_real',ext=None),
+        'filename':self.getResultFile(detPara=paraName,addTxt='moins_real',ext=None),
         'name':'Pressure - (real) ('+txtPara+')'})
         dataW.append({'fielduncorrected':np.imag(self.pressureUncorrect),
         'fieldenrichment':-np.imag(self.pressureEnrichment),
         'levelsetmod':-self.LevelSet,
-        'filename':self.resultFile(detPara=paraName,addTxt='moins_imag',ext=None),
+        'filename':self.getResultFile(detPara=paraName,addTxt='moins_imag',ext=None),
         'name':'Pressure - (imaginary) ('+txtPara+')'})
         dataW.append({'fielduncorrected':np.absolute(self.pressureUncorrect),
         'fieldenrichment':-np.absolute(self.pressureEnrichment),
         'levelsetmod':-self.LevelSet,
-        'filename':self.resultFile(detPara=paraName,addTxt='moins_abs',ext=None),
+        'filename':self.getResultFile(detPara=paraName,addTxt='moins_abs',ext=None),
         'name':'Pressure - (norm) ('+txtPara+')'})
         #
         if self.paraData['gradCompute']:
@@ -1373,23 +1395,23 @@ class SILEX:
                 dataW.append({'fielduncorrected':np.real(self.pressureUncorrectGrad[itG]),
                 'fieldenrichment':np.real(self.pressureEnrichmentGrad[itG]),
                 'levelsetmod':self.LevelSet,
-                'filename':self.resultFile(detPara=paraName,addTxt='_grad_'+str(itG)+'plus_real',ext=None),
+                'filename':self.getResultFile(detPara=paraName,addTxt='_grad_'+str(itG)+'plus_real',ext=None),
                 'name':'Pressure + (real) ('+txtPara+')'})
                 dataW.append({'fielduncorrected':np.imag(self.pressureUncorrectGrad[itG]),
                 'fieldenrichment':np.imag(self.pressureEnrichmentGrad[itG]),
                 'levelsetmod':self.LevelSet,
-                'filename':self.resultFile(detPara=paraName,addTxt='_grad_'+str(itG)+'plus_imag',ext=None),
+                'filename':self.getResultFile(detPara=paraName,addTxt='_grad_'+str(itG)+'plus_imag',ext=None),
                 'name':'Pressure + (imaginary) ('+txtPara+')'})
                 #
                 dataW.append({'fielduncorrected':np.real(self.pressureUncorrectGrad[itG]),
                 'fieldenrichment':-np.real(self.pressureEnrichmentGrad[itG]),
                 'levelsetmod':-self.LevelSet,
-                'filename':self.resultFile(detPara=paraName,addTxt='_grad_'+str(itG)+'moins_real',ext=None),
+                'filename':self.getResultFile(detPara=paraName,addTxt='_grad_'+str(itG)+'moins_real',ext=None),
                 'name':'Pressure - (real) ('+txtPara+')'})
                 dataW.append({'fielduncorrected':np.imag(self.pressureUncorrectGrad[itG]),
                 'fieldenrichment':-np.imag(self.pressureEnrichmentGrad[itG]),
                 'levelsetmod':-self.LevelSet,
-                'filename':self.resultFile(detPara=paraName,addTxt='_grad_'+str(itG)+'moins_imag',ext=None),
+                'filename':self.getResultFile(detPara=paraName,addTxt='_grad_'+str(itG)+'moins_imag',ext=None),
                 'name':'Pressure - (imaginary) ('+txtPara+')'})
                 #compute gradients of absolute values
                 gradAbsUncorrect = (np.real(self.pressureUncorrectGrad[itG])*np.real(self.pressureUncorrect)+\
@@ -1406,16 +1428,16 @@ class SILEX:
                 dataW.append({'fielduncorrected':self.gradAbsUncorrect[itG],
                 'fieldenrichment':self.gradAbsEnrichment[itG],
                 'levelsetmod':self.LevelSet,
-                'filename':self.resultFile(detPara=paraName,addTxt='_grad_'+str(itG)+'plus_abs',ext=None),
+                'filename':self.getResultFile(detPara=paraName,addTxt='_grad_'+str(itG)+'plus_abs',ext=None),
                 'name':'Pressure + (norm) ('+txtPara+')'})
                 dataW.append({'fielduncorrected':self.gradAbsUncorrect[itG],
                 'fieldenrichment':-self.gradAbsEnrichment[itG],
                 'levelsetmod':-self.LevelSet,
-                'filename':self.resultFile(detPara=paraName,addTxt='_grad_'+str(itG)+'moins_abs',ext=None),
+                'filename':self.getResultFile(detPara=paraName,addTxt='_grad_'+str(itG)+'moins_abs',ext=None),
                 'name':'Pressure - (norm) ('+txtPara+')'})
 
         #write the file
-        self.exportResults(typeExport='manuFields',method='pos',dictFields = dataW,fileName = self.resultFile(detPara=paraName,addTxt='results_fluid',ext=None))
+        self.exportResults(typeExport='manuFields',method='pos',dictFields = dataW,fileName = self.getResultFile(detPara=paraName,addTxt='results_fluid',ext=None))
 
 
     def saveFRF(self,typeSave=None,paraName=False,allData=False):
@@ -1435,14 +1457,14 @@ class SILEX:
             dictOut['FRFgrad']=self.FRFgrad
             if typeSave is 'mat':
                 #export data
-                scipy.io.savemat(self.resultFile(detPara=paraName,addTxt='results',ext='mat'),mdict=dictOut)
-                logging.info('Export data in %s'%(self.resultFile(detPara=paraName,addTxt='results',ext='mat')))
+                scipy.io.savemat(self.getResultFile(detPara=paraName,addTxt='results',ext='mat'),mdict=dictOut)
+                logging.info('Export data in %s'%(self.getResultFile(detPara=paraName,addTxt='results',ext='mat')))
             if typeSave is 'pickle':
                 #export data
-                f = open(self.resultFile(detPara=paraName,addTxt='results',ext='pck'))
+                f = open(self.getResultFile(detPara=paraName,addTxt='results',ext='pck'))
                 pickle.dump(dictOut,f)
                 f.close()
-                logging.info('Export data in %s'%(self.resultFile(detPara=paraName,addTxt='results',ext='pck')))
+                logging.info('Export data in %s'%(self.getResultFile(detPara=paraName,addTxt='results',ext='pck')))
         else:
             logging.info('Nothing to export (FRF not computed)')
 
