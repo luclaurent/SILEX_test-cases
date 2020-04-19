@@ -60,6 +60,6 @@ bcdef['disp']={'type':'bbx','data':[0,0,5,5,0,0],'values':3.1250E-05}
 PB.loadBC(bcdef)
 
 #solve the problem
-PB.solvePb([3.,3.,1.,1.])
+PB.solvePb([[3.,3.,1.,1.],[3.,3.,1.,1.],[3.,3.,1.,1.],[3.,3.,1.,1.],[3.,3.,1.,1.]])
 
 raise

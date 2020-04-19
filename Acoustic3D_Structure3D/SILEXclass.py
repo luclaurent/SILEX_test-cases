@@ -83,33 +83,7 @@ def loadMumps():
         globals()['mumps'] = __import__('mumps')
     return foundMumps
 
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-# distribution of frequencies per processor
-def computeFreqPerProc(nbStep, nbProc, freqInit, freqEnd):
-    # compute integer number of freq per proc and remaining steps
-    nbFreqProc = nbStep // nbProc
-    nbFreqProcRemain = nbStep % nbProc
-    # compute frequencies steps
-    varCase = 1
-    if nbFreqProcRemain == 0:
-        varCase = 0
-    listFreq = np.zeros((nbFreqProc+varCase, nbProc))
-    listAllFreq = np.linspace(freqInit, freqEnd, nbStep)
-    # print(np.linspace(freqInit,freqEnd,nbStep))
-    # build array of frequencies
-    itF = 0
-    for itP in range(nbProc):
-        for itC in range(nbFreqProc+varCase):
-            if itC*nbProc+itP < nbStep:
-                listFreq[itC, itP] = listAllFreq[itF]
-                itF += 1
-    # print(listFreq)
-    return listFreq
+
 
 
 ###########################################################
@@ -457,7 +431,7 @@ class SILEX:
                     logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
                     #
                     if dispFlag:
-                        logging.info("Fluid control volume: %i elems, %i nodes"%(self.fluidNbElemControl,self.fluidNbNodesControl))
+                        logging.info("Fluid control volume: %i elems, %i nodes"%(self.fluidNbElemsControl,self.fluidNbNodesControl))
                 if typeData=='elemsFluid':
                     logging.info('>> Read %s'%textDict[typeData])
                     tic = time.process_time()
@@ -491,6 +465,19 @@ class SILEX:
                 logging.error('Unable to read data: %s'%textDict[typeData])
                 logging.error('>>> Unable to read file \'%s\' (file does not exist)'%filename)
                 raise
+
+    def getFrequencies(self,total=False):
+        """
+        ##################################################################
+        # obtain the list of frequencies for the rank or the whole list of frequencies
+        ##################################################################
+        """
+        if total:
+            listFreq = self.Frequencies.T.flatten()
+        else:
+            listFreq = self.Frequencies[:,self.rankMPI]
+        return listFreq
+
     def getNbGrad(self):
         """
         ##################################################################
@@ -501,6 +488,7 @@ class SILEX:
         if not nbG:
             nbG = len(self.paraData['name'])
         return nbG
+        
 
     def getNameGrad(self):
         """
@@ -811,14 +799,14 @@ class SILEX:
 
         if typeLS is "manual":
             #the level-set is built using an explicit function 
-            LSobj=structTools.LSmanual(typeGEO,self.fluidNodes)
+            LSobj=structTools.LSmanual(typeName=typeGEO,nodes=self.fluidNodes,paraVal=paraVal)
             #export values
             self.LevelSet,self.LevelSetU=LSobj.exportLS()
-            self.loadParaU(namePara=LSobj.exportParaName())
+            self.loadParaU(namePara = LSobj.exportParaName())
             #compute gradient of Level-Set
-            if paraData['gradCompute']:
+            if self.paraData['gradCompute']:
                 self.LevelSetGradient,nameGrad= LSobj.exportLSgrad(self.getNameGrad())
-                self.loadParaU(nameParaGrad=nameGrad)
+                self.loadParaU(nameParaGrad = nameGrad)
         #
         logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
     
@@ -967,8 +955,8 @@ class SILEX:
             self.fluidElems, 
             self.fluidNodes, 
             self.LevelSet, 
-            self.paraData['celerity'], 
-            self.paraData['rho'])
+            self.mechaProp['celerity'], 
+            self.mechaProp['rho'])
 
         self.KAA = scipy.sparse.csc_matrix(
             (Vaak, (IIaa, JJaa)), 
@@ -991,7 +979,7 @@ class SILEX:
             tic = time.process_time()
             for it in range(0,self.getNbGrad()):
                 #compute gradients matrices for each selected parameter
-                dKAAx,dKFAx,dMAAx,dMFAx=self.buildGoperator(self,it)
+                dKAAx,dKFAx,dMAAx,dMFAx=self.buildGoperators(self,it)
                 #store
                 self.dKAA.append(dKAAx) 
                 self.dKFA.append(dKAAx) 
@@ -1008,7 +996,7 @@ class SILEX:
         logging.info("Assembly of operators of the whole problem")
         tic = time.process_time()  
         #
-        fd=self.paraData['fluid_damping']
+        fd=self.mechaProp['fluid_damping']
         #
         self.K = scipy.sparse.construct.bmat([
             [fd*self.KFF[self.SolvedDofF, :][:, self.SolvedDofF], fd*self.KAF[self.SolvedDofF, :][:, self.SolvedDofA]],
@@ -1037,7 +1025,7 @@ class SILEX:
             #
             logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
 
-    def buildGOperator(self,itG):
+    def buildGOperators(self,itG):
         """
         ##################################################################
         # Build gradients operators one by one
@@ -1105,19 +1093,21 @@ class SILEX:
         # load fluid mesh
         self.loadMesh(typeData='nodesFluid',dispFlag=True,filename=self.getDatafile('fluidmesh'))
         self.loadMesh(typeData='elemsFluid',dispFlag=True,filename=self.getDatafile('fluidmesh'))
+        # load control volume
+        self.loadMesh(typeData='elemsControlFluid',dispFlag=True,filename=self.getDatafile('fluidmesh'))
         #build fluid operators
         self.buildFluidOperators() 
         #build second member
         self.buildSecondMember()
         #generate the list of frequencies
-        self.Frequencies=computeFreqPerProc(\
+        self.Frequencies=utils.computeFreqPerProc(\
             self.caseProp['nbSteps'],
             self.nbProcMPI,
             self.caseProp['freqMin'],
             self.caseProp['freqMax'])
 
     
-    def initRun(self):
+    def initRun(self,paraVal=None):
         """
         ##################################################################
         # method used to intialize the data before a run associated to a set of parameters
@@ -1127,13 +1117,13 @@ class SILEX:
         self.initDataSolve()
         #
         self.showDataParaVal()
+        #build levelset
+        self.buildLevelSet(typeLS=self.caseProp['typeLS'],typeGEO=self.caseProp['typeGEOstruct'],paraVal=paraVal)
+        #build enriched part
+        self.buildEnrichedPart()
         #build operators
-
-
-
-
-
-
+        self.buildEnrichedOperators()
+        self.buildOperators()
 
     def solveLinear(self, A, B):
         """
@@ -1162,46 +1152,46 @@ class SILEX:
         #solve the whole problem on pressure
         ticB = time.process_time()
         sol = self.solveLinear(self.K-(omega**2)*self.M,F)
-        logging.info("Rank: %i - Solve linear problem - Done - %g s"%(self.rank,time.process_time()-ticB))
+        logging.info("Rank: %i - Solve linear problem - Done - %g s"%(self.rankMPI,time.process_time()-ticB))
         ##### build the fields
         ticB = time.process_time()
         # uncorrected pressure field        
-        self.pressureUncorrect[itF][self.solvedDofF] = sol[list(range(len(self.solveDofF)))].copy()
+        self.pressureUncorrect[itF][self.SolvedDofF] = sol[list(range(len(self.SolvedDofF)))].copy()
         # enrichment field
-        self.pressureUncorrect[itF][self.solvedDofA] = sol[list(range(len(self.solveDofF),len(self.solveDofF)+len(self.solveDofA)))].copy()
+        self.pressureEnrichment[itF][self.SolvedDofA] = sol[list(range(len(self.SolvedDofF),len(self.SolvedDofF)+len(self.SolvedDofA)))].copy()
         # corrected pressure field
-        self.pressure[itF] = self.pressureUncorrect.copy()
-        self.pressure[itF][self.solvedDofA] += self.pressureEnrichment[itF][self.solvedDofA]*np.sign(self.LevelSet[self.solvedDofA])
-        logging.info("Rank: %i - Fields computation - Done - %g s"%(self.rank,time.process_time()-ticB))
+        self.pressure[itF] = self.pressureUncorrect[itF].copy()
+        self.pressure[itF][self.SolvedDofA] += self.pressureEnrichment[itF][self.SolvedDofA]*np.sign(self.LevelSet[self.SolvedDofA])
+        logging.info("Rank: %i - Fields computation - Done - %g s"%(self.rankMPI,time.process_time()-ticB))
         #compute and store FRF on the control volume
-        if caseProp['computeFRF']:
+        if self.caseProp['computeFRF']:
             self.FRF[itF] = silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(
                 self.fluidElemsControl,
                 self.fluidNodes,
                 self.pressureUncorrect[itF],
                 self.pressureEnrichment[itF],
                 self.LevelSet,
-                self.LevelSet*0-1.0)
+                self.LevelSet*0.-1.0)
         #Compute gradients of fields
-        if paraData['gradCompute']:
+        if self.paraData['gradCompute']:
             #initialize variables
             
             # along the parameters
-            logging.info("Rank: %i - Start gradients computation"%(self.rank))
+            logging.info("Rank: %i - Start gradients computation"%(self.rankMPI))
             ticC = time.process_time()
             for itG in range(0,self.paraData['nbGrad']):
                 ticB = time.process_time()
                 #prepare data
                 tmp = -(self.dK[itG]-(omega**2)*self.dM[itG])*sol
                 Dsol = self.solveLinear(self.K-(omega**2)*self.M,tmp)
-                logging.info("Rank: %i - Prepare and solve linear problem for grad (var: %s/num: %i) - Done - %g s"%(self.rank,self.paraData['nameGrad'],itG,time.process_time()-ticB))
+                logging.info("Rank: %i - Prepare and solve linear problem for grad (var: %s/num: %i) - Done - %g s"%(self.rankMPI,self.paraData['nameGrad'],itG,time.process_time()-ticB))
                 # gradient of uncorrected pressure field
-                self.pressureUncorrectGrad[itG][self.solvedDofF,itF] = Dsol[list(range(len(self.solveDofF)))].copy()
+                self.pressureUncorrectGrad[itG][self.SolvedDofF,itF] = Dsol[list(range(len(self.SolvedDofF)))].copy()
                 # gradient of enrichment field
-                self.pressureUncorrectGrad[itG][self.solvedDofA,itF] = Dsol[list(range(len(self.solveDofF),len(self.solveDofF)+len(self.solveDofA)))].copy()
+                self.pressureUncorrectGrad[itG][self.SolvedDofA,itF] = Dsol[list(range(len(self.SolvedDofF),len(self.SolvedDofF)+len(self.SolvedDofA)))].copy()
                 # gradient of corrected pressure field
                 self.pressureGrad[itG][:,itF] = self.pressureUncorrectGrad.copy()
-                self.pressureGrad[itG][self.solvedDofA,itG] += self.pressureEnrichmentGrad[itF][self.solvedDofA,itG]*np.sign(self.LevelSet[self.solvedDofA].T)
+                self.pressureGrad[itG][self.SolvedDofA,itG] += self.pressureEnrichmentGrad[itF][self.SolvedDofA,itG]*np.sign(self.LevelSet[self.SolvedDofA].T)
                 #compute and store gradient of FRF on the control volume
                 if self.caseProp['computeFRF']:
                     self.FRFgrad[itG][itF] = silex_lib_xfem_acou_tet4.computegradientcomplexquadratiquepressure(
@@ -1210,9 +1200,9 @@ class SILEX:
                         self.pressureUncorrect[itF],
                         self.pressureUncorrectGrad[itG][:,itF],
                         self.LevelSet)
-            logging.info("Rank: %i - Gradients computation - Done - %g s"%(self.rank,time.process_time()-ticC))
+            logging.info("Rank: %i - Gradients computation - Done - %g s"%(MPI,time.process_time()-ticC))
 
-        logging.info("Rank: %i - Done - Solve whole problem for frequency %g (step %i/%i) in %g s"%(self.rank,freq,itF,itMax,time.process_time()-tic))
+        logging.info("Rank: %i - Done - Solve whole problem for frequency %g (step %i/%i) in %g s"%(self.rankMPI,freq,itF,itMax,time.process_time()-tic))
 
     def initDataSolve(self):
         """
@@ -1220,14 +1210,18 @@ class SILEX:
         # Initialize storage for computation
         ##################################################################
         """
-        self.pressureUncorrect = [np.zeros((self.fluidNbDofs),dtype=self.loadType())] * self.caseProp['nbSteps']
-        self.pressureEnrichment = [np.zeros((self.fluidNbDofs),dtype=self.loadType())] * self.caseProp['nbSteps']
-        self.pressure = [None] * self.caseProp['nbSteps']
+        self.pressureUncorrect = [np.zeros((self.fluidNbDofs),dtype=self.loadType()) for _ in range(self.caseProp['nbSteps'])]
+        self.pressureEnrichment = [np.zeros((self.fluidNbDofs),dtype=self.loadType()) for _ in range(self.caseProp['nbSteps'])]
+        self.pressure = [None for _ in range(self.caseProp['nbSteps'])]
+        #
+        self.FRF = [None for _ in range(self.caseProp['nbSteps'])]
         #
         if self.paraData['gradCompute']:
-            self.pressureUncorrectGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType())] * self.getNbGrad()
-            self.pressureEnrichmentGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType())] * self.getNbGrad()
-            self.pressureGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType())] * self.getNbGrad()
+            self.pressureUncorrectGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType()) for _ in range(self.getNbGrad())]
+            self.pressureEnrichmentGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType()) for _ in range(self.getNbGrad())]
+            self.pressureGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType()) for _ in range(self.getNbGrad())]
+            #
+            self.FRFgrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType()) for _ in range(self.getNbGrad())]
 
     def formatPara(self,valIn=None,nospace=False):
         """
@@ -1298,18 +1292,18 @@ class SILEX:
             txtPara=self.formatPara(valIn=valU)
             logging.info('Start compute for parameters (nb %i): %s'%(self.nbRuns,txtPara))
             #initialization for run
-            self.initRun()
+            self.initRun(paraVal=valU)
 
             # along the frequencies
-            for (itF,Freq) in enumerate(self.Frequencies):
+            for (itF,Freq) in enumerate(self.getFrequencies()):
                 # solve the problem
-                self.solvePbOneStep(itF,len(self.Frequencies),Freq)
+                self.solvePbOneStep(itF,len(self.getFrequencies(total=True)),Freq)
             #export results (FRF, pressure fields and gradients)
             if self.flags['saveResults']:
                 self.exportFieldsOnePara(paraName=True)
                 self.saveFRF(paraName=True)
             #
-            logging.info("Time to solve the whole problem for set of parameters nb %i - %g s"%(self.nbRuns,time.process_time()-ticS))
+            logging.info("Time to solve the whole problem for set of parameters nb %i - %g s"%(self.nbRuns,time.process_time()-ticV))
         #
         logging.info("Time to solve the whole problem along sets of parameters - %g s"%(time.process_time()-ticS))
         

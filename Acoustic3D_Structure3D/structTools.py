@@ -52,7 +52,7 @@ class LSmanual:
         #build the LS
         self.buildLS(typeName,nodes,paraVal)
 
-    def buildLS(self,typeName,nodes,paraVal):
+    def buildLS(self,typeName = None,nodes = None,paraVal = None):
         """
         build the Level-set and associated gradients
         """
@@ -70,21 +70,21 @@ class LSmanual:
             if self.nodes is not None and self.paraVal is not None:
                 # check data
                 if nodes.shape[1]<3:
-                    print('ERROR in manualLS >> bad dimension of nodes array (%i)'%(nodes.shape[1]))
+                    print('ERROR in manualLS >> bad dimension of nodes array (%i)'%(self.nodes.shape[1]))
                 if len(paraVal)!=4:
-                    print('ERROR in manualLS >> bad number of parameter (%i)'%(len(paraVal)))
+                    print('ERROR in manualLS >> bad number of parameter (%i)'%(len(self.paraVal)))
                 # LS from a simple analytic shape (sphere)
-                lx3 = paraVal[0]  # 2.0 # Xc
-                ly3 = paraVal[1]  # 2.0 # Yc
-                lz3 = paraVal[2]  # 0.0 # YZ
-                R = paraVal[3]  # 1.0 # sphere radius
+                lx3 = self.paraVal[0]  # 2.0 # Xc
+                ly3 = self.paraVal[1]  # 2.0 # Yc
+                lz3 = self.paraVal[2]  # 0.0 # YZ
+                R = self.paraVal[3]  # 1.0 # sphere radius
                 
                 #
                 logging.debug("Parameters values")
                 logging.debug("X ", lx3, " Y ", ly3, " Z ", lz3, " R ", R)
                 # analytic LS
-                self.LevelSet = np.sqrt((nodes[:, 0]-lx3)**2+(nodes[:, 1]-ly3)**2+(nodes[:, 2]-lz3)**2)-R
-                self.LevelSetU=np.abs(LevelSet)
+                self.LevelSet = np.sqrt((self.nodes[:, 0]-lx3)**2+(self.nodes[:, 1]-ly3)**2+(self.nodes[:, 2]-lz3)**2)-R
+                self.LevelSetU=np.abs(self.LevelSet)
                 # levelset gradients
                 # Compute LS gradient according to Xc
                 self.LevelSetGrad.append((lx3-nodes[:, 0])/(self.LevelSet+R))

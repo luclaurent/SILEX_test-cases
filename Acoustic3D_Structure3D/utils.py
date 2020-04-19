@@ -134,4 +134,30 @@ def file_size(file_path):
         file_info = os.stat(file_path)
         return convert_bytes(file_info.st_size)
 
-    
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+# distribution of frequencies per processor
+def computeFreqPerProc(nbStep, nbProc, freqInit, freqEnd):
+    # compute integer number of freq per proc and remaining steps
+    nbFreqProc = nbStep // nbProc
+    nbFreqProcRemain = nbStep % nbProc
+    # compute frequencies steps
+    varCase = 1
+    if nbFreqProcRemain == 0:
+        varCase = 0
+    listFreq = np.zeros((nbFreqProc+varCase, nbProc))
+    listAllFreq = np.linspace(freqInit, freqEnd, nbStep)
+    # print(np.linspace(freqInit,freqEnd,nbStep))
+    # build array of frequencies
+    itF = 0
+    for itP in range(nbProc):
+        for itC in range(nbFreqProc+varCase):
+            if itC*nbProc+itP < nbStep:
+                listFreq[itC, itP] = listAllFreq[itF]
+                itF += 1
+    # print(listFreq)
+    return listFreq    
