@@ -3,7 +3,6 @@
 # L. LAURENT - 2020 - luc.laurent@lecnam.net
 ###########################################################
 
-import importlib
 import numpy as np
 import os
 
@@ -161,3 +160,39 @@ def computeFreqPerProc(nbStep, nbProc, freqInit, freqEnd):
                 itF += 1
     # print(listFreq)
     return listFreq    
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+# Useful tools to replace None in comlex dictionary
+class Null(object):
+    def __repr__(self):
+        return 'Null'
+
+NULL = Null()
+
+def replace_none(data):
+    for k, v in data.items() if isinstance(data, dict) else enumerate(data):
+        if v is None:
+            data[k] = NULL
+        elif isinstance(v, (dict, list)):
+            replace_none(v)
+
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+# add extension to filename if necessary
+def addExt(filename,ext=None):
+    outputFilename = filename
+    if outputFilename is not None:        
+        if ext is not None:
+            if ext[0] is not '.':
+                ext = '.'+ext
+            if outputFilename[len(outputFilename)-len(ext):len(outputFilename)] != ext:
+                outputFilename += ext
+    return outputFilename    

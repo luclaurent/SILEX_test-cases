@@ -11,6 +11,27 @@
             "program": "${workspaceFolder}/debugClass.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"
-        }
+        },
+        {
+            "name": "debugFortran",
+            "type": "lldb",
+            "request": "launch",
+            "program": "python",
+            "args": "debugClass.py",//[],//"-o", "debug", "-g","-O0","*.f08","*.f90"],
+            // "stopAtEntry": false ,
+            "cwd": "${workspaceRoot}",
+            // "environment": [],
+            // "preLaunchTask": "buildFortran",
+            // "MIMode": "gdb",
+            // "miDebuggerPath": "/usr/local/bin/gdb",
+            // "setupCommands":[
+            //  {
+            //      "description": "Enable pretty-printing for gdb",
+            //      "text": "-enable-pretty-printing",
+            //      "ignoreFailures": true
+            //  }
+            // ]
+        },
     ]
 }
+
