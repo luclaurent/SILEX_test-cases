@@ -196,3 +196,36 @@ def addExt(filename,ext=None):
             if outputFilename[len(outputFilename)-len(ext):len(outputFilename)] != ext:
                 outputFilename += ext
     return outputFilename    
+
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+# class used to redirect Fortran stdout/stderr
+class RedirectFortran:
+    def __init__(self, outputfile=os.devnull):
+        self.outfiles = outputfile
+
+    def start(self):
+        # open outputfile
+        self.out = os.open(self.outfiles,os.O_RDWR|os.O_CREAT)
+        # save the current file descriptor
+        self.save = os.dup(1)
+        # put outfile on 1
+        os.dup2(self.out, 1)
+
+    def stop(self, funExport = None):
+        # restore the standard output file descriptor
+        os.dup2(self.save, 1)
+        # close the output file
+        os.close(self.out)
+        # read it
+        file = open(self.outfiles,'r')
+        for line in file: 
+            funExport(line.replace('\n',''))
+        # delete it
+        if self.outfiles != os.devnull:
+            os.remove(self.outfiles)
+        

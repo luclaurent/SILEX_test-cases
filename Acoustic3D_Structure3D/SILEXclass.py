@@ -679,15 +679,19 @@ class SILEX:
         # function used to export results and mesh via fortran classMeshField
         ##################################################################
         """
+        #class used to catch the stdout of Fortran
+        clSTD = utils.RedirectFortran('logfortran.tmp.log')
+        funExport= lambda x: logging.info('%s%s'%('FORTRAN: ',x))
+        
         #first initialization
         if not self.classSave:
             if self.LevelSet is not None and self.fluidNodes is not None and self.fluidElems is not None:
-                global cl
-                importlib.reload(cl)
                 
                 #initialized class for results export                
+                clSTD.start()
                 self.classSave = cl.classmeshfield
                 self.classSave.init(self.fluidNodes,self.fluidElems,self.LevelSet)
+                clSTD.stop(funExport)
             else:
                 logging.error('Unable to initialize the saving class due to a lack of data')
         #declare the type of output
@@ -697,7 +701,9 @@ class SILEX:
             if writerMethod is "vtk":                
                 typeExport="vtk"
             #declare the writer
+            clSTD.start()
             self.classSave.declarewriter(fileName,typeExport)
+            clSTD.stop(funExport)
         else:
             if writerMethod is None:
                 logging.warning('Writer method not declared (use %s)'%self.classSave.typeWriter)
@@ -707,17 +713,21 @@ class SILEX:
         writeOk=True
         if uncorrectedField is not None and enrichmentField is not None:
             writeOk=True
+            clSTD.start()
             if fieldName is not None:
                 self.classSave.loadfields(uncorrectedField,enrichmentField,fieldName.replace(' ','_'))
             else:
                 self.classSave.loadfields(uncorrectedField,enrichmentField)
+            clSTD.stop(funExport)
         #append field without correction
         if uncorrectedField is not None and enrichmentField is None:
             writeOk=True
+            clSTD.start()
             if fieldName is not None:
                 self.classSave.loadfieldscorrected(uncorrectedField,fieldName.replace(' ','_'))
             else:
                 self.classSave.loadfieldscorrected(uncorrectedField)
+            clSTD.stop(funExport)
         #create list of written files
         listFiles=None
         if writeOk:            
