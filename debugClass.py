@@ -38,7 +38,7 @@ PB.loadMechaProperties(mechaBD)
 
 #load data
 dataBD = dict()
-dataBD['geomFolder'] = 'geom'             # folder of geometry and meshes
+dataBD['geomFolder'] = 'cases/Acoustic3D_Structure3D/geom'             # folder of geometry and meshes
 dataBD['resultsFolder'] = 'results'        # folder of results
 #
 dataBD['originalFluidMeshFile'] = 'cavity_acou3D_struc_3D_v3_air.msh'      # provided fluid mesh file

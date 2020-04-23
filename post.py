@@ -458,9 +458,14 @@ class postProcess:
         if self.caseProp['computeFRF']:            
             #build dictionary
             dictOut=self.paraData
-            dictOut['frequencies']=self.Frequencies
-            dictOut['FRF']=self.FRF
-            dictOut['FRFgrad']=self.FRFgrad
+            if allData: 
+                dictOut['frequencies']=self.Frequencies
+                dictOut['FRF']=self.FRF
+                dictOut['FRFgrad']=self.FRFgrad
+            else:
+                dictOut['frequencies']=self.Frequencies
+                dictOut['FRF']=self.allFRF
+                dictOut['FRFgrad']=self.allFRFgrad
             if typeSave is 'mat':
                 #clean dictionary
                 utils.replace_none(dictOut)
