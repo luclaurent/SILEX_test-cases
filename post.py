@@ -494,15 +494,16 @@ class postProcess:
         dictOut=self.paraData
         if allData: 
             dictOut['frequencies']=self.Frequencies
+            dictOut['FRF']=self.allFRF
+            dictOut['FRFgrad']=self.allFRFgrad
+            dictOut['paraVal']=self.paraData['oldval']            
+        else:
+            dictOut['frequencies']=self.Frequencies
             dictOut['FRF']=self.FRF
             dictOut['FRFgrad']=self.FRFgrad
             dictOut['paraVal']=self.paraData['val']
-        else:
-            dictOut['frequencies']=self.Frequencies
-            dictOut['FRF']=self.allFRF
-            dictOut['FRFgrad']=self.allFRFgrad
-            dictOut['paraVal']=self.paraData['oldval']
-        return dictOut
+            
+        return dictOut.copy()
 
 
 ###########################################################

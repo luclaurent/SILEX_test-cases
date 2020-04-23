@@ -191,7 +191,7 @@ class plotFRF:
         if self.paraVal is not None and self.paraName is not None:
             pVal=self.paraVal
             for itR in pVal:
-                listLabels.append(" ".join(str(x)+"="+str(y) for (x,y) in zip(self.paraName,pVal)))
+                listLabels.append(" ".join(str(x)+"="+str(y) for (x,y) in zip(self.paraName,itR)))
         if self.paraVal is not None and self.paraName is None:
             pVal=self.paraVal
             for itR in pVal:

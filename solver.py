@@ -493,7 +493,8 @@ class solverTools:
         self.pressureEnrichment = [np.zeros((self.fluidNbDofs),dtype=self.loadType()) for _ in range(self.caseProp['nbSteps'])]
         self.pressure = [None for _ in range(self.caseProp['nbSteps'])]
         #
-        self.FRF = [None for _ in range(self.caseProp['nbSteps'])]
+        if self.caseProp['computeFRF']:
+            self.FRF = np.zeros(self.caseProp['nbSteps'])
         #
         if self.paraData['gradCompute']:
             self.pressureUncorrectGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType()) for _ in range(self.getNbGrad())]
@@ -556,7 +557,7 @@ class solverTools:
         #plot and export results (FRF, pressure fields and gradients)
         if self.flags['saveResults']:
             self.saveFRF(paraName=False,allData=True)
-            self.plotFRF(allData=False,fileOut=self.getResultFile(detPara=False,addTxt='allData',ext='csv'))
+            self.plotFRF(allData=True,fileOut=self.getResultFile(detPara=False,addTxt='allData',ext='csv'))
             
         #
         logging.info("Time to solve the whole problem along sets of parameters - %g s"%(time.process_time()-ticS))
