@@ -1,16 +1,21 @@
+#!/usr/bin/env python3
+
 ###########################################################
-# class to plot the FRF from file 
+# class to plot the FRF from file or dictionary
 # L. LAURENT - 2020 - luc.laurent@lecnam.net
 ###########################################################
 
 import OpenSSL.tsafe
+import matplotlib
 import matplotlib.pyplot as pl
 import matplotlib.cm as mplcm
 import matplotlib.colors as colors
+from cycler import cycler
 import scipy.io
 import pickle
 import numpy as np
 import os
+
 
 def changeExt(fileIn=None,newExt=None):
     """
@@ -24,7 +29,9 @@ def changeExt(fileIn=None,newExt=None):
 
 class plotFRF:
     def __init__(self,fileIn=None,presRef=20e-6,dictIn=None,fileOut=None):
-        self.plot = None
+        matplotlib.interactive(True)
+
+        self.plotCl = None
         self.ready = False
         self.freq = None
         self.frf = None
@@ -41,8 +48,8 @@ class plotFRF:
         #
         #load data from dictionary
         if dictIn is not None:
-            self.ready = self.prepDataDict(dictIn=dictIn)
-        #
+            self.ready = self.prepDataDict(dictData=dictIn)
+        #        
         #plot
         if self.ready:
             self.plot()
@@ -53,6 +60,44 @@ class plotFRF:
                 self.exportPlot(changeExt(fileOut,'tex'))
                 self.exportPlot(changeExt(fileOut,'pdf'))
 
+        #restore non intercative mode and replot
+        matplotlib.interactive(False)
+        if self.ready:
+            self.plotCl.show()
+
+    
+    def normFRF(self,data,dataF=None,typeData=None):
+        """
+        function to normlized FRF (compute in dB) and derivatives
+        """
+        dataOut=data
+        if self.presRef is not None:
+            if typeData == 'f':
+                dataOut=10*np.log10(np.array(data)/(self.presRef**2))
+            if typeData == 'g':
+                dataOut = np.array(data)*10*1/(np.array(dataF)**2)*np.log10(1/(self.presRef**2))*1/np.log(10)
+        return dataOut
+
+    def getUnit(self):
+        """
+        function to get the unit for plotting
+        """
+        if self.presRef is None:
+            txtUnit = str(1)
+        else:
+            txtUnit = 'dB'
+        return txtUnit
+
+    def checkGrad(self,data):
+        """
+        function to check if the gradients data are avialable
+        """
+        gradData = False
+        if data is not None:
+            if len(data)>0:
+                if len(data[0])>0:
+                    gradData = True
+        return gradData
 
     def prepDataFile(self,filename=None):
         """
@@ -62,9 +107,9 @@ class plotFRF:
             #get extension of the file
             ext = os.path.splitext(filename)
             #
-            if ext[1] is '.mat':
+            if ext[1] == '.mat':
                 data = scipy.io.loadmat(filename)
-            if ext[1] is '.pck':
+            if ext[1] == '.pck':
                 f = open(filename,'rb')
                 data = pickle.load(f)
             #read the dictionary and return
@@ -75,6 +120,9 @@ class plotFRF:
         """
         extract data from dictionary
         """
+        if 'presRef' in dictData.keys():
+            if dictData['presRef'] is not None:
+                self.presRef = dictData['presRef']
         if 'frequencies' in dictData.keys():
             if dictData['frequencies'] is not None:
                 if len(dictData['frequencies'])>0:
@@ -83,30 +131,30 @@ class plotFRF:
             if dictData['FRF'] is not None:
                 self.manyParametersSets = False
                 if len(dictData['FRF'])>0:
-                    if isinstance(dictData['FRF'],'list'):
+                    if isinstance(dictData['FRF'],list):
                         self.frf = dictData['FRF']
                         self.manyParametersSets = True
                     else:
                         self.frf = [dictData['FRF']]
         if 'FRFgrad' in dictData.keys():
             if dictData['FRFgrad'] is not None:
-                if len(dictData['FRFgrad'])>0:
+                if self.checkGrad(dictData['FRFgrad']):
                     self.frfGrad = dictData['FRFgrad']
         if 'paraVal' in dictData.keys():
             if dictData['paraVal'] is not None:
                 if len(dictData['paraVal'])>0:
-                    if isinstance(dictData['paraVal'],'list'):
-                        self.paraVal = dictData['paraVal']
-                    else:
-                        self.paraVal = [dictData['paraVal']]
-        if 'paraName' in dictData.keys():
-            if dictData['paraName'] is not None:
-                if len(dictData['paraName'])>0:
-                    self.paraName = dictData['paraName']
-        if 'gradName' in dictData.keys():
-            if dictData['gradName'] is not None:
-                if len(dictData['gradName'])>0:
-                    self.gradName = dictData['gradName']
+                    # if isinstance(dictData['paraVal'],list):
+                    self.paraVal = dictData['paraVal']
+                    # else:
+                    #     self.paraVal = [dictData['paraVal']]
+        if 'name' in dictData.keys():
+            if dictData['name'] is not None:
+                if len(dictData['name'])>0:
+                    self.paraName = dictData['name']
+        if 'nameGrad' in dictData.keys():
+            if dictData['nameGrad'] is not None:
+                if len(dictData['nameGrad'])>0:
+                    self.gradName = dictData['nameGrad']
 
         boolReady = self.freq is not None and self.frf is not None
         return boolReady 
@@ -118,19 +166,19 @@ class plotFRF:
         if freq is not None:
             self.freq = freq
         if frf is not None:
-            if isinstance(frf,'list'):
+            if isinstance(frf,list):
                 self.manyParametersSets = True
                 self.frf = frf
             else:
                 self.frf = [frf]
-        if frfGrad is not None:
+        if self.checkGrad(frfGrad):
             self.frfGrad = frfGrad
         if paraName is not None:
             self.paraName = paraName
         if gradName is not None:
             self.gradName = gradName
         if paraVal is not None:
-            if isinstance(paraVal,'list'):
+            if isinstance(paraVal,list):
                 self.paraVal = paraVal
             else:
                 self.paraVal = [paraVal]
@@ -147,7 +195,7 @@ class plotFRF:
         if self.paraVal is not None and self.paraName is None:
             pVal=self.paraVal
             for itR in pVal:
-                listLabels.append(" ".join(str(x) for x in pVal))
+                listLabels.append(" ".join(str(x) for x in itR))
         if self.paraVal is None and self.paraName is None:
             for it in len(self.frf):
                 listLabels.append("Case: "+str(it))
@@ -160,50 +208,52 @@ class plotFRF:
         """
         self.loadVariables(freq,frf,frfGrad,paraName,gradName,paraVal)
         #generate table of colors
-        NUM_COLORS = len(frf)
+        NUM_COLORS = len(self.frf)
         cm = pl.get_cmap('gist_rainbow')
         cNorm  = colors.Normalize(vmin=0, vmax=NUM_COLORS-1)
         scalarMap = mplcm.ScalarMappable(norm=cNorm, cmap=cm)
+        default_cycler = (cycler(color=[scalarMap.to_rgba(i) for i in range(NUM_COLORS)]))
         #
-        self.plot = pl
-        self.plot.figure(1)
+        self.plotCl = pl
+        self.plotCl.figure(1)
         #
         nbGrad = 0
         nbRows = 1
         nbCols = 1
-        if self.frfGrad is not None:
+        if self.checkGrad(self.frfGrad):
             nbGrad = self.frfGrad[0].shape[1]
             nbCols = 2 
             nbRows = np.ceil((nbGrad+1)/nbCols)
         #
         itSub = nbRows*100+nbCols*10+1
-        ax = self.plot.subplot(itSub)
-        ax.set_color_cycle([scalarMap.to_rgba(i) for i in range(NUM_COLORS)])
+        ax = self.plotCl.subplot(itSub)
+        ax.set_prop_cycle(default_cycler)
         #
         listLabels = self.getListLabels()
         for it,val in enumerate(self.frf):
-            ax.plot(self.freq,val,label = listLabels[it])
+            ax.plot(self.freq.flatten(),self.normFRF(data=val,typeData='f').flatten(),label = listLabels[it])
             #
-            ax.xlabel('Frequency (Hz)')
-            ax.ylabel('Mean quadratic pressure (dB)')
+            ax.set_xlabel('Frequency (Hz)')
+            ax.set_ylabel('Mean quadratic pressure (%s)'%self.getUnit())
             ax.grid(True)
             ax.legend(loc=4)
         #
         if nbCols>1:
             for itP in range(nbGrad):
                 itSub += itP
-                ax = self.plot.subplot(itSub)
+                ax = self.plotCl.subplot(itSub)
                 ax.set_color_cycle([scalarMap.to_rgba(i) for i in range(NUM_COLORS)])
                 for it,gradList in enumerate(self.frfGrad):
-                    self.plot.plot(self.freq,gradList[:,itP])#,label = listLabels[it]
+                    self.plotCl.plot(self.freq,self.norm(gradList[:,itP],self.frf[it],'g'))#,label = listLabels[it]
                     #
                     ax.xlabel('Frequency (Hz)')
                     if self.paraName is not None:
-                        ax.ylabel('Grad. wrt %s of mean quad. press. (dB)'%self.paraName(itP))
+                        ax.ylabel('Grad. wrt %s of mean quad. press. (%s/[para])'%(self.paraName(itP),self.getUnit()))
                     else:
-                        ax.ylabel('Grad. wrt %s of mean quad. press. (dB)'%itP)
+                        ax.ylabel('Grad. wrt %s of mean quad. press. (%s/[para])'%(itP,self.getUnit()))
                     ax.grid(True)
                     ax.legend(loc=4)
+        self.plotCl.show()
 
 
     def exportData(self,fileOut=None):
@@ -217,16 +267,16 @@ class plotFRF:
             data = list()
             headers.append('#Freq')
             for it,val in enumerate(frf):
-                headers.append('FRF'+str(it))
-            if self.frfGrad is not None:
+                headers.append('FRF_'+str(it)+'_'+self.getUnit())
+            if self.checkGrad(self.frfGrad):
                 for it,val in enumerate(frfGrad):
                     for itg,vall in enumerate(val):
                         if self.paraName is None:
-                            headers.append('FRF_'+str(it)+'_G'+self.paraName[itg])
+                            headers.append('FRF_'+str(it)+'_G'+self.paraName[itg]+'_'+self.getUnit())
                         else:
-                            headers.append('FRF_'+str(it)+'_G'+str(itg))
+                            headers.append('FRF_'+str(it)+'_G'+str(itg)+'_'+self.getUnit())
             #prepare data
-            if self.frfGrad is not None:
+            if self.checkGrad(self.frfGrad):
                 data = np.vstack((self.freq,self.frf,self.frfGrad))
             else:
                 data = np.vstack((self.freq,self.frf))
@@ -239,10 +289,10 @@ class plotFRF:
         if self.paraVal is not None:
             import csv
             ext = os.path.splitext(fileOut)
-            fileOut = os.path.join(fileOut.replace(ext,''),'_para',ext)
-            with open(fileOut) as fp:
+            fileOut = ext[0]+'_para'+ext[1]
+            with open(fileOut,'w') as fp:
                 fp.write(';'.join(self.paraName)+'\n')
-                np.savetext(fp, self.paraVal, '%g', ';')
+                np.savetxt(fp, self.paraVal, '%g', ';')
 
 
     def exportPlot(self,fileOut=None):
@@ -250,14 +300,79 @@ class plotFRF:
         export plot as Tikz
         """
         ext = os.path.splitext(fileOut)
-        if ext[1] == '.tex':
-            try:
-                import tikzplotlib as tk 
-                tk.save(fileOut,figure=)
-            except ModuleNotFoundError:
-                print('Tikzplotlib is not available')
-        if ext[1] == '.png' or ext[1] =='.jpg' or ext[1] =='.jpeg' or ext[1] =='.pdf':
-            if self.plot is not None:
-                self.plot.savefig(fileOut)
+        if self.plotCl is not None:
+            if ext[1] == '.tex':
+                try:
+                    import tikzplotlib as tk 
+                    tk.save(fileOut,figure=self.plotCl.figure(1))
+                except ModuleNotFoundError:
+                    print('Tikzplotlib is not available')
+            if ext[1] == '.png' or ext[1] =='.jpg' or ext[1] =='.jpeg' or ext[1] =='.pdf':
+                if self.plotCl is not None:
+                    self.plotCl.savefig(fileOut)
+        else:
+            print('Unable to export picture')
+
+
+#####################################################################################
+#####################################################################################
+#####################################################################################
+#####################################################################################
+#####################################################################################
+#####################################################################################
+
+def usage():
+    print("Usage: ", sys.argv[0], "file1 [file2 or [-ioh [+arg]]")
+    print("\t file1: input file (.mat or .pck) mandatory")
+    print("\t file2: optional output file (to export csv, plot, etc...)")
+    print("\t -i + file1 : input file1")
+    print("\t -o + file2 : input file2")
+
+# function for dealing with options
+def manageOpt(parser):
+    """
+    Manage options/arguments and run
+    """
+    fileIn = None
+    fileOut = None
+    #
+    # parser.add_argument("file1", nargs=1, help="Input data file (mandatory)",default=None)
+    # parser.add_argument("file2", nargs=1, help="Output file (optional)",default=None)
+    parser.add_argument("-i", "--input",nargs=1, help="Input data file (mandatory)",required=True)
+    parser.add_argument("-o", "--output",nargs=1, help="Output file (optional)",required=False)
+    #
+    args = parser.parse_args()
+    #
+    if args.input:
+        fileIn = args.input[0]
+    if args.output:
+        fileOut = args.output[0]    
+    #
+    fileInOk = os.path.exists(fileIn)
+    #
+    if fileInOk:
+        print('Input file: %s - status: %s'%(fileIn,"OK"))
+    else:
+        print('Input file: %s - status: %s'%(fileIn,"does not exist"))
+    if fileOut:
+        fileOutOk = not os.path.exists(fileOut)
+        if fileOutOk:
+            print('Output file: %s - status: Ok'%fileOut)
+        else:
+            print('Output file: %s - status: Already exists (will be overwritten)'%fileOut)
+
+    # run computation
+    if fileInOk:
+        plotFRF(fileIn=fileIn,fileOut=fileOut)
+
+
+# Run autonomous
+if __name__ == '__main__':
+    import sys
+    import argparse
+    #
+    parser = argparse.ArgumentParser()
+    # run with options
+    manageOpt(parser)
 
 

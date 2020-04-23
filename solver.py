@@ -510,3 +510,53 @@ class solverTools:
 ###########################################################
 ###########################################################
 ###########################################################
+
+    def solvePb(self,paraVal=None):
+        """
+        ##################################################################
+        # Method used to solve the whole problem
+        ##################################################################
+        """
+        ticS = time.process_time()
+        if self.nbRuns == 0:
+            self.preProcessMaster()
+        if paraVal is not None:
+            paraVal=np.array(paraVal)
+        else:
+            logging.error('>> Unable to start computation due to no given parameters values')
+            raise
+        #prepare parameters values to run
+        paraValOk=self.prepPara(paraVal)
+        #
+        # along the parameters
+        for valU in paraValOk:
+            self.nbRuns += 1
+            ticV = time.process_time()
+            logging.info("##################################################")
+            self.paraData['val']=valU            
+            txtPara=self.formatPara(valIn=valU)
+            logging.info('Start compute for parameters (nb %i): %s'%(self.nbRuns,txtPara))
+            #initialization for run
+            self.initRun(paraVal=valU)
+
+            # along the frequencies
+            for (itF,Freq) in enumerate(self.getFrequencies()):
+                # solve the problem
+                self.solvePbOneStep(itF,len(self.getFrequencies(total=True)),Freq)
+            #export results (FRF, pressure fields and gradients)
+            if self.flags['saveResults']:
+                self.exportFieldsOnePara(paraName=True)
+                self.saveFRF(paraName=True)
+            # append dat to history
+            self.paraData['oldval'].append(valU)
+            self.allFRF.append(self.FRF)
+            self.allFRFgrad.append(self.FRFgrad)
+            #
+            logging.info("Time to solve the whole problem for set of parameters nb %i - %g s"%(self.nbRuns,time.process_time()-ticV))
+        #plot and export results (FRF, pressure fields and gradients)
+        if self.flags['saveResults']:
+            self.saveFRF(paraName=False,allData=True)
+            self.plotFRF(allData=False,fileOut=self.getResultFile(detPara=False,addTxt='allData',ext='csv'))
+            
+        #
+        logging.info("Time to solve the whole problem along sets of parameters - %g s"%(time.process_time()-ticS))

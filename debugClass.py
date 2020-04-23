@@ -34,6 +34,7 @@ mechaBD = dict()
 mechaBD['celerity'] = 340
 mechaBD['rho'] = 1.2
 mechaBD['fluid_damping'] = 1+0.01j
+mechaBD['pressRef'] = 20e-6
 PB.loadMechaProperties(mechaBD)
 
 #load data

@@ -202,6 +202,9 @@ class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
     Frequencies = []            # frequencies for computation
     FRF = []                    # results of frequency response function
     FRFgrad = list()            # gradients of the FRF
+    #
+    allFRF = list()             #save all FRF along iterations on parameters
+    allFRFgrad = list()         # save all FRF gradients along iterations on parameters
 
     ##############
     #others data
@@ -237,101 +240,8 @@ class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
         if os.path.islink(fileLogLast):
             os.unlink(fileLogLast)
         os.symlink(loggingFile,fileLogLast)
-        
-
 
     
-
-    
-
-   
-
-
-
-
- 
-
-
-
-
- 
-
-
-
-
-
- 
-    
-
-
-
-
-
-
- 
-
-
-
-
-        
-        
-
-
-
-
-
-
-
-
-
-    
-
-
- 
-
-
-    
-
-    def solvePb(self,paraVal=None):
-        """
-        ##################################################################
-        # Method used to solve the whole problem
-        ##################################################################
-        """
-        ticS = time.process_time()
-        if self.nbRuns == 0:
-            self.preProcessMaster()
-        if paraVal is not None:
-            paraVal=np.array(paraVal)
-        else:
-            logging.error('>> Unable to start computation due to no given parameters values')
-            raise
-        #prepare parameters values to run
-        paraValOk=self.prepPara(paraVal)
-        #
-        # along the parameters
-        for valU in paraValOk:
-            self.nbRuns += 1
-            ticV = time.process_time()
-            logging.info("##################################################")
-            self.paraData['val']=valU
-            txtPara=self.formatPara(valIn=valU)
-            logging.info('Start compute for parameters (nb %i): %s'%(self.nbRuns,txtPara))
-            #initialization for run
-            self.initRun(paraVal=valU)
-
-            # along the frequencies
-            for (itF,Freq) in enumerate(self.getFrequencies()):
-                # solve the problem
-                self.solvePbOneStep(itF,len(self.getFrequencies(total=True)),Freq)
-            #export results (FRF, pressure fields and gradients)
-            if self.flags['saveResults']:
-                self.exportFieldsOnePara(paraName=True)
-                self.saveFRF(paraName=True)
-            #
-            logging.info("Time to solve the whole problem for set of parameters nb %i - %g s"%(self.nbRuns,time.process_time()-ticV))
-        #
-        logging.info("Time to solve the whole problem along sets of parameters - %g s"%(time.process_time()-ticS))
         
 
 

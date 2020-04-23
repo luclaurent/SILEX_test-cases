@@ -456,28 +456,23 @@ class postProcess:
             typeSave = self.data['exportData']
             logging.info('Use default format:  %s'%(typeSave))
         if self.caseProp['computeFRF']:            
-            #build dictionary
-            dictOut=self.paraData
-            if allData: 
-                dictOut['frequencies']=self.Frequencies
-                dictOut['FRF']=self.FRF
-                dictOut['FRFgrad']=self.FRFgrad
-            else:
-                dictOut['frequencies']=self.Frequencies
-                dictOut['FRF']=self.allFRF
-                dictOut['FRFgrad']=self.allFRFgrad
+            dictOut=self.getOutputDict(allData)
+            #
+            txt=''
+            if allData:
+                txt='_all'
             if typeSave is 'mat':
                 #clean dictionary
                 utils.replace_none(dictOut)
                 #export data
-                scipy.io.savemat(self.getResultFile(detPara=paraName,addTxt='results',ext='mat'),mdict=dictOut)
-                logging.info('Export data in %s'%(self.getResultFile(detPara=paraName,addTxt='results',ext='mat')))
+                scipy.io.savemat(self.getResultFile(detPara=paraName,addTxt='results'+txt,ext='mat'),mdict=dictOut)
+                logging.info('Export data in %s'%(self.getResultFile(detPara=paraName,addTxt='results'+txt,ext='mat')))
             if typeSave is 'pickle':
                 #export data
-                f = open(self.getResultFile(detPara=paraName,addTxt='results',ext='pck'))
+                f = open(self.getResultFile(detPara=paraName,addTxt='results'+txt,ext='pck'))
                 pickle.dump(dictOut,f)
                 f.close()
-                logging.info('Export data in %s'%(self.getResultFile(detPara=paraName,addTxt='results',ext='pck')))
+                logging.info('Export data in %s'%(self.getResultFile(detPara=paraName,addTxt='results'+txt,ext='pck')))
         else:
             logging.info('Nothing to export (FRF not computed)')
 
@@ -489,13 +484,46 @@ class postProcess:
 ###########################################################
 ###########################################################
 
-    def plotFRF(self):
+    def getOutputDict(self,allData=False):
+        """
+        ##################################################################
+        # Function used to create an output dictionary
+        ##################################################################
+        """
+        #build dictionary
+        dictOut=self.paraData
+        if allData: 
+            dictOut['frequencies']=self.Frequencies
+            dictOut['FRF']=self.FRF
+            dictOut['FRFgrad']=self.FRFgrad
+            dictOut['paraVal']=self.paraData['val']
+        else:
+            dictOut['frequencies']=self.Frequencies
+            dictOut['FRF']=self.allFRF
+            dictOut['FRFgrad']=self.allFRFgrad
+            dictOut['paraVal']=self.paraData['oldval']
+        return dictOut
+
+
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+
+    def plotFRF(self,allData=False,fileOut=None):
         """
         ##################################################################
         # Function used to plot FRF
         ##################################################################
         """
-        pass
+        if self.caseProp['computeFRF']:            
+            from plotFRF import plotFRF
+            dictOut=self.getOutputDict(allData)
+            plotFRF(dictIn=dictOut,fileOut=fileOut)            
+        else:
+            logging.info('Nothing to plot (FRF not computed)')
 
 
 ###########################################################
