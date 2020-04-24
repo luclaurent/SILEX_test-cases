@@ -145,7 +145,7 @@ class LSmanual:
             if len(listExport)>0:
                 LevelSetgradExport=list()
                 paraNameExport=list()
-                for it in listExport:
+                for it,v in enumerate(listExport):
                     LevelSetgradExport.append(self.LevelSetGrad[it])
                     paraNameExport.append(self.paraName[it])
             else:

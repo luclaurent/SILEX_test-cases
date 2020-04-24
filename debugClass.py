@@ -6,12 +6,14 @@ import SILEXclass
 # create SILEX object
 PB = SILEXclass.SILEX()
 
+PB.debug = False
+
 #load case properties
 caseBD = dict()
 caseBD['name'] = 'test'
 caseBD['freqMax'] = 100            # maximum frequency of the range
 caseBD['freqMin'] = 0.1         # minimum frequency of the range
-caseBD['nbSteps'] = 2          # number of frequency steps
+caseBD['nbSteps'] = 3          # number of frequency steps
 caseBD['modal'] = False         # modal version of the computation (building of modal basis and use it for gradients)
 caseBD['computeFRF'] = True     # computation of the FRF in control volume
 caseBD['typeLS'] = 'manual'           # type of Level-Set (FromMesh or manual)
@@ -23,10 +25,8 @@ paraBD = dict()
 paraBD['oldval'] = list()       # previous values of parameters
 paraBD['val'] = []              # current values of parameters
 paraBD['name'] = []             # name of parameters
-paraBD['nb'] = []               # number of parameters
 paraBD['nameGrad'] = []         # name of parameters for gradients
-paraBD['nbGrad'] = []           # number of gradients
-paraBD['gradCompute'] = False   # compute gradients or not
+paraBD['gradCompute'] = True   # compute gradients or not
 PB.loadPara(paraBD)
 
 #load mechanical properties
@@ -61,6 +61,6 @@ bcdef['disp']={'type':'bbx','data':[0,0,5,5,0,0],'values':3.1250E-05}
 PB.loadBC(bcdef)
 
 #solve the problem
-PB.solvePb([[3.,3.,1.,1.],[3.,3.0000000001,1.,1.]])
+PB.solvePb([[3.,3.,1.,1.]])#,[3.,3.0000000001,1.,1.]])
 
 # raise

@@ -221,7 +221,7 @@ class plotFRF:
         nbRows = 1
         nbCols = 1
         if self.checkGrad(self.frfGrad):
-            nbGrad = self.frfGrad[0].shape[1]
+            nbGrad = len(self.frfGrad[0])
             nbCols = 2 
             nbRows = np.ceil((nbGrad+1)/nbCols)
         #
@@ -242,9 +242,9 @@ class plotFRF:
             for itP in range(nbGrad):
                 itSub += itP
                 ax = self.plotCl.subplot(itSub)
-                ax.set_color_cycle([scalarMap.to_rgba(i) for i in range(NUM_COLORS)])
+                ax.set_prop_cycle(default_cycler)
                 for it,gradList in enumerate(self.frfGrad):
-                    self.plotCl.plot(self.freq,self.norm(gradList[:,itP],self.frf[it],'g'))#,label = listLabels[it]
+                    self.plotCl.plot(self.freq,self.normFRF(gradList[:,itP],self.frf[it],'g'))#,label = listLabels[it]
                     #
                     ax.xlabel('Frequency (Hz)')
                     if self.paraName is not None:

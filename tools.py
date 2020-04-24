@@ -195,11 +195,27 @@ class tools:
         ##################################################################
         # obtain the number of computed gradients
         ##################################################################
+        """        
+        return len(self.getNameGrad())
+
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+
+    def getNbPara(self):
         """
-        nbG = self.paraData['nbGrad']
-        if not nbG:
-            nbG = len(self.paraData['name'])
-        return nbG
+        ##################################################################
+        # obtain the number of computed gradients
+        ##################################################################
+        """        
+        if self.paraData['name'] is not None:
+            nbP = len(self.paraData['name'])
+        if self.paraData['val'] is not None:
+            nbP = len(self.paraData['val'])
+        return nbP
 
 
 ###########################################################
@@ -247,8 +263,8 @@ class tools:
         pGrad=['No'] * len(pVal)
         if self.paraData['gradCompute']:            
             if self.getNameGrad():
-                for vv in self.getNameGrad():
-                    pGrad[vv]='Yes'
+                for it,vv in enumerate(self.getNameGrad()):
+                    pGrad[it]='Yes'
             else:
                 pGrad=['Yes'] * len(pVal)
 

@@ -49,6 +49,7 @@ class preProcess:
         # method used to create full path of folders
         ##################################################################
         """
+        logging.info('================================')
         #name of the symlink
         symlinkname='last'
         #create a specific folder for the results
@@ -71,6 +72,7 @@ class preProcess:
 
         #display
         logging.info('Folder for results: %s'%(self.fullPathCurrentResultsFolder))
+        logging.info('================================')
 
 ###########################################################
 ###########################################################
@@ -85,6 +87,7 @@ class preProcess:
         # method used to load mesh files
         ##################################################################
         """
+        logging.info('================================')
         #dictionary of kind of data
         textDict = dict()
         textDict['nodesFluid'] = 'nodes of the fluid'
@@ -153,6 +156,8 @@ class preProcess:
                 logging.error('Unable to read data: %s'%textDict[typeData])
                 logging.error('>>> Unable to read file \'%s\' (file does not exist)'%filename)
                 raise
+        logging.info('================================')
+
 
 ###########################################################
 ###########################################################
@@ -168,6 +173,7 @@ class preProcess:
         # method used to load parameters data with dictionary
         ##################################################################
         """
+        logging.info('================================')
         if dataIn is not None:
             logging.info('>>> Load parameters properties <<<')
             for key in dataIn:
@@ -178,6 +184,7 @@ class preProcess:
             logging.info('>>> Available parameters properties and current values <<<')
             for key in self.paraData:
                 logging.info('>>>> %s: %s'%(key,paraData[key]))
+        logging.info('================================')
 
 ###########################################################
 ###########################################################
@@ -195,11 +202,9 @@ class preProcess:
         """
         if namePara is not None:
             self.paraData['name']=namePara
-            self.paraData['nb']=len(namePara)
         if nameParaGrad is not None:
             if self.paraData['nameGrad'] is None or forceGradName:
-                self.paraData['nameGrad']=namePara
-                self.paraData['nbGrad']=len(namePara)
+                self.paraData['nameGrad']=self.paraData['name']
         if valPara is not None:
             self.paraData['val']=valPara
         if gradCompute is not None:
@@ -222,6 +227,7 @@ class preProcess:
         # method used to load mechanical properties
         ##################################################################
         """
+        logging.info('================================')
         if dataIn is not None:
             logging.info('>>> Load Mechanical properties <<<')
             for key in dataIn:
@@ -232,6 +238,7 @@ class preProcess:
             logging.info('>>> Available Mechanical properties and current values <<<')
             for key in self.mechaProp:
                 logging.info('>>>> %s: %s'%(key,mechaProp[key]))
+        logging.info('================================')
 
 ###########################################################
 ###########################################################
@@ -247,6 +254,7 @@ class preProcess:
         # load data for the case (mesh file, directories,...)
         ##################################################################
         """
+        logging.info('================================')
         if dataIn is not None:
             logging.info('>>> Load data  <<<')
             for key in dataIn:
@@ -257,6 +265,7 @@ class preProcess:
             logging.info('>>> Available data and current values <<<')
             for key in self.data:
                 logging.info('>>>> %s: %s'%(key,mechaProp[key]))
+        logging.info('================================')
 
 ###########################################################
 ###########################################################
@@ -272,6 +281,7 @@ class preProcess:
         # method used to load computation properties
         ##################################################################
         """
+        logging.info('================================')
         if dataIn is not None:
             logging.info('>>> Load properties for computation <<<')
             for key in dataIn:
@@ -284,6 +294,8 @@ class preProcess:
                 logging.info('>>>> %s: %s'%(key,mechaProp[key]))
         # try to prepare the case
         self.prepCase()
+        logging.info('================================')
+        
 
 ###########################################################
 ###########################################################
@@ -300,6 +312,7 @@ class preProcess:
         ##################################################################
         """
         if dataIn is not None:
+            logging.info('================================')
             logging.info('>>> Load boundary condition(s) <<<')
             for key in dataIn:
                 if key=='disp':
@@ -308,6 +321,7 @@ class preProcess:
                 if key=='press':
                     self.caseProp['bcpress'].append(dataIn[key])
                     logging.info('>> Add new bc: type pressure (nb %i)'%len(self.caseProp['bcpress']))
+            logging.info('================================')
 
 ###########################################################
 ###########################################################

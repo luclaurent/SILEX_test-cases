@@ -41,6 +41,7 @@ class solverTools:
         # function used to build the LevelSet (signed) and the gradient of the level-set
         ##################################################################
         """
+        logging.info('================================')
         logging.info("Build Level-set: type %s"%(typeLS))
         tic = time.process_time()
         if typeLS is "FromMesh":
@@ -88,6 +89,7 @@ class solverTools:
         # Find the enriched parts using the Level-set
         ##################################################################
         """
+        logging.info('================================')
         logging.info("Find enriched elements and nodes using LS")
         tic = time.process_time()
         #
@@ -133,6 +135,7 @@ class solverTools:
         # Build second member
         ##############################################################
         """    
+        logging.info('================================')
         logging.info("Build second member")
         tic = time.process_time()
         #fluid vector second member
@@ -148,7 +151,7 @@ class solverTools:
         if self.paraData['gradCompute']:
             logging.info("Build gradient of second member")
             tic = time.process_time()
-            for it in self.paraData['nameGrad']:
+            for it in self.getNameGrad():
                 self.dUF.append(None) 
             logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
 
@@ -166,6 +169,7 @@ class solverTools:
         # Compute Standard Fluid Matrices
         ##############################################################
         """
+        logging.info('================================')
         logging.info("Build fluid operators")
         tic = time.process_time()   
         # build matrices using vector description
@@ -188,7 +192,7 @@ class solverTools:
         if self.paraData['gradCompute']:
             logging.info("Build fluid gradient operators")
             tic = time.process_time()
-            for it in self.paraData['nameGrad']:
+            for it in self.getNameGrad():
                 self.dKFF.append(None) 
                 self.dMFF.append(None) 
             logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
@@ -207,6 +211,7 @@ class solverTools:
         # Compute Heaviside enrichment
         ##################################################################
         """
+        logging.info('================================')
         logging.info("Build enriched operators")
         tic = time.process_time()  
         # build matrices using vector description
@@ -236,14 +241,14 @@ class solverTools:
         if self.paraData['gradCompute']:
             logging.info("Build gradient of enriched operators")
             tic = time.process_time()
-            for it in range(0,self.getNbGrad()):
+            for it in range(self.getNbGrad()):
                 #compute gradients matrices for each selected parameter
-                dKAAx,dKFAx,dMAAx,dMFAx=self.buildGoperators(self,it)
+                dKAAx,dKFAx,dMAAx,dMFAx=self.buildGOperators(it)
                 #store
                 self.dKAA.append(dKAAx) 
-                self.dKFA.append(dKAAx) 
-                self.dMAA.append(dKAAx) 
-                self.dMFA.append(dKAAx) 
+                self.dKFA.append(dKFAx) 
+                self.dMAA.append(dMAAx) 
+                self.dMFA.append(dMFAx) 
             logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
 
 ###########################################################
@@ -260,6 +265,7 @@ class solverTools:
         # Construct the whole system
         #################################################################
         """
+        logging.info('================================')
         logging.info("Assembly of operators of the whole problem")
         tic = time.process_time()  
         #
@@ -281,14 +287,33 @@ class solverTools:
         if self.paraData['gradCompute']:
             logging.info("Build gradient of the assembled operators")
             tic = time.process_time()            
-            for it in range(0,self.getNbGrad()):
+            for it in range(self.getNbGrad()):
+                #build submatrices
+                K11 = None; K12 = None; K21 = None; K22 = None
+                M11 = None; M12 = None; M21 = None; M22 = None
+                # 
+                if self.dKFF[it] is not None:
+                    K11 = fd*self.dKFF[it][self.SolvedDofF, :][:, self.SolvedDofF]
+                if self.dKFA[it] is not None:
+                    K12 = fd*self.dKFA[it][self.SolvedDofF, :][:, self.SolvedDofA]
+                    K21 = fd*self.dKFA[it][self.SolvedDofA, :][:, self.SolvedDofF]
+                if self.dKAA[it] is not None:
+                    K22 = fd*self.dKAA[it][self.SolvedDofA, :][:, self.SolvedDofA]
+                #
+                if self.dMFF[it] is not None:
+                    M11 = self.dMFF[it][self.SolvedDofF, :][:, self.SolvedDofF]
+                if self.dMFA[it] is not None:
+                    M12 = self.dMFA[it][self.SolvedDofF, :][:, self.SolvedDofA]
+                    M21 = self.dMFA[it][self.SolvedDofA, :][:, self.SolvedDofF]
+                if self.dMAA[it] is not None:
+                    M22 = self.dMAA[it][self.SolvedDofA, :][:, self.SolvedDofA]
                 # build full stiffness and mass gradient matrices
-                dK.append(scipy.sparse.construct.bmat([
-                    [fd*self.dKFF[it][self.SolvedDofF, :][:, self.SolvedDofF], fd*self.dKFA[it][self.SolvedDofF, :][:, self.SolvedDofA]],
-                    [fd*self.dKFA[it][self.SolvedDofA, :][:, self.SolvedDofF], fd*self.dKAA[it][self.SolvedDofA, :][:, self.SolvedDofA]]]))
-                dM.append(scipy.sparse.construct.bmat([
-                    [self.dMFF[it][self.SolvedDofF, :][:, self.SolvedDofF], self.dMFA[it][self.SolvedDofF, :][:, self.SolvedDofA]],
-                    [self.dMFA[it][self.SolvedDofA, :][:, self.SolvedDofF], self.dMAA[it][self.SolvedDofA, :][:, self.SolvedDofA]]]))
+                self.dK.append(scipy.sparse.construct.bmat([
+                    [K11,K12],
+                    [K21,K22]]))
+                self.dM.append(scipy.sparse.construct.bmat([
+                    [M11,M12],
+                    [M21,M22]]))
             #
             logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
 
@@ -306,15 +331,16 @@ class solverTools:
         # Build gradients operators one by one
         ##################################################################
         """
-        logging.info(' Build gradient matrices for parameter '+self.paraData['NameGrad'][itG])
+        logging.info('================================')
+        logging.info(' Build gradient matrices for parameter '+self.paraData['nameGrad'][itG])
         #compute gradients matrices and indices
         # print(silex_lib_xfem_acou_tet4.globalacousticgradientmatrices.__doc__)
         IIf, JJf, Vfak_gradient, Vfam_gradient =\
             silex_lib_xfem_acou_tet4.globalacousticgradientmatrices(self.fluidNodes,
                                                                     self.fluidElems,
                                                                     self.LevelSet,
-                                                                    self.paraData['celerity'],
-                                                                    self.paraData['rho'],
+                                                                    self.mechaProp['celerity'],
+                                                                    self.mechaProp['rho'],
                                                                     self.LevelSetGradient[itG])
         #build sparse matrices
         dKAA_dtheta=None
@@ -324,7 +350,7 @@ class solverTools:
             shape=(self.fluidNbDofs, self.fluidNbDofs))
         dMFA_dtheta = scipy.sparse.csc_matrix(
             (Vfam_gradient, (IIf, JJf)),
-             hape=(self.fluidNbDofs, self.fluidNbDofs))
+             shape=(self.fluidNbDofs, self.fluidNbDofs))
         #
         return dKAA_dtheta,dKFA_dtheta,dMAA_dtheta,dMFA_dtheta
 
@@ -413,6 +439,7 @@ class solverTools:
         """
         Method used to solve the problem for one frequency step
         """
+        logging.info('================================')
         tic = time.process_time()
         #
         logging.info("Rank: %i - Solve whole problem for frequency %g (step %i/%i)"%(self.rankMPI,freq,itF,itMax))
@@ -427,20 +454,20 @@ class solverTools:
         ##### build the fields
         ticB = time.process_time()
         # uncorrected pressure field        
-        self.pressureUncorrect[itF][self.SolvedDofF] = sol[list(range(len(self.SolvedDofF)))].copy()
+        self.pressureUncorrect[self.SolvedDofF,itF] = sol[list(range(len(self.SolvedDofF)))].copy()
         # enrichment field
-        self.pressureEnrichment[itF][self.SolvedDofA] = sol[list(range(len(self.SolvedDofF),len(self.SolvedDofF)+len(self.SolvedDofA)))].copy()
+        self.pressureEnrichment[self.SolvedDofA,itF] = sol[list(range(len(self.SolvedDofF),len(self.SolvedDofF)+len(self.SolvedDofA)))].copy()
         # corrected pressure field
-        self.pressure[itF] = self.pressureUncorrect[itF].copy()
-        self.pressure[itF][self.SolvedDofA] += self.pressureEnrichment[itF][self.SolvedDofA]*np.sign(self.LevelSet[self.SolvedDofA])
+        self.pressure[:,itF] = self.pressureUncorrect[:,itF].copy()
+        self.pressure[self.SolvedDofA,itF] += self.pressureEnrichment[self.SolvedDofA,itF]*np.sign(self.LevelSet[self.SolvedDofA])
         logging.info("Rank: %i - Fields computation - Done - %g s"%(self.rankMPI,time.process_time()-ticB))
         #compute and store FRF on the control volume
         if self.caseProp['computeFRF']:
             self.FRF[itF] = silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(
                 self.fluidElemsControl,
                 self.fluidNodes,
-                self.pressureUncorrect[itF],
-                self.pressureEnrichment[itF],
+                self.pressureUncorrect[:,itF],
+                self.pressureEnrichment[:,itF],
                 self.LevelSet,
                 self.LevelSet*0.-1.0)
         #Compute gradients of fields
@@ -450,30 +477,31 @@ class solverTools:
             # along the parameters
             logging.info("Rank: %i - Start gradients computation"%(self.rankMPI))
             ticC = time.process_time()
-            for itG in range(0,self.paraData['nbGrad']):
+            for itG in range(self.getNbGrad()):
                 ticB = time.process_time()
                 #prepare data
                 tmp = -(self.dK[itG]-(omega**2)*self.dM[itG])*sol
                 Dsol = self.solveLinear(self.K-(omega**2)*self.M,tmp)
-                logging.info("Rank: %i - Prepare and solve linear problem for grad (var: %s/num: %i) - Done - %g s"%(self.rankMPI,self.paraData['nameGrad'],itG,time.process_time()-ticB))
+                logging.info("Rank: %i - Prepare and solve linear problem for grad (var: %s/num: %i) - Done - %g s"%(self.rankMPI,self.getNameGrad()[itG],itG,time.process_time()-ticB))
                 # gradient of uncorrected pressure field
                 self.pressureUncorrectGrad[itG][self.SolvedDofF,itF] = Dsol[list(range(len(self.SolvedDofF)))].copy()
                 # gradient of enrichment field
                 self.pressureUncorrectGrad[itG][self.SolvedDofA,itF] = Dsol[list(range(len(self.SolvedDofF),len(self.SolvedDofF)+len(self.SolvedDofA)))].copy()
                 # gradient of corrected pressure field
-                self.pressureGrad[itG][:,itF] = self.pressureUncorrectGrad.copy()
-                self.pressureGrad[itG][self.SolvedDofA,itG] += self.pressureEnrichmentGrad[itF][self.SolvedDofA,itG]*np.sign(self.LevelSet[self.SolvedDofA].T)
+                self.pressureGrad[itG][:,itF] = self.pressureUncorrectGrad[itG][:,itF].copy()
+                self.pressureGrad[itG][self.SolvedDofA,itF] += self.pressureEnrichmentGrad[itG][self.SolvedDofA,itF]*np.sign(self.LevelSet[self.SolvedDofA].T)
                 #compute and store gradient of FRF on the control volume
                 if self.caseProp['computeFRF']:
                     self.FRFgrad[itG][itF] = silex_lib_xfem_acou_tet4.computegradientcomplexquadratiquepressure(
                         self.fluidElemsControl,
                         self.fluidNodes,
-                        self.pressureUncorrect[itF],
-                        self.pressureUncorrectGrad[itG][:,itF],
+                        self.pressure[:,itF],
+                        self.pressureGrad[itG][:,itF],
                         self.LevelSet)
-            logging.info("Rank: %i - Gradients computation - Done - %g s"%(MPI,time.process_time()-ticC))
+            logging.info("Rank: %i - Gradients computation - Done - %g s"%(self.rankMPI,time.process_time()-ticC))
 
-        logging.info("Rank: %i - Done - Solve whole problem for frequency %g (step %i/%i) in %g s"%(self.rankMPI,freq,itF,itMax,time.process_time()-tic))
+        logging.info("Rank: %i - Done - Solve whole problem for frequency %g (freq step %i/%i) in %g s"%(self.rankMPI,freq,itF+1,itMax,time.process_time()-tic))
+        logging.info('================================')
 
 ###########################################################
 ###########################################################
@@ -489,9 +517,9 @@ class solverTools:
         # Initialize storage for computation
         ##################################################################
         """
-        self.pressureUncorrect = [np.zeros((self.fluidNbDofs),dtype=self.loadType()) for _ in range(self.caseProp['nbSteps'])]
-        self.pressureEnrichment = [np.zeros((self.fluidNbDofs),dtype=self.loadType()) for _ in range(self.caseProp['nbSteps'])]
-        self.pressure = [None for _ in range(self.caseProp['nbSteps'])]
+        self.pressureUncorrect = np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType())
+        self.pressureEnrichment = np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType())
+        self.pressure = np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType())
         #
         if self.caseProp['computeFRF']:
             self.FRF = np.zeros(self.caseProp['nbSteps'])
@@ -518,6 +546,10 @@ class solverTools:
         # Method used to solve the whole problem
         ##################################################################
         """
+        logging.info('================================')
+        logging.info('================================')
+        logging.info('================================')
+        logging.info('================================')
         ticS = time.process_time()
         if self.nbRuns == 0:
             self.preProcessMaster()
@@ -561,3 +593,7 @@ class solverTools:
             
         #
         logging.info("Time to solve the whole problem along sets of parameters - %g s"%(time.process_time()-ticS))
+        logging.info('++++++++++++++++++++++++++++++++')
+        logging.info('++++++++++++++++++++++++++++++++')
+        logging.info('++++++++++++++++++++++++++++++++')
+        logging.info('++++++++++++++++++++++++++++++++')

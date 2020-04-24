@@ -79,6 +79,7 @@ class postProcess:
             file = str(self.classSave.outputfilename.astype('str')).replace(' ','')
             basename = os.path.relpath(file,self.fullPathCurrentResultsFolder).replace('.msh','').replace('.vtk','')
             filelist= [f for f in os.listdir(self.fullPathCurrentResultsFolder) if re.match(basename+'.*\.(msh|vtk)', f)]
+            filelist.sort()
             return filelist
 
 ###########################################################
@@ -330,25 +331,25 @@ class postProcess:
             'name':'Pressure (norm) ('+txtPara+')'})
         #
         if self.paraData['gradCompute']:
-            for itG,txtP in np.ndenumerate(self.paraData['nameGrad']):
+            for itG,txtP in enumerate(self.getNameGrad()):
                 dataW.append({
-                    'field':np.real(self.pressureGrad),
-                    'fielduncorrected':np.real(self.pressureUncorrectGrad),
-                    'fieldenrichment':np.real(self.pressureEnrichmentGrad),
+                    'field':np.real(self.pressureGrad[itG]),
+                    'fielduncorrected':np.real(self.pressureUncorrectGrad[itG]),
+                    'fieldenrichment':np.real(self.pressureEnrichmentGrad[itG]),
                     'type':'nodal',
-                    'name':'Grad. '+txtP+' Pressure (real) ('+txtPara+')'})
+                    'name':'Grad. '+txtP+' Pressure (real part) ('+txtPara+')'})
                 dataW.append({
-                    'field':np.imag(self.pressureGrad),
-                    'fielduncorrected':np.imag(self.pressureUncorrectGrad),
-                    'fieldenrichment':np.imag(self.pressureEnrichmentGrad),
+                    'field':np.imag(self.pressureGrad[itG]),
+                    'fielduncorrected':np.imag(self.pressureUncorrectGrad[itG]),
+                    'fieldenrichment':np.imag(self.pressureEnrichmentGrad[itG]),
                     'type':'nodal',
-                    'name':'Grad. '+txtP+' Pressure (imaginary) ('+txtPara+')'})
+                    'name':'Grad. '+txtP+' Pressure (imaginary part) ('+txtPara+')'})
                 dataW.append({
-                    'field':np.absolute(self.pressureGrad),
-                    'fielduncorrected':np.absolute(self.pressureUncorrectGrad),
-                    'fieldenrichment':np.absolute(self.pressureEnrichmentGrad),
+                    'field':utils.computeNormGradComplexField(self.pressure,self.pressureGrad[itG]),
+                    'fielduncorrected':utils.computeNormGradComplexField(self.pressureUncorrect,self.pressureUncorrectGrad[itG]),
+                    'fieldenrichment':utils.computeNormGradComplexField(self.pressureEnrichment,self.pressureEnrichmentGrad[itG]),
                     'type':'nodal',
-                    'name':'Grad. '+txtP+' Pressure (norm) ('+txtPara+')'})
+                    'name':'Grad. '+txtP+' Pressure (gradient of norm) ('+txtPara+')'})
         #write the file
         self.exportResults(typeExport="manuFields",method=typeSave,dictFields = dataW,fileName = self.getResultFile(detPara=paraName,addTxt='results_fluid',ext=None))
         

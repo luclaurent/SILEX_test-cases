@@ -83,9 +83,7 @@ class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
     paraData['oldval'] = list()       # previous values of parameters
     paraData['val'] = None            # current values of parameters
     paraData['name'] = None           # name of parameters
-    paraData['nb'] = None             # number of parameters
     paraData['nameGrad'] = None       # name of parameters for gradients
-    paraData['nbGrad'] = None         # number of gradients
     paraData['gradCompute'] = False   # compute gradients or not
 
     #material properties
