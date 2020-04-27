@@ -529,7 +529,8 @@ class solverTools:
             self.pressureEnrichmentGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType()) for _ in range(self.getNbGrad())]
             self.pressureGrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType()) for _ in range(self.getNbGrad())]
             #
-            self.FRFgrad=[np.zeros([self.fluidNbDofs,self.caseProp['nbSteps']],dtype=self.loadType()) for _ in range(self.getNbGrad())]
+            if self.caseProp['computeFRF']:
+                self.FRFgrad=np.zeros([self.getNbGrad(),self.caseProp['nbSteps']])
         # initialize class for exporting meshes
         self.classSave = None
 

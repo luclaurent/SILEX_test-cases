@@ -40,7 +40,8 @@ class plotFRF:
         self.gradName = None
         self.presRef = presRef
         self.paraVal = None
-        self.manyParametersSets = False
+        self.lgd = None
+        self.fig = None
 
         #load data from file
         if fileIn is not None:
@@ -129,13 +130,8 @@ class plotFRF:
                     self.freq = dictData['frequencies']
         if 'FRF'  in dictData.keys():
             if dictData['FRF'] is not None:
-                self.manyParametersSets = False
                 if len(dictData['FRF'])>0:
-                    if isinstance(dictData['FRF'],list):
-                        self.frf = dictData['FRF']
-                        self.manyParametersSets = True
-                    else:
-                        self.frf = [dictData['FRF']]
+                    self.frf = dictData['FRF']
         if 'FRFgrad' in dictData.keys():
             if dictData['FRFgrad'] is not None:
                 if self.checkGrad(dictData['FRFgrad']):
@@ -166,11 +162,7 @@ class plotFRF:
         if freq is not None:
             self.freq = freq
         if frf is not None:
-            if isinstance(frf,list):
-                self.manyParametersSets = True
-                self.frf = frf
-            else:
-                self.frf = [frf]
+            self.frf = frf
         if self.checkGrad(frfGrad):
             self.frfGrad = frfGrad
         if paraName is not None:
@@ -215,44 +207,63 @@ class plotFRF:
         default_cycler = (cycler(color=[scalarMap.to_rgba(i) for i in range(NUM_COLORS)]))
         #
         self.plotCl = pl
-        self.plotCl.figure(1)
         #
         nbGrad = 0
         nbRows = 1
         nbCols = 1
         if self.checkGrad(self.frfGrad):
             nbGrad = len(self.frfGrad[0])
-            nbCols = 2 
-            nbRows = np.ceil((nbGrad+1)/nbCols)
+            nbCols = 3 
+            nbRows = int(np.ceil((nbGrad+1)/(nbCols-1)))
         #
-        itSub = nbRows*100+nbCols*10+1
-        ax = self.plotCl.subplot(itSub)
-        ax.set_prop_cycle(default_cycler)
+        itSub = 0
+        itCol = 0
+        #open subplots
+        self.fig,ax2d = self.plotCl.subplots(nbRows, nbCols, constrained_layout=False,squeeze=False,figsize=(6, 5), tight_layout=True)
+        axs = ax2d   #.flatten()    # 1D linear indexing
+        axs[itSub,itCol].set_prop_cycle(default_cycler)
         #
         listLabels = self.getListLabels()
         for it,val in enumerate(self.frf):
-            ax.plot(self.freq.flatten(),self.normFRF(data=val,typeData='f').flatten(),label = listLabels[it])
+            l = axs[itSub,itCol].plot(self.freq.flatten(),self.normFRF(data = val,typeData = 'f').flatten(),label = listLabels[it])
             #
-            ax.set_xlabel('Frequency (Hz)')
-            ax.set_ylabel('Mean quadratic pressure (%s)'%self.getUnit())
-            ax.grid(True)
-            ax.legend(loc=4)
+            axs[itSub,itCol].set_xlabel('Frequency (Hz)')
+            axs[itSub,itCol].set_ylabel('H(f) [%s]'%self.getUnit())
+            # axs[itSub,itCol].set_title('Mean quadratic pressure')
+            axs[itSub,itCol].grid(True)
         #
         if nbCols>1:
             for itP in range(nbGrad):
-                itSub += itP
-                ax = self.plotCl.subplot(itSub)
-                ax.set_prop_cycle(default_cycler)
+                itSub += 1
+                if itSub>=nbRows:
+                    itCol += 1
+                    itSub = 0
+                axs[itSub,itCol].set_prop_cycle(default_cycler)
                 for it,gradList in enumerate(self.frfGrad):
-                    self.plotCl.plot(self.freq,self.normFRF(gradList[:,itP],self.frf[it],'g'))#,label = listLabels[it]
+                    axs[itSub,itCol].plot(self.freq.flatten(),self.normFRF(gradList[itP,:].flatten(),self.frf[it].flatten(),'g'))#,label = listLabels[it])
                     #
-                    ax.xlabel('Frequency (Hz)')
+                    axs[itSub,itCol].set_xlabel('Frequency (Hz)')
                     if self.paraName is not None:
-                        ax.ylabel('Grad. wrt %s of mean quad. press. (%s/[para])'%(self.paraName(itP),self.getUnit()))
+                        axs[itSub,itCol].set_ylabel('dH(f)/d%s [%s/para]'%(self.gradName[itP],self.getUnit()))
+                        # axs[itSub,itCol].set_title('Grad. wrt %s of mean quad. press.'%(self.gradName[itP]))
                     else:
-                        ax.ylabel('Grad. wrt %s of mean quad. press. (%s/[para])'%(itP,self.getUnit()))
-                    ax.grid(True)
-                    ax.legend(loc=4)
+                        axs[itSub,itCol].set_ylabel('dH(f)/dX%s [%s/para]'%(itP))
+                        # axs[itSub,itCol].set_title('Grad. wrt X%s of mean quad. press.'%(itP))
+                    axs[itSub,itCol].grid(True)
+                    # axs[itSub,itCol].legend(loc=4)
+
+        itSub+=1 
+        #remove remaining subplot
+        while itSub < nbRows:            
+            axs[itSub,itCol].axis('off')
+            itSub+=1
+        for itSub in range(nbRows):
+            axs[itSub,2].axis('off')
+
+        self.lgd = self.fig.legend(loc = 'center right',bbox_to_anchor = (1.,0.5),ncol = 1,prop={'size': 6})
+        # self.plotCl.figlegend( l, bbox_to_anchor = (1.,0.5), loc = 'center left' , ncol = 1)#, borderaxespad=0.1, labelspacing=0.,  prop={'size': 13} )
+        self.plotCl.tight_layout()
+        self.plotCl.subplots_adjust(right=0.2)
         self.plotCl.show()
 
 
@@ -304,12 +315,12 @@ class plotFRF:
             if ext[1] == '.tex':
                 try:
                     import tikzplotlib as tk 
-                    tk.save(fileOut,figure=self.plotCl.figure(1))
+                    tk.save(fileOut,figure=self.fig)
                 except ModuleNotFoundError:
                     print('Tikzplotlib is not available')
             if ext[1] == '.png' or ext[1] =='.jpg' or ext[1] =='.jpeg' or ext[1] =='.pdf':
                 if self.plotCl is not None:
-                    self.plotCl.savefig(fileOut)
+                    self.fig.savefig(fileOut)#,bbox_extra_artists=(self.lgd), bbox_inches='tight')
         else:
             print('Unable to export picture')
 

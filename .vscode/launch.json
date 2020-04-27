@@ -6,7 +6,7 @@
     "configurations": [
 
         {
-            "name": "Python : Fichier actuel",
+            "name": "Python : debug class",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/debugClass.py",
@@ -14,7 +14,7 @@
             "cwd": "${workspaceFolder}"
         },
         {
-            "name": "debugFortran",
+            "name": "Python + Fortran : debug class",
             "type": "lldb",
             "request": "launch",
             "program": "python",

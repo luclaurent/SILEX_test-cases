@@ -495,7 +495,7 @@ class postProcess:
         dictOut=self.paraData
         if allData: 
             dictOut['frequencies']=self.Frequencies
-            dictOut['FRF']=self.allFRF
+            dictOut['FRF']=np.vstack(self.allFRF)
             dictOut['FRFgrad']=self.allFRFgrad
             dictOut['paraVal']=self.paraData['oldval']            
         else:
