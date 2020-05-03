@@ -236,7 +236,7 @@ class preProcess:
         else:
             logging.info('>>> Available Mechanical properties and current values <<<')
             for key in self.mechaProp:
-                logging.info('>>>> %s: %s'%(key,mechaProp[key]))
+                logging.info('>>>> %s: %s'%(key,self.mechaProp[key]))
         logging.info('================================')
 
 ###########################################################
@@ -263,7 +263,7 @@ class preProcess:
         else:
             logging.info('>>> Available data and current values <<<')
             for key in self.data:
-                logging.info('>>>> %s: %s'%(key,mechaProp[key]))
+                logging.info('>>>> %s: %s'%(key,self.data[key]))
         logging.info('================================')
 
 ###########################################################
@@ -290,7 +290,7 @@ class preProcess:
         else:
             logging.info('>>> Available properties for computation and current values <<<')
             for key in self.caseProp:
-                logging.info('>>>> %s: %s'%(key,mechaProp[key]))
+                logging.info('>>>> %s: %s'%(key,self.mechcasePropaProp[key]))
         # try to prepare the case
         self.prepCase()
         logging.info('================================')

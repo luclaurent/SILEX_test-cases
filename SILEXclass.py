@@ -223,7 +223,7 @@ class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
         ##################################################################
         """        
         #initialize logging
-        loggingFile = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")+"_SILEX.log"        
+        loggingFile = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'_SILEX.log'        
         logging.basicConfig(
             handlers=[
                 logging.FileHandler(loggingFile),
@@ -233,10 +233,10 @@ class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
             level=logging.INFO,
             datefmt='%Y-%m-%d %H:%M:%S')
             #
-        logging.info("##################################################")
-        logging.info("##################################################")
-        logging.info("##################################################")
-        logging.info("##               Load SILEX object              ##")
+        logging.info('##################################################')
+        logging.info('##################################################')
+        logging.info('##################################################')
+        logging.info('##               Load SILEX object              ##')
         #create symlink to the file
         fileLogLast = 'last.log'
         if os.path.islink(fileLogLast):
