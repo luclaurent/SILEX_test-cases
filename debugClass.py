@@ -18,6 +18,9 @@ caseBD['modal'] = False         # modal version of the computation (building of 
 caseBD['computeFRF'] = True     # computation of the FRF in control volume
 caseBD['typeLS'] = 'manual'           # type of Level-Set (FromMesh or manual)
 caseBD['typeGEOstruct'] = '3D_sphere'   # type of geometry of the structure (in the case of manual declaration (see structTools.py))
+caseBD['coupling'] = False   # IFS coupling
+caseBD['poromaterial'] = False   # consider poromaterials or not
+caseBD['structure'] = True   # consider structure (if not coupling is deactivated aswell)
 PB.loadComputeProperties(caseBD)
 
 #parameters values

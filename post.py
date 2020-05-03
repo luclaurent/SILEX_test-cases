@@ -13,8 +13,8 @@ import pickle
 #
 import utils
 #
-from SILEX import classMeshField_mod as cl
 from SILEX import silex_lib_xfem_acou_tet4
+from SILEX import MeshField
 
 class postProcess:
 
@@ -23,60 +23,26 @@ class postProcess:
         ##################################################################
         # function used to export results and mesh via fortran classMeshField
         ##################################################################
-        """
-        #class used to catch the stdout of Fortran
-        clSTD = utils.RedirectFortran('logfortran.tmp.log')
-        funExport= lambda x: logging.info('%s%s'%('FORTRAN: ',x))
-        
+        """        
         #first initialization
         if not self.classSave:
-            if self.LevelSet is not None and self.fluidNodes is not None and self.fluidElems is not None:
-                
-                #initialized class for results export                
-                clSTD.start()
-                self.classSave = cl.classmeshfield
-                self.classSave.init(self.fluidNodes,self.fluidElems,self.LevelSet)
-                clSTD.stop(funExport)
-            else:
-                logging.error('Unable to initialize the saving class due to a lack of data')
-        #declare the type of output
-        if writerMethod is not None and fileName is not None:
-            if writerMethod is "msh" or writerMethod is "mshv2":
-                typeExport="msh"
-            if writerMethod is "vtk":                
-                typeExport="vtk"
-            #declare the writer
-            clSTD.start()
-            self.classSave.declarewriter(fileName,typeExport)
-            clSTD.stop(funExport)
-        else:
-            if writerMethod is None:
-                logging.warning('Writer method not declared (use %s)'%self.classSave.typeWriter)
-            if fileName is None:
-                logging.warning('fileName method not declared  (use %s)'%self.classSave.outputFileName)
+            #initialized class for results export
+            self.classSave = MeshField.MeshField(self.fluidNodes,self.fluidElems,self.LevelSet)
+        #declare the writer
+        self.classSave.setWriter(fileName,writerMethod)
         #append fields to the existing file(s)
         writeOk=True
         if uncorrectedField is not None and enrichmentField is not None:
             writeOk=True
-            clSTD.start()
-            if fieldName is not None:
-                self.classSave.loadfields(uncorrectedField,enrichmentField,fieldName.replace(' ','_'))
-            else:
-                self.classSave.loadfields(uncorrectedField,enrichmentField)
-            clSTD.stop(funExport)
+            self.classSave.addField(uncorrectedField,enrichmentField,fieldName)            
         #append field without correction
         if uncorrectedField is not None and enrichmentField is None:
             writeOk=True
-            clSTD.start()
-            if fieldName is not None:
-                self.classSave.loadfieldscorrected(uncorrectedField,fieldName.replace(' ','_'))
-            else:
-                self.classSave.loadfieldscorrected(uncorrectedField)
-            clSTD.stop(funExport)
+            self.classSave.addFieldcorrected(uncorrectedField,fieldName)
         #create list of written files
         listFiles=None
         if writeOk:            
-            file = str(self.classSave.outputfilename.astype('str')).replace(' ','')
+            file = str(self.classSave.getOutputFilename().astype('str')).replace(' ','')
             basename = os.path.relpath(file,self.fullPathCurrentResultsFolder).replace('.msh','').replace('.vtk','')
             filelist= [f for f in os.listdir(self.fullPathCurrentResultsFolder) if re.match(basename+'.*\.(msh|vtk)', f)]
             filelist.sort()

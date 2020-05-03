@@ -183,7 +183,7 @@ class preProcess:
         else:
             logging.info('>>> Available parameters properties and current values <<<')
             for key in self.paraData:
-                logging.info('>>>> %s: %s'%(key,paraData[key]))
+                logging.info('>>>> %s: %s'%(key,self.paraData[key]))
         logging.info('================================')
 
 ###########################################################
@@ -203,8 +203,7 @@ class preProcess:
         if namePara is not None:
             self.paraData['name']=namePara
         if nameParaGrad is not None:
-            if self.paraData['nameGrad'] is None or forceGradName:
-                self.paraData['nameGrad']=self.paraData['name']
+            self.paraData['nameGrad']=nameParaGrad
         if valPara is not None:
             self.paraData['val']=valPara
         if gradCompute is not None:

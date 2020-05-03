@@ -64,6 +64,7 @@ from SILEX import silex_lib_gmsh
 class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
     #case properties
     caseProp = dict()
+    caseProp['dim'] = 3               # dimension of the problem
     caseProp['freqMax'] = []          # maximum frequency of the range
     caseProp['freqMin'] = []          # minimum frequency of the range
     caseProp['nbSteps'] = []          # number of frequency steps
@@ -77,6 +78,9 @@ class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
     #
     caseProp['typeLS'] = ''           # type of Level-Set (FromMesh or manual)
     caseProp['typeGEOstruct'] = ''    # type of geometry of the structure (in the case of manual declaration (see structTools.py))
+    caseProp['coupling'] = False      # IFS coupling
+    caseProp['poromaterial'] = False  # consider poromaterials or not in 3D
+    caseProp['structure'] = True      # consider structure (if not coupling is deactivated aswell)
 
     #parameters values
     paraData = dict()

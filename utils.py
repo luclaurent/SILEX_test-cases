@@ -234,8 +234,13 @@ class RedirectFortran:
         os.close(self.out)
         # read it
         file = open(self.outfiles,'r')
-        for line in file: 
-            funExport(line.replace('\n',''))
+        #
+        if not funExport:
+            for line in file: 
+                print(line.replace('\n',''))
+        else:
+            for line in file: 
+                funExport(line.replace('\n',''))
         # delete it
         if self.outfiles != os.devnull:
             os.remove(self.outfiles)
