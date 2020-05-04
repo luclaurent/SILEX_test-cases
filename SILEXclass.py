@@ -45,13 +45,6 @@ import post
 import solver
 import tools
 #
-from SILEX import silex_lib_xfem_acou_tet4
-from SILEX import silex_lib_gmsh
-
-
-
-
-
 
 
 ###########################################################
@@ -65,6 +58,7 @@ class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
     #case properties
     caseProp = dict()
     caseProp['dim'] = 3               # dimension of the problem
+    caseProp['typeElem'] = 'TET4'     # type of elements in the provided mesh file
     caseProp['freqMax'] = []          # maximum frequency of the range
     caseProp['freqMin'] = []          # minimum frequency of the range
     caseProp['nbSteps'] = []          # number of frequency steps
@@ -114,6 +108,7 @@ class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
     #
     fullPathCurrentResultsFolder = ''
     #
+    builderFE = None                        # libraries to build Finite Element operators
     saveResults = True                      # flag used to declare that the results must be saved
     classSave = None                        # object to store class for saving result
     debug = True                            # debug mode to write additionnal data
@@ -134,6 +129,7 @@ class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
     ###
     # storage variables
     LevelSet = []               # nodal values of LS (known at fluid nodes) signed
+    LevelSetTangent = []        # nodal values of the tangent LS (known at fluid nodes) signed
     LevelSetU = []              # nodal values of LS (known at fluid nodes) unsigned
     LevelSetGradient = list()   # nodal values of the parametric gradients of LS (known at fluid nodes)
     #

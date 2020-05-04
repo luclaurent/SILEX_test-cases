@@ -11,8 +11,8 @@ import numpy as np
 #
 import utils
 import structTools
+import buildFE
 #
-from SILEX import silex_lib_xfem_acou_tet4
 
 class solverTools:
 
@@ -54,7 +54,7 @@ class solverTools:
             self.loadMesh(type='nodesStruct')
             self.loadMesh(type='elemsStruct')
             # build Level-Set from a structure mesh
-            LevelSet,LevelSetU = silex_lib_xfem_acou_tet4.computelevelset(
+            LevelSet,LevelSetU = self.builderFE.computelevelset(
                 self.fluidNodes,
                 self.structNodes,
                 self.structElems)
@@ -93,7 +93,7 @@ class solverTools:
         logging.info("Find enriched elements and nodes using LS")
         tic = time.process_time()
         #
-        self.EnrichedElems, self.EnrichedNbElems = silex_lib_xfem_acou_tet4.getenrichedelementsfromlevelset(self.fluidElems, self.LevelSet)
+        self.EnrichedElems, self.EnrichedNbElems = self.builderFE.getEnrichedElements(self.fluidElems, self.LevelSet)
         self.EnrichedElems = self.EnrichedElems[list(range(self.EnrichedNbElems))]
         #
         # self.LSEnrichedElems=self.LSEnrichedElems#[self.LSEnrichedElems-1]
@@ -173,9 +173,9 @@ class solverTools:
         logging.info("Build fluid operators")
         tic = time.process_time()   
         # build matrices using vector description
-        IIf, JJf, Vffk, Vffm = silex_lib_xfem_acou_tet4.globalacousticmatrices(
-            self.fluidElems, 
-            self.fluidNodes, 
+        IIf, JJf, Vffk, Vffm = self.builderFE.getGlobalAcousticsMatrices(
+            self.fluidNodes,
+            self.fluidElems,
             self.mechaProp['celerity'], 
             self.mechaProp['rho'])
 
@@ -215,9 +215,9 @@ class solverTools:
         logging.info("Build enriched operators")
         tic = time.process_time()  
         # build matrices using vector description
-        IIaa, JJaa, IIaf, JJaf, Vaak, Vaam, Vafk, Vafm = silex_lib_xfem_acou_tet4.globalxfemacousticmatrices(
-            self.fluidElems, 
-            self.fluidNodes, 
+        IIaa, JJaa, IIaf, JJaf, Vaak, Vaam, Vafk, Vafm = self.builderFE.getEnrichedMatrices(
+            self.fluidNodes,
+            self.fluidElems,
             self.LevelSet, 
             self.mechaProp['celerity'], 
             self.mechaProp['rho'])
@@ -336,12 +336,14 @@ class solverTools:
         #compute gradients matrices and indices
         # print(silex_lib_xfem_acou_tet4.globalacousticgradientmatrices.__doc__)
         IIf, JJf, Vfak_gradient, Vfam_gradient =\
-            silex_lib_xfem_acou_tet4.globalacousticgradientmatrices(self.fluidNodes,
-                                                                    self.fluidElems,
-                                                                    self.LevelSet,
-                                                                    self.mechaProp['celerity'],
-                                                                    self.mechaProp['rho'],
-                                                                    self.LevelSetGradient[itG])
+            self.builderFE.getGradEnrichedMatrices(
+                self.fluidNodes,
+                self.fluidElems,
+                self.LevelSet,
+                self.LevelSetGradient[itG],
+                self.mechaProp['celerity'],
+                self.mechaProp['rho'])
+
         #build sparse matrices
         dKAA_dtheta=None
         dMAA_dtheta=None
@@ -389,6 +391,9 @@ class solverTools:
         self.loadMesh(typeData='elemsFluid',dispFlag=True,filename=self.getDatafile('fluidmesh'))
         # load control volume
         self.loadMesh(typeData='elemsControlFluid',dispFlag=True,filename=self.getDatafile('fluidmesh'))
+        # initialize the builder class for Finite Element
+        if self.builderFE is None:
+            self.builderFE = buildFE.buildFE(dimPB=self.getDim())
         #build fluid operators
         self.buildFluidOperators() 
         #build second member
@@ -463,13 +468,12 @@ class solverTools:
         logging.info("Rank: %i - Fields computation - Done - %g s"%(self.rankMPI,time.process_time()-ticB))
         #compute and store FRF on the control volume
         if self.caseProp['computeFRF']:
-            self.FRF[itF] = silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(
-                self.fluidElemsControl,
+            self.FRF[itF] = self.builderFE.computeQuadraticPressure(
                 self.fluidNodes,
+                self.fluidElemsControl,
                 self.pressureUncorrect[:,itF],
                 self.pressureEnrichment[:,itF],
-                self.LevelSet,
-                self.LevelSet*0.-1.0)
+                self.LevelSet)
         #Compute gradients of fields
         if self.paraData['gradCompute']:
             #initialize variables
@@ -492,9 +496,9 @@ class solverTools:
                 self.pressureGrad[itG][self.SolvedDofA,itF] += self.pressureEnrichmentGrad[itG][self.SolvedDofA,itF]*np.sign(self.LevelSet[self.SolvedDofA].T)
                 #compute and store gradient of FRF on the control volume
                 if self.caseProp['computeFRF']:
-                    self.FRFgrad[itG][itF] = silex_lib_xfem_acou_tet4.computegradientcomplexquadratiquepressure(
-                        self.fluidElemsControl,
+                    self.FRFgrad[itG][itF] = self.builderFE.computeGradQuadraticPressure(
                         self.fluidNodes,
+                        self.fluidElemsControl,
                         self.pressure[:,itF],
                         self.pressureGrad[itG][:,itF],
                         self.LevelSet)
@@ -533,6 +537,7 @@ class solverTools:
                 self.FRFgrad=np.zeros([self.getNbGrad(),self.caseProp['nbSteps']])
         # initialize class for exporting meshes
         self.classSave = None
+
 
 ###########################################################
 ###########################################################
