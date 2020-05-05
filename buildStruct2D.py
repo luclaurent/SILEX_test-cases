@@ -5,7 +5,6 @@ class struct2D :
 
     def __init__(self,name):
         self.name = name #name of the geometric case
-        self.paraName = self.getParaName()
         #
         self.BDparaname = {
             '2D_thick_u':['X','Y','R','T'],
@@ -13,6 +12,9 @@ class struct2D :
             '2D_thin_x_up_wall':None,
             '2D_thick_x_up_wall':['X','Y','R']
             }
+        #
+        self.paraName = self.getParaName()
+        #
 
     def getParaName(self):
         return self.BDparaname[self.name]

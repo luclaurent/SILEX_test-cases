@@ -69,14 +69,14 @@ class LSmanual:
         if typeName[0] == '2':
             self.objBuild = struct2D(typeName)
             self.dim = 2
-        elif typeName[3] == '3':
+        elif typeName[0] == '3':
             self.objBuild = struct3D(typeName)
             self.dim = 3
         else:
             logging.error('Bad type: %s (must start with 2 or 3)'%typeName)
 
         # get the parameters names
-        self.paraName = self.objBuild.getParaname()
+        self.paraName = self.objBuild.getParaName()
         #
         if self.nodes is not None and self.paraVal is not None:
             # check data
