@@ -7,6 +7,9 @@
 import os
 import logging
 import numpy as np
+#
+from buildStruct3D import struct3D
+from buildStruct2D import struct2D
 
 
 ###########################################################
@@ -63,45 +66,33 @@ class LSmanual:
         if paraVal is not None:
             self.paraVal = paraVal
         #
-        if  typeName is '3D_sphere':
-            #
-            self.paraName = ['X', 'Y', 'Z', 'R']
-            #
-            if self.nodes is not None and self.paraVal is not None:
-                # check data
-                if nodes.shape[1]<3:
-                    print('ERROR in manualLS >> bad dimension of nodes array (%i)'%(self.nodes.shape[1]))
-                if len(paraVal)!=4:
-                    print('ERROR in manualLS >> bad number of parameter (%i)'%(len(self.paraVal)))
-                # LS from a simple analytic shape (sphere)
-                lx3 = self.paraVal[0]  # 2.0 # Xc
-                ly3 = self.paraVal[1]  # 2.0 # Yc
-                lz3 = self.paraVal[2]  # 0.0 # YZ
-                R = self.paraVal[3]  # 1.0 # sphere radius
-                
-                #
-                logging.debug("Parameters values")
-                logging.debug("X ", lx3, " Y ", ly3, " Z ", lz3, " R ", R)
-                # analytic LS
-                self.LevelSet = np.sqrt((self.nodes[:, 0]-lx3)**2+(self.nodes[:, 1]-ly3)**2+(self.nodes[:, 2]-lz3)**2)-R
-                self.LevelSetU=np.abs(self.LevelSet)
-                # levelset gradients
-                # Compute LS gradient according to Xc
-                self.LevelSetGrad.append((lx3-nodes[:, 0])/(self.LevelSet+R))
-                # Compute LS gradient according to Yc
-                self.LevelSetGrad.append((ly3-nodes[:, 1])/(self.LevelSet+R))
-                # Compute LS gradient according to Zc
-                self.LevelSetGrad.append((lz3-nodes[:, 2])/(self.LevelSet+R))
-                # Compute LS gradient according to R
-                self.LevelSetGrad.append(nodes[:, 0]*0.-1.)
+        if typeName[0] == '2':
+            self.objBuild = struct2D(typeName)
+            self.dim = 2
+        elif typeName[3] == '3':
+            self.objBuild = struct3D(typeName)
+            self.dim = 3
         else:
-            print('Type %s does not exist'%(typeName))
+            logging.error('Bad type: %s (must start with 2 or 3)'%typeName)
+
+        # get the parameters names
+        self.paraName = self.objBuild.getParaname()
+        #
+        if self.nodes is not None and self.paraVal is not None:
+            # check data
+            if self.nodes.shape[1] != self.dim:
+                logging.error('(manualLS) >> bad dimension of nodes array (%i)'%(self.nodes.shape[1]))
+            if len(paraVal)!=len(self.paraName):
+                logging.error('(manualLS) >> bad number of parameters (%i) - expected: %i'%(len(self.paraVal),len(self.paraName)))
+            #build LS
+            self.LevelSet,self.LevelSetTangent,self.LevelSetU,self.LevelSetGrad = self.objBuild.getLS(self.nodes,paraVal)
     
     def clearData(self):
         """
         clear all data in the class
         """
         self.LevelSet = None         # signed distance (Level-set)
+        self.LevelSetTangent = None  # tangent Level-set
         self.LevelSetU = None        # unsigned distance
         self.LevelSetGrad =list()    # gradients of the Level-set
         self.paraName = None         # name of the parameters
@@ -129,6 +120,14 @@ class LSmanual:
         if self.LevelSet is None:
             self.buildLS()
         return self.LevelSet,self.LevelSetU
+    
+    def exportLST(self):
+        """
+        export the tangent level-set nodal values
+        """
+        if self.LevelSet is None:
+            self.buildLS()
+        return self.LevelSetTangent
 
     def exportLSgrad(self,listExport=None):
         """
