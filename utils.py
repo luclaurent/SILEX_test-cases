@@ -67,7 +67,7 @@ def getNodesBBX(coordinateIn,bbxIn):
     ymin=bbxF[2]
     ymax=bbxF[3]
     flag3d=False
-    if len(bbxF)==6:
+    if len(bbxF)==6 and coordinateIn.shape[1] == 3:
         flag3d=True
         zmin=bbxF[4]
         zmax=bbxF[5]

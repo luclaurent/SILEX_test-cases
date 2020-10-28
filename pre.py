@@ -106,7 +106,7 @@ class preProcess:
                 if typeData=='nodesFluid':
                     logging.info('>> Read %s'%textDict[typeData])
                     tic = time.process_time()
-                    self.fluidNodes = silex_lib_gmsh.ReadGmshNodes(filename, 3)
+                    self.fluidNodes = silex_lib_gmsh.ReadGmshNodes(filename, self.getDim())
                     self.fluidNbNodes=self.fluidNodes.shape[0]
                     self.fluidNbDofs=self.fluidNbNodes
                     logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
@@ -116,7 +116,7 @@ class preProcess:
                 if typeData=='elemsControlFluid':
                     logging.info('>> Read %s'%textDict[typeData])
                     tic = time.process_time()
-                    self.fluidElemsControl, self.idFluidNodesControl = silex_lib_gmsh.ReadGmshElements(filename, 4, 5)  # air, ONLY controlled volume
+                    self.fluidElemsControl, self.idFluidNodesControl = silex_lib_gmsh.ReadGmshElements(filename, self.getElemFluid(), 5)  # air, ONLY controlled volume
                     self.fluidNbElemsControl=self.fluidElemsControl.shape[0]
                     self.fluidNbNodesControl=self.idFluidNodesControl.shape[0]
                     logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
@@ -126,7 +126,7 @@ class preProcess:
                 if typeData=='elemsFluid':
                     logging.info('>> Read %s'%textDict[typeData])
                     tic = time.process_time()
-                    self.fluidElems, self.idFluidNodes = silex_lib_gmsh.ReadGmshElements(filename, 4, 1)  # air, cavity + controlled volume
+                    self.fluidElems, self.idFluidNodes = silex_lib_gmsh.ReadGmshElements(filename,  self.getElemFluid(), 1)  # air, cavity + controlled volume
                     self.fluidNbElems=self.fluidElems.shape[0]
                     self.fluidNbNodes=self.idFluidNodes.shape[0]
                     logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
@@ -136,7 +136,7 @@ class preProcess:
                 if typeData=='nodesStruct':
                     logging.info('>>Read %s'%textDict[typeData])
                     tic = time.process_time()
-                    self.structNodes = silex_lib_gmsh.ReadGmshNodes(filename, 3)
+                    self.structNodes = silex_lib_gmsh.ReadGmshNodes(filename, self.getDim())
                     self.structNbNodes = self.structNodes.shape[0]    
                     logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
                     #
@@ -145,7 +145,7 @@ class preProcess:
                 if typeData=='elemsStruct':
                     logging.info('>> Read %s'%textDict[typeData])
                     tic = time.process_time()
-                    self.structElems, self.idStructNodes = silex_lib_gmsh.ReadGmshElements(filename, 2, 2)
+                    self.structElems, self.idStructNodes = silex_lib_gmsh.ReadGmshElements(filename, self.getElemStruct(), 2)
                     self.structNbElems = self.structElems.shape[0]
                     self.structNbNodes = self.idStructNodes.shape[0]
                     logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))

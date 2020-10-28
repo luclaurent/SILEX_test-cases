@@ -75,6 +75,9 @@ class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
     caseProp['coupling'] = False      # IFS coupling
     caseProp['poromaterial'] = False  # consider poromaterials or not in 3D
     caseProp['structure'] = True      # consider structure (if not coupling is deactivated aswell)
+    #
+    caseProp['elemFluid'] = None      # type of elements for fluid mesh
+    caseProp['elemStruct'] = None     # type of elements for structure mesh
 
     #parameters values
     paraData = dict()

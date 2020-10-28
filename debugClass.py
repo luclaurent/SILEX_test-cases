@@ -11,13 +11,14 @@ PB.debug = False
 #load case properties
 caseBD = dict()
 caseBD['name'] = 'test'
+caseBD['dim'] = 2          # dimension of geometry
 caseBD['freqMax'] = 100            # maximum frequency of the range
 caseBD['freqMin'] = 0.1         # minimum frequency of the range
 caseBD['nbSteps'] = 3          # number of frequency steps
 caseBD['modal'] = False         # modal version of the computation (building of modal basis and use it for gradients)
 caseBD['computeFRF'] = True     # computation of the FRF in control volume
 caseBD['typeLS'] = 'manual'           # type of Level-Set (FromMesh or manual)
-caseBD['typeGEOstruct'] = '3D_sphere'   # type of geometry of the structure (in the case of manual declaration (see structTools.py))
+caseBD['typeGEOstruct'] = '2D_thin_x_low_wall'   # type of geometry of the structure (in the case of manual declaration (see structTools.py))
 caseBD['coupling'] = False   # IFS coupling
 caseBD['poromaterial'] = False   # consider poromaterials or not
 caseBD['structure'] = True   # consider structure (if not coupling is deactivated aswell)
@@ -42,10 +43,10 @@ PB.loadMechaProperties(mechaBD)
 
 #load data
 dataBD = dict()
-dataBD['geomFolder'] = 'cases/Acoustic3D_Structure3D/geom'             # folder of geometry and meshes
+dataBD['geomFolder'] = 'cases/Acoustic2D/geom'             # folder of geometry and meshes
 dataBD['resultsFolder'] = 'results'        # folder of results
 #
-dataBD['originalFluidMeshFile'] = 'cavity_acou3D_struc_3D_v3_air.msh'      # provided fluid mesh file
+dataBD['originalFluidMeshFile'] = 'xfem3_noarea_fin_dim_b_fluid.msh'      # provided fluid mesh file
 dataBD['originalStructGeoFile'] = ''      # provided structure geometry file (parametric, gmsh format...)
 dataBD['originalStructMeshFile'] = ''     # provided structure mesh file
 dataBD['currentStructMeshFile'] = ''      # build structure mesh file (generated from geometry)
@@ -64,6 +65,6 @@ bcdef['disp']={'type':'bbx','data':[0,0,5,5,0,0],'values':3.1250E-05}
 PB.loadBC(bcdef)
 
 #solve the problem
-PB.solvePb([[3.,3.,1.,1.]])#,[3.,3.0000000001,1.,1.]])
+PB.solvePb([[3.,1.]])#,[3.,3.0000000001,1.,1.]])
 
 # raise

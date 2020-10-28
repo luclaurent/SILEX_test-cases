@@ -8,8 +8,10 @@ class struct2D :
         #
         self.BDparaname = {
             '2D_thick_u':['X','Y','R','T'],
-            '2D_thin_x_low_wall':None,
-            '2D_thin_x_up_wall':None,
+            '2D_thin_x_low_wall':['X','H'],
+            '2D_thin_x_up_wall':['X','H'],
+            '2D_thin_y_low_wall':['Y','H'],
+            '2D_thin_y_up_wall':['Y','H'],
             '2D_thick_x_up_wall':['X','Y','R']
             }
         #
@@ -22,7 +24,7 @@ class struct2D :
     def showParaVal(self,paraval):
         #
         logging.debug("Parameters values")
-        logging.debug(' '.join('{}={}'.format(x,n) for x,n in zip(self.getParaName(paraval))))
+        logging.debug(' '.join('{}={}'.format(x,n) for x,n in zip(self.getParaName(),paraval)))
     
     def getLS(self,nodes,paraval):
 
@@ -31,6 +33,8 @@ class struct2D :
         LevelSet = []
         LevelSetU = []
         LevelSetGrad = list()
+        #
+        NbNodesFluid=nodes.shape[0]
         
         if self.name == '2D_thick_u':
             #load values of parameters
@@ -79,7 +83,6 @@ class struct2D :
             strucElem=np.vstack([strucElem,[1,nbNodesAllStruct]])
             # print(strucElem)
             #build level-sets
-            NbNodesFluid=nodes.shape[0]
             LevelSet=np.zeros(NbNodesFluid)
             LevelSet_gradient_X=np.zeros(NbNodesFluid)
             LevelSet_gradient_Y=np.zeros(NbNodesFluid)
@@ -142,16 +145,74 @@ class struct2D :
             LevelSetTangent=nodes[:,1]-max(nodes[:,1])
 
             #store data
-            LevelSetGradient=[LevelSet_gradient_X,LevelSet_gradient_Y,LevelSet_gradient_R,LevelSet_gradient_T]
+            LevelSetGrad=[LevelSet_gradient_X,LevelSet_gradient_Y,LevelSet_gradient_R,LevelSet_gradient_T]
         
         elif self.name == 'u':
             pass
 
         elif self.name == '2D_thin_x_low_wall':
-            pass
+            #load values of parameters
+            x_pos_struc = paraval[0]  # abscissa: position of the wall
+            h_struc = paraval[1]  # height of the wall
+            #level-set
+            LevelSet=nodes[:,0]-x_pos_struc
+            #tangent level-set
+            LevelSetTangent = nodes[:,1]-h_struc
+
+            # level set gradient with respect to parameters
+            LevelSet_gradient_X = -np.ones(NbNodesFluid)
+            LevelSet_gradient_H = np.zeros(NbNodesFluid)  #undefined
+
+            #store data
+            LevelSetGrad = [LevelSet_gradient_X,LevelSet_gradient_H]
 
         elif self.name == '2D_thin_x_up_wall':
-            pass
+            #load values of parameters
+            x_pos_struc = paraval[0]  # abscissa: position of the wall
+            h_struc = paraval[1]  # height of the wall
+            #level-set
+            LevelSet=nodes[:,0]-x_pos_struc
+            #tangent level-set
+            LevelSetTangent = (np.max(nodes[:,1])-h_struc)-nodes[:,1]
+
+            # level set gradient with respect to parameters
+            LevelSet_gradient_X = -np.ones(NbNodesFluid)
+            LevelSet_gradient_H = np.zeros(NbNodesFluid)  #undefined
+
+            #store data
+            LevelSetGrad = [LevelSet_gradient_X,LevelSet_gradient_H]
+
+        elif self.name == '2D_thin_y_low_wall':
+            #load values of parameters
+            y_pos_struc = paraval[0]     # ordinate: position of the wall
+            h_struc = paraval[1]         # height of the wall
+            #level-set
+            LevelSet=nodes[:,1]-y_pos_struc
+            #tangent level-set
+            LevelSetTangent = nodes[:,0]-h_struc
+
+            # level set gradient with respect to parameters
+            LevelSet_gradient_Y = -np.ones(NbNodesFluid)
+            LevelSet_gradient_H = np.zeros(NbNodesFluid)  #undefined
+
+            #store data
+            LevelSetGrad = [LevelSet_gradient_Y,LevelSet_gradient_H]
+
+        elif self.name == '2D_thin_y_up_wall':
+            #load values of parameters
+            y_pos_struc = paraval[0]     # ordinate: position of the wall
+            h_struc = paraval[1]         # height of the wall
+            #level-set
+            LevelSet=nodes[:,1]-x_pos_struc
+            #tangent level-set
+            LevelSetTangent = (np.max(nodes[:,0])-h_struc)-nodes[:,0]
+
+            # level set gradient with respect to parameters
+            LevelSet_gradient_Y = -np.ones(NbNodesFluid)
+            LevelSet_gradient_H = np.zeros(NbNodesFluid)  #undefined
+
+            #store data
+            LevelSetGrad = [LevelSet_gradient_Y,LevelSet_gradient_H]
 
         elif self.name == '2D_thick_x_up_wall':
 
@@ -211,8 +272,12 @@ class struct2D :
             LevelSetTangent=nodes[:,1]-max(nodes[:,1])
 
             #store data
-            LevelSetGradient=[LevelSet_gradient_X,LevelSet_gradient_Y,LevelSet_gradient_R]
+            LevelSetGrad=[LevelSet_gradient_X,LevelSet_gradient_Y,LevelSet_gradient_R]
         else:
             logging.error('Undefined geometry')
+        
+        # compute unsigned level-set
+        if LevelSet is not None:
+            LevelSetU = np.sign(LevelSet)
         #
         return LevelSet,LevelSetTangent,LevelSetU,LevelSetGrad
