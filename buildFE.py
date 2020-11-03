@@ -8,8 +8,7 @@ import sys
 #
 import numpy as np
 #
-from SILEX import silex_lib_xfem_acou_tet4
-from SILEX import silex_lib_tri3_acou
+from SILEX import silex_lib_xfem
 
 class buildFE:
     def __init__(self,dimPB=2,typeElem=None):
@@ -47,18 +46,16 @@ class buildFE:
         """
         Load Fortran's libraries depending on the dimension
         """
-        if self.getTypeElem() == 'TRI3':
-            self.lib = silex_lib_tri3_acou
-            logging.info('SILEX TRI3 library loaded')
-        elif self.getTypeElem() == 'TET4':
-            self.lib = silex_lib_xfem_acou_tet4
-            logging.info('SILEX TRI3 library loaded')
+        self.lib = silex_lib_xfem(self.getTypeElem())
 
-    def buildLevelSet(self,cavityNodes=None,immersedNodes=None,immersedElems=None):
+    def buildLevelSet(self,
+        cavityNodes=None,
+        immersedNodes=None,
+        immersedElems=None):
         """
         Build Level-set from mesh
         """
-        LevelSet,LevelSetU = self.lib.computelevelset(
+        LevelSet,LevelSetU = self.lib.ComputeLevelSet(
                 cavityNodes,        # nodes of the cavity (the level-set will be returned at these nodes)
                 immersedNodes,      # nodes of the immersed volume (no compatibility required)
                 immersedElems)      # elements of the immersed volume
@@ -68,76 +65,121 @@ class buildFE:
         """
         Get the enriched elements from the level-set defined at nodes
         """
-        EnrichedElems, EnrichedNbElems = self.lib.getenrichedelementsfromlevelset(
+        EnrichedElems, EnrichedNbElems = self.lib.getEnrichedElementsFromLevelset(
             cavityElems,    # elements of the cavity (defined with nodes number)
             levelset)       # nodal values defining the signed levelset
         return EnrichedElems, EnrichedNbElems   # enriched elements and number of enriched elements
 
-    def getGlobalAcousticsMatrices(self,cavityNodes=None,cavityElems=None,valueCelerity=None,valueRho=None):
+    def getGlobalAcousticsMatrices(self,
+        cavityNodes=None,
+        cavityElems=None,
+        valueCelerity=None,
+        valueRho=None):
         """
         Get the global acoustics matrices defined via Compressed Sparse Column forms
         """
-        IIf, JJf, Vffk, Vffm = self.lib.globalacousticmatrices(
-            cavityElems,    # elements of the cavity
+        IIf, JJf, Vffk, Vffm = self.lib.getGlobalAcousticMatrices(
             cavityNodes,    # nodes coordinates of the cavity
+            cavityElems,    # elements of the cavity            
             valueCelerity,  # celerity value
             valueRho)       # density value
         return IIf,JJf,Vffk,Vffm    # indices for rows and columns, and matrices values at corresponding indices (k = stiffness matrix, m = mass matrix)
 
-    def getEnrichedMatrices(self,cavityNodes=None,cavityElems=None,levelset=None,valueCelerity=None,valueRho=None):
+    def getEnrichedMatrices(self,
+        cavityNodes=None,
+        cavityElems=None,
+        levelset=None,
+        valueCelerity=None,
+        valueRho=None):
         """
         Get the enriched matrices via XFEM defined via Compressed Sparse Column forms
         """
-        IIaa, JJaa, IIaf, JJaf, Vaak, Vaam, Vafk, Vafm = self.lib.globalxfemacousticmatrices(
-            cavityElems,    # elements of the cavity
+        IIaa, JJaa, IIaf, JJaf, Vaak, Vaam, Vafk, Vafm = self.lib.getGlobalXFEMAcousticMatrices(
             cavityNodes,    # nodes coordinates of the cavity
+            cavityElems,    # elements of the cavity            
             levelset,       # level-set defined at cavity nodes
             valueCelerity,  # celerity value
             valueRho)       # density value
         return IIaa, JJaa, IIaf, JJaf, Vaak, Vaam, Vafk, Vafm # indices for rows and columns, and matrices values at corresponding indices (k = stiffness matrix, m = mass matrix, a = enrichment,f = fluid)
 
-    def getGradEnrichedMatrices(self,cavityNodes=None,cavityElems=None,levelset=None,levelsetGrad=None,valueCelerity=None,valueRho=None):
+    def getGradEnrichedMatrices(self,
+        cavityNodes=None,
+        cavityElems=None,
+        levelset=None,
+        levelsetGrad=None,
+        valueCelerity=None,
+        valueRho=None):
         """
         Get the sensitivities of enriched matrices via XFEM defined via Compressed Sparse Column forms
         """
         IIf, JJf, Vfak_gradient, Vfam_gradient =\
-            silex_lib_xfem_acou_tet4.globalacousticgradientmatrices(cavityNodes,    # nodes of cavity
-                                                                    cavityElems,    # elements of cavity
-                                                                    levelset,       # level-set defined at cavity nodes
-                                                                    valueCelerity,  # celerity value
-                                                                    valueRho,       # density value
-                                                                    levelsetGrad)   # sensitivity of the level-set
+            self.lib.getGlobalAcousticGradientMatrices(cavityNodes,    # nodes of cavity
+                                                    cavityElems,    # elements of cavity
+                                                    levelset,       # level-set defined at cavity nodes
+                                                    levelsetGrad,   # sensitivity of the level-set
+                                                    valueCelerity,  # celerity value
+                                                    valueRho)       # density value
+                                                    
         return IIf, JJf, Vfak_gradient, Vfam_gradient # indices for rows and columns, and matrices values at corresponding indices (k = stiffness matrix, m = mass matrix, a = enrichment,f = fluid)
 
-    def computeQuadraticPressure(self, nodesCavity=None, elemsControlVolume=None, uncorrectedField=None, enrichmentField=None, levelset=None):
+    def computeQuadraticPressure(self,
+        nodesCavity=None,
+        elemsControlVolume=None,
+        uncorrectedField=None,
+        enrichmentField=None,
+        levelset=None):
         """
         Compute the quadratic pressure with an enrichment field depending on the type of variable
         """
-        if np.iscomplexobj(uncorrectedField):   # check if input values are complex
-             quadPress = self.lib.computexfemcomplexquadratiquepressure(                 
-                    elemsControlVolume,     # elements defining the volume in which the quadratic pressure must be computed
-                    nodesCavity,            # all nodes of the cavity
-                    uncorrectedField,       # field not corrected via XFEM enrichment
-                    enrichmentField,        # enrichment part of the field from XFEM
-                    levelset,               # level-set defined via nodal values
-                    levelset*0.-1.0)        #
+        if enrichmentField is None:
+            quadPress = self.lib.getQuadraticPressure(
+                nodesCavity,            # all nodes of the cavity
+                elemsControlVolume,     # elements defining the volume in which the quadratic pressure must be computed
+                uncorrectedField        # field not corrected via XFEM enrichment
+            )
         else:
-            logging.error('Float version not usable')
+            quadPress = self.lib.getXfemQuadratiquePressure(
+                nodesCavity,            # all nodes of the cavity
+                elemsControlVolume,     # elements defining the volume in which the quadratic pressure must be computed
+                uncorrectedField,       # field not corrected via XFEM enrichment
+                enrichmentField,        # enrichment part of the field from XFEM
+                levelset,               # level-set defined via nodal values
+                levelset*0.-1.0,        # tangent level-set
+                1                       # flag for modified Heaviside on the edge
+            )
         
         return quadPress
 
-    def computeGradQuadraticPressure(self, nodesCavity=None, elemsControlVolume=None, Field=None, gradField=None, levelset=None, levelsetgrad=None):
+    def computeGradQuadraticPressure(self,
+        nodesCavity=None,
+        elemsControlVolume=None,
+        Field=None,
+        gradField=None,
+        enrichmentField=None,
+        enrichmentGradField=None,
+        levelset=None):
         """
         Compute sensitivity of the quadratic pressure with an enrichment field depending on the type of variable
         """
-        if np.iscomplexobj(Field):   # check if input values are complex
-             quadPress = self.lib.computegradientcomplexquadratiquepressure(                 
-                    elemsControlVolume,     # elements defining the volume in which the quadratic pressure must be computed
-                    nodesCavity,            # all nodes of the cavity
-                    Field,                  # nodal values of the field (corrected version)
-                    gradField,              # nodal values of sensitivity of the field (corrected version)
-                    levelset)               # level-set defined via nodal values
+        if enrichmentField is None:
+            quadPress = self.lib.getGradQuadraticPressure(
+                nodesCavity,            # all nodes of the cavity
+                elemsControlVolume,     # elements defining the volume in which the quadratic pressure must be computed
+                levelset,               # level-set defined via nodal values
+                Field,                  # field
+                gradField               # gradient of the field
+            )
         else:
-            logging.error('Float version not usable')
+            quadPress = self.lib.getGradXfemQuadraticPressure(
+                nodesCavity,            # all nodes of the cavity
+                elemsControlVolume,     # elements defining the volume in which the quadratic pressure must be computed
+                levelset,               # level-set defined via nodal values
+                levelset*0.-1.0,        # tangent level-set
+                Field,                  # field not corrected via XFEM enrichment
+                enrichmentField,        # enrichment part of the field from XFEM
+                gradField,              # gradient of the field
+                enrichmentGradField,    # gradient of the enrichement field
+                1                       # flag for modified Heaviside on the edge
+            )
         
         return quadPress
