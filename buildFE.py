@@ -18,6 +18,12 @@ class buildFE:
         self.dim = dimPB            # dimension of the problem
         self.typeElem = typeElem    # type of elements
         self.lib = None             # object associated to Fortran library
+        #fix dimension when type type of elements is loaded
+        if self.typeElem is not None:
+            if self.typeElem is 'TRI3':
+                self.dim = 2
+            elif self.typeElem is 'TET4':
+                self.dim = 3
         # check if logging is already loaded
         if not logging.getLogger().hasHandlers():
             logging.basicConfig(stream=sys.stdout, level=logging.INFO)
@@ -44,9 +50,10 @@ class buildFE:
     
     def loadLib(self):
         """
-        Load Fortran's libraries depending on the dimension
+        Load Fortran's libraries depending on the type of elements
         """
-        self.lib = silex_lib_xfem(self.getTypeElem())
+        print(self.getTypeElem())
+        self.lib = silex_lib_xfem.SILEXlibXFEM(typeElem=self.getTypeElem())
 
     def buildLevelSet(self,
         cavityNodes=None,
@@ -61,12 +68,15 @@ class buildFE:
                 immersedElems)      # elements of the immersed volume
         return LevelSet,LevelSetU   # level-set and unsigned level-set
 
-    def getEnrichedElements(self,cavityElems=None,levelset=None):
+    def getEnrichedElements(self,cavityNodes=None,cavityElems=None,structNodes=None,structElems=None,levelset=None):
         """
         Get the enriched elements from the level-set defined at nodes
         """
-        EnrichedElems, EnrichedNbElems = self.lib.getEnrichedElementsFromLevelset(
+        EnrichedElems, EnrichedNbElems = self.lib.getEnrichedElements(
+            cavityNodes,
             cavityElems,    # elements of the cavity (defined with nodes number)
+            structNodes,
+            structElems,
             levelset)       # nodal values defining the signed levelset
         return EnrichedElems, EnrichedNbElems   # enriched elements and number of enriched elements
 

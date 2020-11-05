@@ -11,9 +11,10 @@ import scipy.io
 import numpy as np
 import pickle
 #
-import utils
+import utils,tools
 #
-from SILEX import silex_lib_xfem_acou_tet4
+from SILEX import silex_lib_xfem
+from SILEX import silex_lib_gmsh
 from SILEX import MeshField
 
 class postProcess:
@@ -92,7 +93,7 @@ class postProcess:
                             logging.info("Write: %s"%fileName)
                             #
                             if os.path.exists(fileName):
-                                logging.warning(">>> File %s will OVERWRITTEN"%fileName)
+                                logging.warning(">>> File %s will be OVERWRITTEN"%fileName)
                             #
                             silex_lib_gmsh.WriteResults2(fileName,
                                          self.fluidNodes,
@@ -117,34 +118,14 @@ class postProcess:
                             dataUnc = fields['fielduncorrected']
                             dataEnr = fields['fieldenrichment']
                             #
-                            if dataUnc.shape[1] == self.fluidNbNodes:
-                                funU=lambda x: x.transpose()
-                                logging.warning("Change shape of uncorrected fields")
-                            elif dataUnc.shape[0] == self.fluidNbNodes:
-                                funU=lambda x: x
-                            else:
-                                logging.error("Bad dimension of uncorrected fields to be exported")
-                            #
-                            if dataEnr.shape[1] == self.fluidNbNodes:
-                                funE=lambda x: x.transpose()
-                                logging.warning("Change shape of enrichment fields")
-                            elif dataEnr.shape[0] == self.fluidNbNodes:
-                                funE=lambda x: x
-                            else:
-                                logging.error("Bad dimension of enrichment fields to be exported")
-                            #                            
-                            if os.path.exists(fileName):
-                                logging.warning(">>> File %s will OVERWRITTEN"%fileName)
-                            #
-                            silex_lib_xfem_acou_tet4.makexfemposfilefreq(
+                            silex_lib_xfem.makexfemposfilefreq(
                                 self.fluidNodes,
                                 self.fluidElems, 
                                 dataLS,
-                                funU(dataUnc),
-                                funE(dataEnr),
+                                dataUnc,
+                                dataEnr,
                                 fileName,
                                 fields['name'])
-                            logging.info('File size: %s'%utils.file_size(fileName))
                     #
                     if method is "mshv2" or method is "vtk":
                         #write a pos files (gmsh syntax) which include the discontinuities
@@ -163,24 +144,11 @@ class postProcess:
                             dataUnc = fields['fielduncorrected']
                             dataEnr = fields['fieldenrichment']
                             #
-                            if dataUnc.shape[1] == self.fluidNbNodes:
-                                funU=lambda x: x.transpose()
-                                logging.warning("Change shape of uncorrected fields")
-                            elif dataUnc.shape[0] == self.fluidNbNodes:
-                                funU=lambda x: x
-                            else:
-                                logging.error("Bad dimension of uncorrected fields to be exported")
-                            #
-                            if dataEnr.shape[1] == self.fluidNbNodes:
-                                funE=lambda x: x.transpose()
-                                logging.warning("Change shape of enrichment fields")
-                            elif dataEnr.shape[0] == self.fluidNbNodes:
-                                funE=lambda x: x
-                            else:
-                                logging.error("Bad dimension of enrichment fields to be exported")
+                            funU=tools.fixShapeArray(dataUnc,self.fluidNbNodes,'uncorrected fields')
+                            funE=tools.fixShapeArray(dataEnr,self.fluidNbNodes,'enrichment fields')
                             #                            
                             if os.path.exists(fileName):
-                                logging.warning(">>> File %s will OVERWRITTEN"%fileName)
+                                logging.warning(">>> File %s will be OVERWRITTEN"%fileName)
                             #
                             fileList = self.writeMeshField(
                                 method,
@@ -201,7 +169,7 @@ class postProcess:
                 #export mesh of the cavity
                 if method is "msh":
                     if os.path.exists(fileOk):
-                        logging.warning(">>> File %s will OVERWRITTEN"%fileOk)
+                        logging.warning(">>> File %s will be OVERWRITTEN"%fileOk)
                     #
                     silex_lib_gmsh.WriteResults(fileOk, self.fluidNodes, self.fluidElems, 4)
                     
@@ -211,7 +179,7 @@ class postProcess:
                 #export mesh of the control volume
                 if method is "msh":
                     if os.path.exists(fileOk):
-                        logging.warning(">>> File %s will OVERWRITTEN"%fileOk)
+                        logging.warning(">>> File %s will be OVERWRITTEN"%fileOk)
                     #
                     silex_lib_gmsh.WriteResults(fileOk, self.fluidNodes, self.fluidElemsControl, 4)
                     #
@@ -221,7 +189,7 @@ class postProcess:
                 #export 2D mesh of the structur
                 if method is "msh":                    
                     if os.path.exists(fileOk):
-                        logging.warning(">>> File %s will OVERWRITTEN"%fileOk)
+                        logging.warning(">>> File %s will be OVERWRITTEN"%fileOk)
                     #
                     silex_lib_gmsh.WriteResults2(fileOk, self.structNodes, self.structElems, 2)
                     #
@@ -241,7 +209,7 @@ class postProcess:
                         itP = itP+1
                     #
                     if os.path.exists(fileOk):
-                        logging.warning(">>> File %s will OVERWRITTEN"%fileOk)
+                        logging.warning(">>> File %s will be OVERWRITTEN"%fileOk)
                     #
                     silex_lib_gmsh.WriteResults2(fileOk, self.fluidNodes, self.fluidElems, 4, dataW)
                     #
@@ -251,7 +219,7 @@ class postProcess:
                 if method is "msh":
                     #
                     if os.path.exists(fileOk):
-                        logging.warning(">>> File %s will OVERWRITTEN"%fileOk)
+                        logging.warning(">>> File %s will be OVERWRITTEN"%fileOk)
                     #
                     silex_lib_gmsh.WriteResults2(fileOk,self.fluidNodes, self.fluidElems[self.EnrichedElems], 4)
             logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))

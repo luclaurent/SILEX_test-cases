@@ -211,6 +211,7 @@ class tools:
         # obtain the number of computed gradients
         ##################################################################
         """        
+        nbP = 0
         if self.paraData['name'] is not None:
             nbP = len(self.paraData['name'])
         if self.paraData['val'] is not None:
@@ -264,6 +265,7 @@ class tools:
         # get the type of fluid elements
         ##################################################################
         """
+        eleFluid = None
         if self.caseProp['elemFluid']:
             eleFluid = self.caseProp['elemFluid']
         else:
@@ -287,6 +289,7 @@ class tools:
         # get the type of structure elements
         ##################################################################
         """
+        eleStruct = None
         if self.caseProp['elemStruct']:
             eleStruct = self.caseProp['elemStruct']
         else:
@@ -471,6 +474,8 @@ class tools:
         else:
             paraArray = valIn
         return paraArray
+
+
 
 ###########################################################
 ###########################################################

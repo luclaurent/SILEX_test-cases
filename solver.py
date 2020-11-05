@@ -54,12 +54,12 @@ class solverTools:
             self.loadMesh(type='nodesStruct')
             self.loadMesh(type='elemsStruct')
             # build Level-Set from a structure mesh
-            LevelSet,LevelSetU = self.builderFE.computelevelset(
+            self.LevelSet,self.LevelSetU = self.builderFE.computelevelset(
                 self.fluidNodes,
                 self.structNodes,
                 self.structElems)
             #compute gradient of Level-Set
-            if paraData['gradCompute']:
+            if self.paraData['gradCompute']:
                 pass
 
         if typeLS is "manual":
@@ -92,8 +92,13 @@ class solverTools:
         logging.info('================================')
         logging.info("Find enriched elements and nodes using LS")
         tic = time.process_time()
-        #
-        self.EnrichedElems, self.EnrichedNbElems = self.builderFE.getEnrichedElements(self.fluidElems, self.LevelSet)
+        #        
+        self.EnrichedElems, self.EnrichedNbElems = self.builderFE.getEnrichedElements(
+            self.fluidNodes,
+            self.fluidElems,
+            self.structNodes,
+            self.structElems,
+            self.LevelSet)
         self.EnrichedElems = self.EnrichedElems[list(range(self.EnrichedNbElems))]
         #
         # self.LSEnrichedElems=self.LSEnrichedElems#[self.LSEnrichedElems-1]
@@ -393,7 +398,7 @@ class solverTools:
         self.loadMesh(typeData='elemsControlFluid',dispFlag=True,filename=self.getDatafile('fluidmesh'))
         # initialize the builder class for Finite Element
         if self.builderFE is None:
-            self.builderFE = buildFE.buildFE(dimPB=self.getDim())
+            self.builderFE = buildFE.buildFE(typeElem=self.getElemFluid())
         #build fluid operators
         self.buildFluidOperators() 
         #build second member
@@ -425,7 +430,10 @@ class solverTools:
         #
         self.showDataParaVal()
         #build levelset
-        self.buildLevelSet(typeLS=self.caseProp['typeLS'],typeGEO=self.caseProp['typeGEOstruct'],paraVal=paraVal)
+        self.buildLevelSet(
+            typeLS=self.caseProp['typeLS'],
+            typeGEO=self.caseProp['typeGEOstruct'],
+            paraVal=paraVal)
         #build enriched part
         self.buildEnrichedPart()
         #build operators

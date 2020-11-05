@@ -214,6 +214,27 @@ def addExt(filename,ext=None):
 ###########################################################
 ###########################################################
 ###########################################################
+
+def fixShapeArray(dataIn,sizIn,nameArray=''):
+    """
+    ##################################################################
+    # Generate lambda function to fix shape of array (application transpose)
+    ##################################################################
+    """        
+    funFix=lambda x: x
+    if dataIn.shape[1] == sizIn:
+        funFix=lambda x: x.transpose()
+        logging.warning('Change shape of %s'%nameArray)
+    else:
+        logging.error('Bad dimension of %s to be exported'%nameArray)
+    return funFix
+
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
 # class used to redirect Fortran stdout/stderr
 class RedirectFortran:
     def __init__(self, outputfile=os.devnull):
