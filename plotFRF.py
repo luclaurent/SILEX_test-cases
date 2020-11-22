@@ -5,7 +5,6 @@
 # L. LAURENT - 2020 - luc.laurent@lecnam.net
 ###########################################################
 
-import OpenSSL.tsafe
 import matplotlib
 import matplotlib.pyplot as pl
 import matplotlib.cm as mplcm
@@ -69,7 +68,7 @@ class plotFRF:
     
     def normFRF(self,data,dataF=None,typeData=None):
         """
-        function to normlized FRF (compute in dB) and derivatives
+        function to normalized FRF (compute in dB) and derivatives
         """
         dataOut=data
         if self.presRef is not None:
@@ -240,7 +239,11 @@ class plotFRF:
                     itSub = 0
                 axs[itSub,itCol].set_prop_cycle(default_cycler)
                 for it,gradList in enumerate(self.frfGrad):
-                    axs[itSub,itCol].plot(self.freq.flatten(),self.normFRF(gradList[itP,:].flatten(),self.frf[it].flatten(),'g'))#,label = listLabels[it])
+                    axs[itSub,itCol].plot(
+                        self.freq.flatten(),
+                        self.normFRF(gradList[itP,:].flatten(),
+                        self.frf[it].flatten(),
+                        'g'))#,label = listLabels[it])
                     #
                     axs[itSub,itCol].set_xlabel('Frequency (Hz)')
                     if self.paraName is not None:
@@ -257,8 +260,6 @@ class plotFRF:
         while itSub < nbRows:            
             axs[itSub,itCol].axis('off')
             itSub+=1
-        for itSub in range(nbRows):
-            axs[itSub,2].axis('off')
 
         self.lgd = self.fig.legend(loc = 'center right',bbox_to_anchor = (1.,0.5),ncol = 1,prop={'size': 6})
         # self.plotCl.figlegend( l, bbox_to_anchor = (1.,0.5), loc = 'center left' , ncol = 1)#, borderaxespad=0.1, labelspacing=0.,  prop={'size': 13} )

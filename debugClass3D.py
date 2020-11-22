@@ -29,7 +29,7 @@ paraBD['oldval'] = list()       # previous values of parameters
 paraBD['val'] = []              # current values of parameters
 paraBD['name'] = []             # name of parameters
 paraBD['nameGrad'] = []         # name of parameters for gradients
-paraBD['gradCompute'] = True   # compute gradients or not
+paraBD['gradCompute'] = False   # compute gradients or not
 PB.loadPara(paraBD)
 
 #load mechanical properties

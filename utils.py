@@ -5,6 +5,7 @@
 
 import numpy as np
 import os
+import logging
 
 ###########################################################
 ###########################################################
@@ -56,6 +57,7 @@ def prepareStr(strIn):
 # function to get the list of nodes from a bbx declaration
 def getNodesBBX(coordinateIn,bbxIn):
     #two kind of bbx declaration (list or 2D array)
+    bbxF = []
     bbxTmp=np.array(bbxIn)
     if len(bbxTmp.shape)==2:
         bbxF=bbxTmp.flatten()
@@ -67,6 +69,8 @@ def getNodesBBX(coordinateIn,bbxIn):
     ymin=bbxF[2]
     ymax=bbxF[3]
     flag3d=False
+    zmin=None
+    zmax=None
     if len(bbxF)==6 and coordinateIn.shape[1] == 3:
         flag3d=True
         zmin=bbxF[4]
@@ -225,7 +229,7 @@ def fixShapeArray(dataIn,sizIn,nameArray=''):
     if dataIn.shape[1] == sizIn:
         funFix=lambda x: x.transpose()
         logging.warning('Change shape of %s'%nameArray)
-    else:
+    elif dataIn.shape[0] != sizIn and dataIn.shape[1] != sizIn:
         logging.error('Bad dimension of %s to be exported'%nameArray)
     return funFix
 
@@ -235,34 +239,5 @@ def fixShapeArray(dataIn,sizIn,nameArray=''):
 ###########################################################
 ###########################################################
 ###########################################################
-# class used to redirect Fortran stdout/stderr
-class RedirectFortran:
-    def __init__(self, outputfile=os.devnull):
-        self.outfiles = outputfile
 
-    def start(self):
-        # open outputfile
-        self.out = os.open(self.outfiles,os.O_RDWR|os.O_CREAT)
-        # save the current file descriptor
-        self.save = os.dup(1)
-        # put outfile on 1
-        os.dup2(self.out, 1)
-
-    def stop(self, funExport = None):
-        # restore the standard output file descriptor
-        os.dup2(self.save, 1)
-        # close the output file
-        os.close(self.out)
-        # read it
-        file = open(self.outfiles,'r')
-        #
-        if not funExport:
-            for line in file: 
-                print(line.replace('\n',''))
-        else:
-            for line in file: 
-                funExport(line.replace('\n',''))
-        # delete it
-        if self.outfiles != os.devnull:
-            os.remove(self.outfiles)
         

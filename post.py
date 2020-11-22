@@ -11,7 +11,7 @@ import scipy.io
 import numpy as np
 import pickle
 #
-import utils,tools
+import utils
 #
 from SILEX import silex_lib_xfem
 from SILEX import silex_lib_gmsh
@@ -19,15 +19,25 @@ from SILEX import MeshField
 
 class postProcess:
 
-    def writeMeshField(self,writerMethod=None,uncorrectedField=None,enrichmentField=None,fileName=None,fieldName=None):
+    def writeMeshField(self,
+        writerMethod=None,
+        uncorrectedField=None,
+        enrichmentField=None,
+        fileName=None,
+        fieldName=None):
         """
         ##################################################################
         # function used to export results and mesh via fortran classMeshField
         ##################################################################
         """        
+        data=[self.fluidNodes,self.fluidElems,self.LevelSet,uncorrectedField,enrichmentField]
+        import pickle
+        with open('debug_export_2d.pck', 'wb') as f1:
+            pickle.dump(data, f1)
         #first initialization
         if not self.classSave:
             #initialized class for results export
+            logging.info('Initialization of the writing class')
             self.classSave = MeshField.MeshField(self.fluidNodes,self.fluidElems,self.LevelSet)
         #declare the writer
         self.classSave.setWriter(fileName,writerMethod)
@@ -144,8 +154,8 @@ class postProcess:
                             dataUnc = fields['fielduncorrected']
                             dataEnr = fields['fieldenrichment']
                             #
-                            funU=tools.fixShapeArray(dataUnc,self.fluidNbNodes,'uncorrected fields')
-                            funE=tools.fixShapeArray(dataEnr,self.fluidNbNodes,'enrichment fields')
+                            funU=utils.fixShapeArray(dataUnc,self.fluidNbNodes,'uncorrected fields')
+                            funE=utils.fixShapeArray(dataEnr,self.fluidNbNodes,'enrichment fields')
                             #                            
                             if os.path.exists(fileName):
                                 logging.warning(">>> File %s will be OVERWRITTEN"%fileName)
@@ -156,6 +166,7 @@ class postProcess:
                                 funE(dataEnr),
                                 fileName,
                                 fields['name'])
+                            #
                             for file in fileList:
                                 logging.info('File size: %s (%s)'%(utils.file_size(os.path.join(self.fullPathCurrentResultsFolder,file)),file))
 
@@ -285,7 +296,11 @@ class postProcess:
                     'type':'nodal',
                     'name':'Grad. '+txtP+' Pressure (gradient of norm) ('+txtPara+')'})
         #write the file
-        self.exportResults(typeExport="manuFields",method=typeSave,dictFields = dataW,fileName = self.getResultFile(detPara=paraName,addTxt='results_fluid',ext=None))
+        self.exportResults(
+            typeExport="manuFields",
+            method=typeSave,
+            dictFields = dataW,
+            fileName = self.getResultFile(detPara=paraName,addTxt='results_fluid',ext=None))
         
         if self.debug:
             #write the discontinuties of the field in file

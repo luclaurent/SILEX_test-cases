@@ -6,7 +6,7 @@
 import logging
 import time
 import scipy
-import scipy.sparse
+import scipy.sparse.linalg
 import numpy as np
 #
 import utils
@@ -67,6 +67,7 @@ class solverTools:
             LSobj=structTools.LSmanual(typeName=typeGEO,nodes=self.fluidNodes,paraVal=paraVal)
             #export values
             self.LevelSet,self.LevelSetU=LSobj.exportLS()
+            self.LevelSetTangent=LSobj.exportLST()
             self.loadParaU(namePara = LSobj.exportParaName())
             #compute gradient of Level-Set
             if self.paraData['gradCompute']:
@@ -150,6 +151,8 @@ class solverTools:
             #get number of dofs and values to apply
             numDofs,valbc = self.getFormatBC(bc)
             self.UF[numDofs]=valbc
+            if len(numDofs)==0:
+                logging.warning('No nodes for bc')
         #
         logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
 
@@ -224,6 +227,7 @@ class solverTools:
             self.fluidNodes,
             self.fluidElems,
             self.LevelSet, 
+            self.LevelSetTangent, 
             self.mechaProp['celerity'], 
             self.mechaProp['rho'])
 
@@ -482,7 +486,7 @@ class solverTools:
                 self.pressureUncorrect[:,itF],
                 self.pressureEnrichment[:,itF],
                 self.LevelSet)
-        #Compute gradients of fields
+        #Compute gradients of field
         if self.paraData['gradCompute']:
             #initialize variables
             
@@ -594,7 +598,7 @@ class solverTools:
             if self.flags['saveResults']:
                 self.exportFieldsOnePara(paraName=True)
                 self.saveFRF(paraName=True)
-            # append dat to history
+            # append data to history
             self.paraData['oldval'].append(valU)
             self.allFRF.append(self.FRF)
             self.allFRFgrad.append(self.FRFgrad)

@@ -344,6 +344,9 @@ class preProcess:
         # ex: {'type':'bbx','data':[[xm,XM],[ym,YM],[zm,ZM]],'values':[uu]}
         # notice that 'bbx' could be also declared using 'bbx':[xm,XM,ym,YM,zm,ZM]
         """
+        nodesList = []
+        valuesOut = []
+        nbNodes = 0
         if 'bbx' in bcIn['type']:
             nodesList=utils.getNodesBBX(self.fluidNodes,bcIn['data'])
             nbNodes=len(nodesList)

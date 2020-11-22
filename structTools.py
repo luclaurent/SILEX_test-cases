@@ -85,7 +85,7 @@ class LSmanual:
             if len(paraVal)!=len(self.paraName):
                 logging.error('(manualLS) >> bad number of parameters (%i) - expected: %i'%(len(self.paraVal),len(self.paraName)))
             #build LS
-            self.LevelSet,self.LevelSetTangent,self.LevelSetU,self.LevelSetGrad = self.objBuild.getLS(self.nodes,paraVal)
+            self.LevelSet,self.LevelSetTangent,self.LevelSetU,self.LevelSetGrad,self.structNodes,self.structElems = self.objBuild.getLS(self.nodes,paraVal)
     
     def clearData(self):
         """

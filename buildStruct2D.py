@@ -31,8 +31,11 @@ class struct2D :
         self.showParaVal(paraval)
         #
         LevelSet = []
+        LevelSetTangent = []
         LevelSetU = []
         LevelSetGrad = list()
+        strucNodes = []
+        strucElem = []
         #
         NbNodesFluid=nodes.shape[0]
         
@@ -179,8 +182,20 @@ class struct2D :
             LevelSet_gradient_X = -np.ones(NbNodesFluid)
             LevelSet_gradient_H = np.zeros(NbNodesFluid)  #undefined
 
-            #store data
+            #store LS data
             LevelSetGrad = [LevelSet_gradient_X,LevelSet_gradient_H]
+
+            #create structure mesh
+            nbNodesHC=50
+            thetaHC=scipy.linspace(0,0+scipy.pi,nbNodesHC)
+
+            xNodesHC=x_pos_struc*np.ones(nbNodesHC)
+            yNodesHC=(np.max(nodes[:,1])-h_struc)+np.linspace(0,h_struc,nbNodesHC)
+            strucNodes=np.vstack([xNodesHC,yNodesHC]).transpose()
+
+            lA=np.linspace(1,nbNodesHC-1)
+            lB=np.linspace(2,nbNodesHC)
+            strucElems=np.vstack([lA,lB]).transpose()
 
         elif self.name == '2D_thin_y_low_wall':
             #load values of parameters
@@ -280,4 +295,4 @@ class struct2D :
         if LevelSet is not None:
             LevelSetU = np.sign(LevelSet)
         #
-        return LevelSet,LevelSetTangent,LevelSetU,LevelSetGrad
+        return LevelSet,LevelSetTangent,LevelSetU,LevelSetGrad,strucNodes,strucElem

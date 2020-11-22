@@ -99,8 +99,10 @@ class buildFE:
         cavityNodes=None,
         cavityElems=None,
         levelset=None,
+        levelsetTg=None,
         valueCelerity=None,
-        valueRho=None):
+        valueRho=None,
+        flagEdge=1):
         """
         Get the enriched matrices via XFEM defined via Compressed Sparse Column forms
         """
@@ -108,8 +110,10 @@ class buildFE:
             cavityNodes,    # nodes coordinates of the cavity
             cavityElems,    # elements of the cavity            
             levelset,       # level-set defined at cavity nodes
+            levelsetTg,     # tangent level-set defined at cavity nodes
             valueCelerity,  # celerity value
-            valueRho)       # density value
+            valueRho,       # density value
+            flagEdge)       # flag edge enrichment (0=inactive, 1=active)
         return IIaa, JJaa, IIaf, JJaf, Vaak, Vaam, Vafk, Vafm # indices for rows and columns, and matrices values at corresponding indices (k = stiffness matrix, m = mass matrix, a = enrichment,f = fluid)
 
     def getGradEnrichedMatrices(self,
@@ -148,7 +152,7 @@ class buildFE:
                 uncorrectedField        # field not corrected via XFEM enrichment
             )
         else:
-            quadPress = self.lib.getXfemQuadratiquePressure(
+            quadPress = self.lib.getXfemQuadraticPressure(
                 nodesCavity,            # all nodes of the cavity
                 elemsControlVolume,     # elements defining the volume in which the quadratic pressure must be computed
                 uncorrectedField,       # field not corrected via XFEM enrichment

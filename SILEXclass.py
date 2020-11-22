@@ -151,12 +151,11 @@ class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
     fluidNbNodesControl = 0     # number of nodes in control volume
     #
     structNodes = []            # coordinates of the structure nodes 
-    structNbNodes = []          # number of structures nodes
+    structNbNodes = 0          # number of structures nodes
     #
     structElems = []            # array of elements of structure
     idStructNodes = []          # 
     structNbElems = 0           # number of elements for structure
-    structNbNodes = 0           # number of nodes of structure
     #enriched parts
     EnrichedNodes = []          # nodes associated to enriched elements
     EnrichedElems = []          # enriched elements
