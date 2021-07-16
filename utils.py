@@ -136,7 +136,7 @@ def convert_bytes(num):
     for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
         num
         if num < 1024.0:
-            return "%3.1f %s" % (num, x)
+            return '{:3.1f} {}'.format(num, x)
         num /= 1024.0
 
 
@@ -228,9 +228,9 @@ def fixShapeArray(dataIn,sizIn,nameArray=''):
     funFix=lambda x: x
     if dataIn.shape[1] == sizIn:
         funFix=lambda x: x.transpose()
-        logging.warning('Change shape of %s'%nameArray)
+        logging.warning('Change shape of {}'.format(nameArray))
     elif dataIn.shape[0] != sizIn and dataIn.shape[1] != sizIn:
-        logging.error('Bad dimension of %s to be exported'%nameArray)
+        logging.error('Bad dimension of{} to be exported'.format(nameArray))
     return funFix
 
 ###########################################################

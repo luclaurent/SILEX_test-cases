@@ -8,7 +8,12 @@ import sys
 #
 import numpy as np
 #
-from SILEX import silex_lib_xfem
+from SILEXlib.lib import silex_lib_xfem
+
+
+# activate logger
+Logger = logging.getLogger(__name__)
+
 
 class buildFE:
     def __init__(self,dimPB=2,typeElem=None):
@@ -24,9 +29,6 @@ class buildFE:
                 self.dim = 2
             elif self.typeElem is 'TET4':
                 self.dim = 3
-        # check if logging is already loaded
-        if not logging.getLogger().hasHandlers():
-            logging.basicConfig(stream=sys.stdout, level=logging.INFO)
         #
         self.loadLib()
     
@@ -68,7 +70,12 @@ class buildFE:
                 immersedElems)      # elements of the immersed volume
         return LevelSet,LevelSetU   # level-set and unsigned level-set
 
-    def getEnrichedElements(self,cavityNodes=None,cavityElems=None,structNodes=None,structElems=None,levelset=None):
+    def getEnrichedElements(self,
+                            cavityNodes=None,
+                            cavityElems=None,
+                            structNodes=None,
+                            structElems=None,
+                            levelset=None):
         """
         Get the enriched elements from the level-set defined at nodes
         """

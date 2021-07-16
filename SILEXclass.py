@@ -23,6 +23,7 @@
 import getopt
 import importlib
 from importlib import util as utilImport
+from misc.customLogging import customLogger
 import string
 import time
 import logging
@@ -40,6 +41,7 @@ from shutil import copyfile
 #
 import utils
 import structTools
+from misc.customLogging import customLogger
 import pre
 import post
 import solver
@@ -97,7 +99,8 @@ class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
     #data properties
     data = dict()
     data['geomFolder'] = 'geom'             # folder of geometry and meshes
-    data['resultsFolder'] = 'results'        # folder of results
+    data['resultsFolder'] = 'results'       # folder of results
+    data['logFolder'] = '.'            # folder of the log files
     #
     data['originalFluidMeshFile'] = ''      # provided fluid mesh file
     data['originalStructGeoFile'] = ''      # provided structure geometry file (parametric, gmsh format...)
@@ -131,6 +134,8 @@ class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
 
     ###
     # storage variables
+    meshData = []               # all data read in msh file
+    #
     LevelSet = []               # nodal values of LS (known at fluid nodes) signed
     LevelSetTangent = []        # nodal values of the tangent LS (known at fluid nodes) signed
     LevelSetU = []              # nodal values of LS (known at fluid nodes) unsigned
@@ -220,17 +225,16 @@ class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
         # Constructor of the class
         ##################################################################
         """        
+        #create folder to store logs file
+        if self.data['logfolder'] is not ('..' and '.'):
+            os.mkdir(self.data['logfolder'])
         #initialize logging
-        loggingFile = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'_SILEX.log'        
-        logging.basicConfig(
-            handlers=[
-                logging.FileHandler(loggingFile),
-                logging.StreamHandler(sys.stdout)
-                ],
-            format='%(asctime)s %(levelname)-8s %(message)s',
-            level=logging.INFO,
-            datefmt='%Y-%m-%d %H:%M:%S')
-            #
+        loggingFile = os.path.join(self.data['logsfolder'],datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'_SILEX.log')
+        #
+        self.logger = customLogger('SILEX')
+        self.logger.setupConsoleLogger(verbositylevel=1)
+        self.logger.setupFileLogger(loggingFile,verbositylevel=2)
+        #
         logging.info('##################################################')
         logging.info('##################################################')
         logging.info('##################################################')

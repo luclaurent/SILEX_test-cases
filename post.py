@@ -13,10 +13,12 @@ import pickle
 #
 import utils
 #
-from SILEX import silex_lib_xfem
-from SILEX import silex_lib_gmsh
-from SILEX import MeshField
+from SILEXlib.lib import silex_lib_xfem
+from SILEXlib.mesh import msh,vtk
+from SILEXlib.lib import MeshField
 
+# activate logger
+Logger = logging.getLogger(__name__)
 class postProcess:
 
     def writeMeshField(self,
@@ -38,7 +40,7 @@ class postProcess:
         if not self.classSave:
             #initialized class for results export
             logging.info('Initialization of the writing class')
-            self.classSave = MeshField.MeshField(self.fluidNodes,self.fluidElems,self.LevelSet)
+            self.classSave = MeshField.MeshField(self.fluidNodes,self.fluidElems,self.LevelSet,self.LevelSetTangent)
         #declare the writer
         self.classSave.setWriter(fileName,writerMethod)
         #append fields to the existing file(s)

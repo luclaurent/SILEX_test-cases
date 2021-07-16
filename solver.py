@@ -42,7 +42,7 @@ class solverTools:
         ##################################################################
         """
         logging.info('================================')
-        logging.info("Build Level-set: type %s"%(typeLS))
+        logging.info("Build Level-set: type {}".format(typeLS))
         tic = time.process_time()
         if typeLS is "FromMesh":
             # the level-set is built using the structure mesh
@@ -74,7 +74,7 @@ class solverTools:
                 self.LevelSetGradient,nameGrad= LSobj.exportLSgrad(self.getNameGrad())
                 self.loadParaU(nameParaGrad = nameGrad)
         #
-        logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+        logging.info("++++++++++++++++++++ Done - {} s".format(time.process_time()-tic))
 
 ###########################################################
 ###########################################################
@@ -125,7 +125,7 @@ class solverTools:
         #     EnrichedElements0[list(range(NbEnrichedElements))])
         # EnrichedElements0 = EnrichedElements0-1
         # EnrichedElements = tmp[EnrichedElements0]
-        logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+        logging.info("++++++++++++++++++++ Done - {} s".format(time.process_time()-tic))
 
 ###########################################################
 ###########################################################
@@ -154,14 +154,14 @@ class solverTools:
             if len(numDofs)==0:
                 logging.warning('No nodes for bc')
         #
-        logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+        logging.info("++++++++++++++++++++ Done - {} s".format(time.process_time()-tic))
 
         if self.paraData['gradCompute']:
             logging.info("Build gradient of second member")
             tic = time.process_time()
             for it in self.getNameGrad():
                 self.dUF.append(None) 
-            logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+            logging.info("++++++++++++++++++++ Done - {} s".format(time.process_time()-tic))
 
 ###########################################################
 ###########################################################
@@ -195,7 +195,7 @@ class solverTools:
             shape=(self.fluidNbDofs, self.fluidNbDofs))
 
         self.SolvedDofF = list(range(self.fluidNbDofs))
-        logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+        logging.info("++++++++++++++++++++ Done - {} s".format(time.process_time()-tic))
         #
         if self.paraData['gradCompute']:
             logging.info("Build fluid gradient operators")
@@ -203,7 +203,7 @@ class solverTools:
             for it in self.getNameGrad():
                 self.dKFF.append(None) 
                 self.dMFF.append(None) 
-            logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+            logging.info("++++++++++++++++++++ Done - {} s".format(time.process_time()-tic))
 
 ###########################################################
 ###########################################################
@@ -245,7 +245,7 @@ class solverTools:
             shape=(self.fluidNbDofs, self.fluidNbDofs))
 
         self.SolvedDofA = self.EnrichedNodes-1
-        logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+        logging.info("++++++++++++++++++++ Done - {} s".format(time.process_time()-tic))
 
         if self.paraData['gradCompute']:
             logging.info("Build gradient of enriched operators")
@@ -258,7 +258,7 @@ class solverTools:
                 self.dKFA.append(dKFAx) 
                 self.dMAA.append(dMAAx) 
                 self.dMFA.append(dMFAx) 
-            logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+            logging.info("++++++++++++++++++++ Done - {} s".format(time.process_time()-tic))
 
 ###########################################################
 ###########################################################
@@ -291,7 +291,7 @@ class solverTools:
         #list of all dofs
         self.SolvedDof = np.hstack([self.SolvedDofF, self.SolvedDofA+self.fluidNbDofs])
         #
-        logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+        logging.info("++++++++++++++++++++ Done - {} s".format(time.process_time()-tic))
         #
         if self.paraData['gradCompute']:
             logging.info("Build gradient of the assembled operators")
@@ -324,7 +324,7 @@ class solverTools:
                     [M11,M12],
                     [M21,M22]]))
             #
-            logging.info("++++++++++++++++++++ Done - %g s"%(time.process_time()-tic))
+            logging.info("++++++++++++++++++++ Done - {} s".format(time.process_time()-tic))
 
 ###########################################################
 ###########################################################
@@ -341,7 +341,7 @@ class solverTools:
         ##################################################################
         """
         logging.info('================================')
-        logging.info(' Build gradient matrices for parameter '+self.paraData['nameGrad'][itG])
+        logging.info(' Build gradient matrices for parameter {}'.format(self.paraData['nameGrad'][itG]))
         #compute gradients matrices and indices
         # print(silex_lib_xfem_acou_tet4.globalacousticgradientmatrices.__doc__)
         IIf, JJf, Vfak_gradient, Vfam_gradient =\
@@ -459,7 +459,7 @@ class solverTools:
         logging.info('================================')
         tic = time.process_time()
         #
-        logging.info("Rank: %i - Solve whole problem for frequency %g (step %i/%i)"%(self.rankMPI,freq,itF,itMax))
+        logging.info("Rank: {} - Solve whole problem for frequency {} (step {}/{})".format(self.rankMPI,freq,itF,itMax))
         # compute natural frequency
         omega=2*np.pi*freq
         #Build full second member
@@ -467,7 +467,7 @@ class solverTools:
         #solve the whole problem on pressure
         ticB = time.process_time()
         sol = self.solveLinear(self.K-(omega**2)*self.M,F)
-        logging.info("Rank: %i - Solve linear problem - Done - %g s"%(self.rankMPI,time.process_time()-ticB))
+        logging.info("Rank: {} - Solve linear problem - Done - {} s".format(self.rankMPI,time.process_time()-ticB))
         ##### build the fields
         ticB = time.process_time()
         # uncorrected pressure field        
@@ -477,7 +477,7 @@ class solverTools:
         # corrected pressure field
         self.pressure[:,itF] = self.pressureUncorrect[:,itF].copy()
         self.pressure[self.SolvedDofA,itF] += self.pressureEnrichment[self.SolvedDofA,itF]*np.sign(self.LevelSet[self.SolvedDofA])
-        logging.info("Rank: %i - Fields computation - Done - %g s"%(self.rankMPI,time.process_time()-ticB))
+        logging.info("Rank: {} - Fields computation - Done - {} s".format(self.rankMPI,time.process_time()-ticB))
         #compute and store FRF on the control volume
         if self.caseProp['computeFRF']:
             self.FRF[itF] = self.builderFE.computeQuadraticPressure(
@@ -491,14 +491,14 @@ class solverTools:
             #initialize variables
             
             # along the parameters
-            logging.info("Rank: %i - Start gradients computation"%(self.rankMPI))
+            logging.info("Rank: {} - Start gradients computation".format(self.rankMPI))
             ticC = time.process_time()
             for itG in range(self.getNbGrad()):
                 ticB = time.process_time()
                 #prepare data
                 tmp = -(self.dK[itG]-(omega**2)*self.dM[itG])*sol
                 Dsol = self.solveLinear(self.K-(omega**2)*self.M,tmp)
-                logging.info("Rank: %i - Prepare and solve linear problem for grad (var: %s/num: %i) - Done - %g s"%(self.rankMPI,self.getNameGrad()[itG],itG,time.process_time()-ticB))
+                logging.info("Rank: {} - Prepare and solve linear problem for grad (var: {}/num: {}) - Done - {} s".format(self.rankMPI,self.getNameGrad()[itG],itG,time.process_time()-ticB))
                 # gradient of uncorrected pressure field
                 self.pressureUncorrectGrad[itG][self.SolvedDofF,itF] = Dsol[list(range(len(self.SolvedDofF)))].copy()
                 # gradient of enrichment field
@@ -514,9 +514,9 @@ class solverTools:
                         self.pressure[:,itF],
                         self.pressureGrad[itG][:,itF],
                         self.LevelSet)
-            logging.info("Rank: %i - Gradients computation - Done - %g s"%(self.rankMPI,time.process_time()-ticC))
+            logging.info("Rank: {} - Gradients computation - Done - {} s".format(self.rankMPI,time.process_time()-ticC))
 
-        logging.info("Rank: %i - Done - Solve whole problem for frequency %g (freq step %i/%i) in %g s"%(self.rankMPI,freq,itF+1,itMax,time.process_time()-tic))
+        logging.info("Rank: {} - Done - Solve whole problem for frequency{g (freq step {}/{}) in {} s".format(self.rankMPI,freq,itF+1,itMax,time.process_time()-tic))
         logging.info('================================')
 
 ###########################################################
@@ -586,7 +586,7 @@ class solverTools:
             logging.info("##################################################")
             self.paraData['val']=valU            
             txtPara=self.formatPara(valIn=valU)
-            logging.info('Start compute for parameters (nb %i): %s'%(self.nbRuns,txtPara))
+            logging.info('Start compute for parameters (nb {}): {}'.format(self.nbRuns,txtPara))
             #initialization for run
             self.initRun(paraVal=valU)
 
@@ -603,14 +603,14 @@ class solverTools:
             self.allFRF.append(self.FRF)
             self.allFRFgrad.append(self.FRFgrad)
             #
-            logging.info("Time to solve the whole problem for set of parameters nb %i - %g s"%(self.nbRuns,time.process_time()-ticV))
+            logging.info("Time to solve the whole problem for set of parameters nb {} - {} s".format(self.nbRuns,time.process_time()-ticV))
         #plot and export results (FRF, pressure fields and gradients)
         if self.flags['saveResults']:
             self.saveFRF(paraName=False,allData=True)
             self.plotFRF(allData=True,fileOut=self.getResultFile(detPara=False,addTxt='allData',ext='csv'))
             
         #
-        logging.info("Time to solve the whole problem along sets of parameters - %g s"%(time.process_time()-ticS))
+        logging.info("Time to solve the whole problem along sets of parameters - {} s".format(time.process_time()-ticS))
         logging.info('++++++++++++++++++++++++++++++++')
         logging.info('++++++++++++++++++++++++++++++++')
         logging.info('++++++++++++++++++++++++++++++++')

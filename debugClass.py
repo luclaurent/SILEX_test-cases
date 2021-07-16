@@ -14,7 +14,7 @@ caseBD['name'] = 'test'
 caseBD['dim'] = 2                                       # dimension of geometry
 caseBD['freqMax'] = 100                                 # maximum frequency of the range
 caseBD['freqMin'] = 0.1                                 # minimum frequency of the range
-caseBD['nbSteps'] = 500                                   # number of frequency steps
+caseBD['nbSteps'] = 5                                   # number of frequency steps
 caseBD['modal'] = False                                 # modal version of the computation (building of modal basis and use it for gradients)
 caseBD['computeFRF'] = True                             # computation of the FRF in control volume
 caseBD['typeLS'] = 'manual'                             # type of Level-Set (FromMesh or manual)
@@ -44,7 +44,7 @@ PB.loadMechaProperties(mechaBD)
 #load data
 dataBD = dict()
 dataBD['geomFolder'] = 'cases/Acoustic2D/geom'             # folder of geometry and meshes
-dataBD['resultsFolder'] = 'results'        # folder of results
+dataBD['resultsFolder'] = 'results'       # folder of results
 #
 dataBD['originalFluidMeshFile'] = 'xfem3_noarea_fin_dim_b_fluid.msh'      # provided fluid mesh file
 dataBD['originalStructGeoFile'] = ''      # provided structure geometry file (parametric, gmsh format...)
