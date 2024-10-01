@@ -1,3 +1,17 @@
 *.py[cod]     # Will match .pyc, .pyo and .pyd files.
-__pycache__  # Exclude the whole folder
+**/__pycache__/  # Exclude the whole folder
 *.log
+*.mat
+*.pck
+*.log
+*.msh
+*.bz2
+*.csv
+*.txt
+*.frf
+*.json
+*.gmsh
+*.db
+*.pdf
+*.jpeg
+*.png
