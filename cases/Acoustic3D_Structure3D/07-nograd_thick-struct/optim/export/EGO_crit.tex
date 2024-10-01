@@ -1,0 +1,73 @@
+% This file was created by matlab2tikz.
+%
+%The latest updates can be retrieved from
+%  http://www.mathworks.com/matlabcentral/fileexchange/22022-matlab2tikz-matlab2tikz
+%where you can also make suggestions and rate matlab2tikz.
+%
+\documentclass[tikz]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{pgfplots}
+\usepackage{grffile}
+\pgfplotsset{compat=newest}
+\usetikzlibrary{plotmarks}
+\usetikzlibrary{arrows.meta}
+\usepgfplotslibrary{patchplots}
+\usepackage{amsmath}
+
+\begin{document}
+\definecolor{mycolor1}{rgb}{0.00000,0.44700,0.74100}%
+\definecolor{mycolor2}{rgb}{0.85000,0.32500,0.09800}%
+%
+\begin{tikzpicture}
+
+\begin{axis}[%
+width=6.028in,
+height=4.754in,
+at={(1.011in,0.642in)},
+scale only axis,
+xmin=1,
+xmax=10,
+xlabel={Iterations EGO},
+ymode=log,
+ymin=0.0001,
+ymax=1,
+ylabel={Critère de Huang},
+axis background/.style={fill=white},
+legend style={legend cell align=left, align=left, draw=white!15!black}
+]
+\addplot[const plot, color=mycolor1, line width=2.0pt, mark=o, mark options={solid, mycolor1}] table[row sep=crcr] {%
+1	0.132543272085579\\
+2	0.0183900341354833\\
+3	0.0111098707255173\\
+4	0.0126586529041573\\
+5	0.0142494793203904\\
+6	0.00864305694006471\\
+7	0.0054040937102544\\
+8	0.0033493089582621\\
+9	0.00118932771235245\\
+10	0.000736571957422277\\
+};
+\addlegendentry{$n_s=15$}
+
+\addplot[const plot, color=mycolor2, line width=2.0pt, mark=o, mark options={solid, mycolor2}] table[row sep=crcr] {%
+1	0.0806972252881152\\
+2	0.00816108520652311\\
+3	0.0173420822545498\\
+4	0.0196424757352804\\
+5	0.0064974475168125\\
+6	0.00843788032012917\\
+7	0.00235781017837878\\
+8	0.00198974352773135\\
+9	0.00159035279345885\\
+};
+\addlegendentry{$n_s=18$}
+
+\addplot [color=red, line width=2.0pt, forget plot]
+  table[row sep=crcr]{%
+1	0.001\\
+10	0.001\\
+};
+\end{axis}
+\end{tikzpicture}%
+\end{document}

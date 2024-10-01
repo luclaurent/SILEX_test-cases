@@ -1,0 +1,68 @@
+% This file was created by matlab2tikz.
+%
+%The latest updates can be retrieved from
+%  http://www.mathworks.com/matlabcentral/fileexchange/22022-matlab2tikz-matlab2tikz
+%where you can also make suggestions and rate matlab2tikz.
+%
+\documentclass[tikz]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{pgfplots}
+\usepackage{grffile}
+\pgfplotsset{compat=newest}
+\usetikzlibrary{plotmarks}
+\usetikzlibrary{arrows.meta}
+\usepgfplotslibrary{patchplots}
+\usepackage{amsmath}
+
+\begin{document}
+\definecolor{mycolor1}{rgb}{0.00000,0.44700,0.74100}%
+\definecolor{mycolor2}{rgb}{0.85000,0.32500,0.09800}%
+%
+\begin{tikzpicture}
+
+\begin{axis}[%
+width=6.028in,
+height=4.754in,
+at={(1.011in,0.642in)},
+scale only axis,
+xmin=1,
+xmax=10,
+xlabel={Iterations EGO},
+ymode=log,
+ymin=1.28509392667832,
+ymax=1.95159742936436,
+ylabel={Minimum},
+axis background/.style={fill=white},
+legend style={legend cell align=left, align=left, draw=white!15!black}
+]
+\addplot[const plot, color=mycolor1, line width=2.0pt, mark=o, mark options={solid, mycolor1}] table[row sep=crcr] {%
+1	1.77854774847143\\
+2	1.40562701969401\\
+3	1.40329855648507\\
+4	1.36592461823302\\
+5	1.30110312217081\\
+6	1.30296719418882\\
+7	1.30060473310592\\
+8	1.30282126482654\\
+9	1.29569908033882\\
+10	1.29570473158637\\
+};
+\addlegendentry{$n_s=15$}
+
+\addplot[const plot, color=mycolor2, line width=2.0pt, mark=o, mark options={solid, mycolor2}] table[row sep=crcr] {%
+1	1.76034057926785\\
+2	1.95159742936436\\
+3	1.38544637305598\\
+4	1.3148890748567\\
+5	1.31581711146238\\
+6	1.31127935925478\\
+7	1.28583340096729\\
+8	1.28583301003192\\
+9	1.28509392667832\\
+};
+\addlegendentry{$n_s=18$}
+
+\end{axis}
+\end{tikzpicture}%
+\end{document}
