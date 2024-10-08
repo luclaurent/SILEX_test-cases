@@ -11,8 +11,8 @@ import pickle
 
 import sys
 sys.path.append('../../librairies')
-from SILEX import silex_lib_tri3_acou
-from SILEX import silex_lib_gmsh
+from SILEXrun import silex_lib_tri3_acou
+from SILEXrun import silex_lib_gmsh
 
 
 from mpi4py import MPI
