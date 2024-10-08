@@ -23,12 +23,18 @@
 import getopt
 import importlib
 from importlib import util as utilImport
-from misc.customLogging import customLogger
+
+import logging
+import logging.config
+# Logger = logging.getLogger()
+
+from .misc.customLogging import customLogger
+from .misc.decorateTxt import decorateTxt 
 import string
 import time
-import logging
 from datetime import datetime 
 import re
+
 #
 import numpy as np
 import scipy as sp
@@ -39,13 +45,14 @@ import sys
 import os
 from shutil import copyfile
 #
-import utils
-import structTools
-from misc.customLogging import customLogger
-import pre
-import post
-import solver
-import tools
+from . import structTools
+#
+from .misc import utils
+from .misc import tools
+from . import pre
+from . import post
+from . import solver
+
 #
 
 
@@ -57,6 +64,8 @@ import tools
 ###########################################################
 # computation class
 class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
+    # usefull things
+    deco = decorateTxt(le=60)
     #case properties
     caseProp = dict()
     caseProp['dim'] = 3               # dimension of the problem
@@ -100,7 +109,7 @@ class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
     data = dict()
     data['geomFolder'] = 'geom'             # folder of geometry and meshes
     data['resultsFolder'] = 'results'       # folder of results
-    data['logFolder'] = '.'            # folder of the log files
+    data['logFolder'] = 'logfiles'            # folder of the log files
     #
     data['originalFluidMeshFile'] = ''      # provided fluid mesh file
     data['originalStructGeoFile'] = ''      # provided structure geometry file (parametric, gmsh format...)
@@ -113,8 +122,8 @@ class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
     data['exportMesh'] = 'vtk'              # default format to export fields and mesh (msh, mshv2, vtk)
     #
     fullPathCurrentResultsFolder = ''
-    #
-    builderFE = None                        # libraries to build Finite Element operators
+    # 
+    libXFEM = None                          # libraries to build Finite Element operators
     saveResults = True                      # flag used to declare that the results must be saved
     classSave = None                        # object to store class for saving result
     debug = True                            # debug mode to write additionnal data
@@ -134,7 +143,7 @@ class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
 
     ###
     # storage variables
-    meshData = []               # all data read in msh file
+    meshData = dict()           # all data read in msh file
     #
     LevelSet = []               # nodal values of LS (known at fluid nodes) signed
     LevelSetTangent = []        # nodal values of the tangent LS (known at fluid nodes) signed
@@ -187,8 +196,8 @@ class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
     #operators for the whole coupled problem
     K = []                      # rigidity matrix
     M = []                      # mass matrix
-    dK = list()                 # gradient matrices
-    dM = list()                 # gradients matrices
+    dK = None                   # gradient matrices
+    dM = None                   # gradients matrices
     UF = []                     # second member
     dUF = list()                # gradients of second member
     SolvedDof = []
@@ -224,27 +233,44 @@ class SILEX(tools.tools,pre.preProcess,post.postProcess,solver.solverTools):
         ##################################################################
         # Constructor of the class
         ##################################################################
-        """        
-        #create folder to store logs file
-        if self.data['logfolder'] is not ('..' and '.'):
-            os.mkdir(self.data['logfolder'])
-        #initialize logging
-        loggingFile = os.path.join(self.data['logsfolder'],datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'_SILEX.log')
-        #
-        self.logger = customLogger('SILEX')
-        self.logger.setupConsoleLogger(verbositylevel=1)
-        self.logger.setupFileLogger(loggingFile,verbositylevel=2)
-        #
-        logging.info('##################################################')
-        logging.info('##################################################')
-        logging.info('##################################################')
-        logging.info('##               Load SILEX object              ##')
-        #create symlink to the file
+        """
+
+        # create folder to store logs file
+        if self.data['logFolder'] is not ('..' and '.') and \
+           not os.path.isdir(self.data['logFolder']):
+            os.mkdir(self.data['logFolder'])
+
+        # initialize logging
+        logging.config.fileConfig(os.path.join(os.path.dirname(os.path.abspath(__file__)),'log.conf'),disable_existing_loggers=True)
+        self.logger = logging.getLogger('SILEX')
+        
+        # loggingFile = os.path.join(self.data['logFolder'],
+        #                            datetime.now()
+        #                            .strftime('%Y-%m-%d_%H-%M-%S')
+        #                            + '_SILEX.log')
+        # #
+        # self.logObj = customLogger(loggerRoot=Logger)  # 'SILEX')
+        # self.logObj.setupConsoleLogger(verbositylevel=2)
+        # self.logObj.setupFileLogger(loggingFile, verbositylevel=2)
+
+        # # catch self.logger
+        # self.logger = self.logObj.getLogger()
+        # #
+        self.logger.info(self.deco.dashPattern())
+        self.logger.info(self.deco.dashPattern())
+        self.logger.info(self.deco.dashPattern())
+        self.logger.info(self.deco.adaptTxt('Load SILEX object'))
+
+        # create symlink to the log file
         fileLogLast = 'last.log'
         if os.path.islink(fileLogLast):
             os.unlink(fileLogLast)
-        os.symlink(loggingFile,fileLogLast)
-
-    
-        
-
+            
+        # look for current log file
+        loggingFile = None
+        for h in self.logger.handlers:
+            if type(h) == logging.FileHandler:
+                loggingFile = h.baseFilename
+                break
+        if loggingFile:
+            os.symlink(loggingFile, fileLogLast)

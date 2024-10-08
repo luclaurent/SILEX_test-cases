@@ -2,42 +2,60 @@ import logging
 import sys
 
 # DEFAULT
-DEFAULT_LOG_BASIC_FORMATTER = '[%(levelname)-8s]: %(message)s '
+DEFAULT_LOG_BASIC_FORMATTER = '(%(name)s) - [%(levelname)-8s]: %(message)s '
 DEFAULT_LOG_VERBA_FORMATTER = '%(relativeCreated)dms [%(levelname)-8s]: %(message)s '
 DEFAULT_LOG_VERBB_FORMATTER = lambda x : '%(relativeCreated)dms - ({}-%(name)s) [%(levelname)-8s]: %(message)s '.format(x)
 DEFAULT_LOG_VERBC_FORMATTER = '%(relativeCreated)dms - (%(name)s) [%(levelname)-8s]: %(message)s '
 DEFAULT_FMT_TIME = '%H:%M:%S'
 
+# Logger = logging.getLogger()
+# Logger.setLevel(logging.DEBUG)
 
 class customLogger:
     """ 
-    Basic custom Logger management (load logger, remove consol/file logger, create console/file logger)
+    Basic custom Logger management (load logger, remove console/file logger, create console/file logger)
     """
 
     def __init__(self,
-        loggerName='custom'):
+        loggerName='custom',
+        loggerRoot=None,
+        console=False,
+        filename=None,
+        activate=False):
         """
         Load logger with loggerName ID and set level to DEBUG
         """
-        self.rootLogger = logging.getLogger(loggerName)
-        self.rootLogger.setLevel(logging.DEBUG)
+        if loggerRoot:
+            self.rootLogger = loggerRoot
+        else:
+            self.rootLogger = logging.getLogger(loggerName)
+        # set level of actual root logger
+        logging.root.setLevel(logging.DEBUG)
+        #
+        if activate:
+            if not self.rootLogger.hasHandlers():
+                self.setupConsoleLogger(verbositylevel=1)
+        #
+        if console:
+            self.setupConsoleLogger()
+        if filename:
+            self.setupFileLogger(filename=filename)
 
     def removeConsoleLogger(self):
         """
         Remove all console Loggers
         """
         for hdlr in self.rootLogger.handlers[:]:
-            if isinstance(hdlr,logging.StreamHandler):
+            if isinstance(hdlr, logging.StreamHandler):
                 self.rootLogger.removeHandler(hdlr)
-    
+
     def removeFileLogger(self):
         """
         Remove all file loggers
         """
         for hdlr in self.rootLogger.handlers[:]:
-            if isinstance(hdlr,logging.FileHandler):
-                self.rootLogger.removeHandler(hdlr) 
-
+            if isinstance(hdlr, logging.FileHandler):
+                self.rootLogger.removeHandler(hdlr)
 
     def setupConsoleLogger(self,
         verbositylevel = 0,

@@ -8,18 +8,21 @@ import os
 import logging
 import numpy as np
 #
-from buildStruct3D import struct3D
-from buildStruct2D import struct2D
+from .buildStruct3D import struct3D
+from .buildStruct2D import struct2D
+#
+Logger = logging.getLogger(__name__)
+
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
 
 
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-###########################################################
-###########################################################
 # change parameters in geometry file (gmsh) and build the mesh
-def buildStructMesh(fileOrig, destFile, paraVal,build=False):
+def buildStructMesh(fileOrig, destFile, paraVal, build=False):
     # copy original file to the used one
     copyfile(fileOrig+'.geo', destFile+'.geo')
     # change value of parameters in the new file
@@ -73,7 +76,7 @@ class LSmanual:
             self.objBuild = struct3D(typeName)
             self.dim = 3
         else:
-            logging.error('Bad type: %s (must start with 2 or 3)'%typeName)
+            Logger.error('Bad type: {} (must start with 2 or 3)'.format(typeName))
 
         # get the parameters names
         self.paraName = self.objBuild.getParaName()
@@ -81,11 +84,11 @@ class LSmanual:
         if self.nodes is not None and self.paraVal is not None:
             # check data
             if self.nodes.shape[1] != self.dim:
-                logging.error('(manualLS) >> bad dimension of nodes array (%i)'%(self.nodes.shape[1]))
+                Logger.error('(manualLS) >> bad dimension of nodes array ({})'.format(self.nodes.shape[1]))
             if len(paraVal)!=len(self.paraName):
-                logging.error('(manualLS) >> bad number of parameters (%i) - expected: %i'%(len(self.paraVal),len(self.paraName)))
+                Logger.error('(manualLS) >> bad number of parameters ({}) - expected: {}'.format(len(self.paraVal),len(self.paraName)))
             #build LS
-            self.LevelSet,self.LevelSetTangent,self.LevelSetU,self.LevelSetGrad,self.structNodes,self.structElems = self.objBuild.getLS(self.nodes,paraVal)
+            self.LevelSet,self.LevelSetTangent,self.LevelSetU,self.LevelSetGrad,self.structNodes,self.structElems,self.structBounds = self.objBuild.getLS(self.nodes,paraVal)
     
     def clearData(self):
         """

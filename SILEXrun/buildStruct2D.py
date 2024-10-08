@@ -36,6 +36,7 @@ class struct2D :
         LevelSetGrad = list()
         strucNodes = []
         strucElem = []
+        strucBnds = []
         #
         NbNodesFluid=nodes.shape[0]
         

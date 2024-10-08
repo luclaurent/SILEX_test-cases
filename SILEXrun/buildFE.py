@@ -3,16 +3,11 @@
 # L. LAURENT - 2020 - luc.laurent@lecnam.net
 ###########################################################
 
-import logging
 import sys
 #
 import numpy as np
 #
 from SILEXlib.lib import silex_lib_xfem
-
-
-# activate logger
-Logger = logging.getLogger(__name__)
 
 
 class buildFE:
