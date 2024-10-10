@@ -1,0 +1,16 @@
+Results_truss_static_0.msh filter=lfs diff=lfs merge=lfs -text
+Results_truss_static_optim_1test.msh filter=lfs diff=lfs merge=lfs -text
+Results_truss_static_optim_1_xe_static_optim.msh filter=lfs diff=lfs merge=lfs -text
+Results_truss_static_optim_1_xe_static_optim.pkl filter=lfs diff=lfs merge=lfs -text
+Results_truss_2_XE_optim_NO_damping_modes.msh filter=lfs diff=lfs merge=lfs -text
+Results_truss_4_optim_eigenvalue.msh filter=lfs diff=lfs merge=lfs -text
+Results_truss_4_optim_eigenvalue_Density_0.5Lfrac.msh filter=lfs diff=lfs merge=lfs -text
+Results_truss_static_optim_1_Density_0.5Lfrac.msh filter=lfs diff=lfs merge=lfs -text
+Results_truss_4_optim_eigenvalue_xe_static.pkl filter=lfs diff=lfs merge=lfs -text
+Results_truss_2_XE_1_NO_damping_disp_frf.msh filter=lfs diff=lfs merge=lfs -text
+Results_truss_2_XE_1_NO_damping_disp_frf_bck.msh filter=lfs diff=lfs merge=lfs -text
+Results_truss_2_XE_1_modes.msh filter=lfs diff=lfs merge=lfs -text
+truss.msh filter=lfs diff=lfs merge=lfs -text
+Results_truss_2_XE_1_NO_damping_modes.msh filter=lfs diff=lfs merge=lfs -text
+Results_truss_2_XE_optim_NO_damping_disp_frf.msh filter=lfs diff=lfs merge=lfs -text
+Results_truss_static_optim_1.msh filter=lfs diff=lfs merge=lfs -text
