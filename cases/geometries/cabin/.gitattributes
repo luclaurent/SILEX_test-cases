@@ -1,0 +1,2 @@
+Cabin.CATPart filter=lfs diff=lfs merge=lfs -text
+Cabin.igs filter=lfs diff=lfs merge=lfs -text
