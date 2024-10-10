@@ -1,0 +1,155 @@
+*COMPLEX
+FEAP * * cube domain
+0,0,0,3,7,8
+
+PARAmeter
+pi = 4*atan(1)
+ce = 343 
+ro = 1.21
+f0 = 100 ! frequency_step
+n0 = 3 ! number_of_step
+t0 = 300 ! first_frequency
+ff = 25e-8/(8e-3)
+fm = 600
+fi = 0.5 
+in = (fm-f0*n0)/fi 
+it = int(in) 
+rp = 0.00002 
+Es = 4400000 
+ns = 0 
+rs = 130 
+to = 1.06 
+po = 0.94 
+sg = 40000 
+l1 = 0.000056 
+l2 = 0.00011 
+rf = 1.21 
+vy = 0.0000184 
+pr = 0.71 
+ld = 1.4
+p0 = 101325 
+nr = 1 
+mo = 0 
+
+
+COORdinates
+ INCLude nodes
+
+
+ELEMents
+ INCLude elements
+
+BOUNdaries
+ INCLude boundaries
+
+MATErial,1
+  USER 11 0 1 2 3 4 5 6 0 ! Us-Uf porous material Us 1-3, Uf 4-6 
+  PORO Es ns rs to po sg l1 l2 rf vy pr ld p0 ce mo 
+  
+
+MATErial,2
+  USER 9 0 1 2 3 4 5 6 7 
+  PUUA mo po
+
+MATErial,3
+  USER 13 0 7 0 0 0 0 0 0 ! Acoustic element
+  ACOU ce ro mo 
+
+MATErial,4
+  USER 13 0 7 0 0 0 0 0 0 ! Acoustic element
+  ACOU ce ro mo 
+
+MATErial,5
+  USER 13 0 7 0 0 0 0 0 0 ! Acoustic element
+  ACOU ce ro mo 
+
+MATErial,6
+  USER 12 0 1 2 3 7 0 0 0 ! Coupling element acou to shell
+  USPR ce ro mo nr 
+
+MATErial,7
+  USER 08 0 1 2 3 4 5 6 0 ! Shell element
+  SHE5 4 mo 0.01 
+  THICk,,0.0015
+  DENSity,,7800
+  ELAStic ISOTropic 233000000000 0.29
+
+MATErial,8
+  USER 12 0 1 2 3 7 0 0 0 ! Coupling element acou to shell
+  USPR ce ro mo -nr 
+
+MATErial,9
+  USER 13 0 7 0 0 0 0 0 0 ! Acoustic element
+  ACOU ce ro mo 
+
+
+FORCe
+ INCLude force
+
+!dofs inpt
+!  1  1  1  1  1  1  1  0 ! Porous
+!  2 -1 -1 -1 -1 -1 -1 -1 ! Coupling porous-PC
+!  3  0  0  0  0  0  0  2 ! PC acou ss 1
+!  4  0  0  0  0  0  0  3 ! PC acou ss 2
+!  5  0  0  0  0  0  0  4 ! PC acou ss 3
+!  6 -1 -1 -1  0  0  0 -1 ! Coupling PC-Wireframe
+!  7  1  1  1  1  1  1  0 ! Wireframe
+!  8 -1 -1 -1  0  0  0 -1 ! Coupling Wireframe-EC
+!  9  0  0  0  0  0  0  5 ! EC acou ss 4
+
+
+!dofs link ! 1 do not link 0 link
+!  1  2  0  0  0  0  0  0  1
+!  2  3  1  1  1  1  1  1  0
+!  3  4  1  1  1  1  1  1  0
+!  4  5  1  1  1  1  1  1  0
+!  5  6  1  1  1  1  1  1  0
+!  6  7  0  0  0  1  1  1  1
+!  7  8  0  0  0  1  1  1  1
+!  8  9  1  1  1  1  1  1  0
+
+
+!NOPRINT,LINK
+END
+INCLUDE link
+
+!BATCH
+!  plot,pers,1
+!  plot,hide
+!  plot,mesh
+!  plot,axis
+!END
+!0
+!10*lx,10*ly,10*lz
+!1,0,0
+
+!inter
+!stop
+
+BATCh
+!  optimize
+    POST volu 3 5
+    POST volu 9 9
+  time,set,t0
+  DT,,f0 ! Increment in frequency domain (in Hz)
+  LOOP,freq,n0
+    ZERO node ! Works ONLY for real part!!!!
+    TIME
+    TANG,,1
+    POST psqv 3 5
+    POST psqv 9 9
+    POST freq
+    POST pq01 rp 3 5
+    POST pq03 rp 3 3
+    POST pq04 rp 4 4
+    POST pq05 rp 5 5
+    POST pq02 rp 9 9
+!    PLOT Hide
+!    PLOT Cont 7
+  NEXT freq
+END               ! End of batch execution
+
+!INTEractive
+
+STOP
+
