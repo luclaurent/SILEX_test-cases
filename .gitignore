@@ -1,5 +1,6 @@
 *.py[cod]     # Will match .pyc, .pyo and .pyd files.
-__pycache__  # Exclude the whole folder
+**/__pycache__/  # Exclude the whole folder
+*~
 *.log
 *.mat
 *.pck
@@ -14,10 +15,14 @@ __pycache__  # Exclude the whole folder
 *.db
 *.pdf
 *.jpeg
+*.jpg
+*.gif
 *.png
-*.pdf
 *.eps
 *.synctex.gz
 *.fdb_latexmk
 *.swp
 *.xdv
+*.pos
+*.mp4
+*.mpg

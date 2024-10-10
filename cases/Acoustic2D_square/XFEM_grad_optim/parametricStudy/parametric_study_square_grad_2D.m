@@ -25,7 +25,8 @@ paraVal=[X(:) Ym(:),Rm(:)];
 %start wrapper
 SILEX=wrapperSILEX;
 SILEX.resultFile='results_square/xfem_3_results.mat';
-SILEX.pythonCompute={'square_debug_raccord.py'};
+SILEX.pythonCompute={'square_all.py'};
+SILEX.caseDefine='thick_x_up_all';
 SILEX.nbSteps=freq.steps;
 SILEX.freqMax=freq.max;
 SILEX.freqMin=freq.min;
