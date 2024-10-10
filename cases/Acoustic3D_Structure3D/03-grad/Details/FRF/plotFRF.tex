@@ -1,0 +1,95 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{pgfplots}
+
+
+\begin{document}
+\begin{tikzpicture}
+\pgfplotstableread[col sep=semicolon,header=true]{FRF_sphere_reference.csv}\dataA
+
+\begin{axis}[%scale=0.45,
+        enlarge x limits=false,
+        ylabel={FRF},
+        %xlabel={Iter. EGO}
+        every minor tick,
+        every minor grid,
+        grid=both,
+        %xmin=1,
+        %xmax=10
+        %ytick={0.1,0.01,0.001,1e-4,1e-6,1e-8}
+    ]
+    \addplot[line width=1pt,blue]table[x=freq, y=frf]{\dataA};
+\end{axis}
+\end{tikzpicture}
+\begin{tikzpicture}
+\pgfplotstableread[col sep=semicolon,header=true]{FRF_sphere_reference.csv}\dataA
+
+\begin{axis}[%scale=0.45,
+        enlarge x limits=false,
+        ylabel={FRF x},
+        %xlabel={Iter. EGO}
+        every minor tick,
+        every minor grid,
+        grid=both,
+        %xmin=1,
+        %xmax=10
+        %ytick={0.1,0.01,0.001,1e-4,1e-6,1e-8}
+    ]
+    \addplot[line width=1pt,blue]table[x=freq, y=gradient x]{\dataA};
+\end{axis}
+\end{tikzpicture}
+\begin{tikzpicture}
+\pgfplotstableread[col sep=semicolon,header=true]{FRF_sphere_reference.csv}\dataA
+
+\begin{axis}[%scale=0.45,
+        enlarge x limits=false,
+        ylabel={FRF y},
+        %xlabel={Iter. EGO}
+        every minor tick,
+        every minor grid,
+        grid=both,
+        %xmin=1,
+        %xmax=10
+        %ytick={0.1,0.01,0.001,1e-4,1e-6,1e-8}
+    ]
+    \addplot[line width=1pt,blue]table[x=freq, y=gradient y]{\dataA};
+\end{axis}
+\end{tikzpicture}
+\begin{tikzpicture}
+\pgfplotstableread[col sep=semicolon,header=true]{FRF_sphere_reference.csv}\dataA
+
+\begin{axis}[%scale=0.45,
+        enlarge x limits=false,
+        ylabel={FRF z },
+        %xlabel={Iter. EGO}
+        every minor tick,
+        every minor grid,
+        grid=both,
+        %xmin=1,
+        %xmax=10
+        %ytick={0.1,0.01,0.001,1e-4,1e-6,1e-8}
+    ]
+    \addplot[line width=1pt,blue]table[x=freq, y=gradient z]{\dataA};
+\end{axis}
+\end{tikzpicture}
+\begin{tikzpicture}
+    \pgfplotstableread[col sep=semicolon,header=true]{FRF_sphere_reference.csv}\dataA
+
+    \begin{axis}[%scale=0.45,
+            enlarge x limits=false,
+            ylabel={FRF r},
+            %xlabel={Iter. EGO}
+            every minor tick,
+            every minor grid,
+            grid=both,
+            %xmin=1,
+            %xmax=10
+            %ytick={0.1,0.01,0.001,1e-4,1e-6,1e-8}
+        ]
+        \addplot[line width=1pt,blue]table[x=freq, y=gradient R]{\dataA};
+    \end{axis}
+
+\end{tikzpicture}
+\end{document}
+
