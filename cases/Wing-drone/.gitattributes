@@ -1,0 +1,7 @@
+Deformee-aile-drone-proto.png filter=lfs diff=lfs merge=lfs -text
+Aile-surface2.msh filter=lfs diff=lfs merge=lfs -text
+Aile.msh filter=lfs diff=lfs merge=lfs -text
+Results_Aile-Drone.msh filter=lfs diff=lfs merge=lfs -text
+Results_Aile-surface2_surf1_emplanture.msh filter=lfs diff=lfs merge=lfs -text
+Results_Aile-surface2_surf2_peau_inferieure.msh filter=lfs diff=lfs merge=lfs -text
+Results_Aile-surface2_surf3_peau_superieure.msh filter=lfs diff=lfs merge=lfs -text
