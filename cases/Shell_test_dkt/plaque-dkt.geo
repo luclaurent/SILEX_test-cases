@@ -1,0 +1,17 @@
+cl1 = 100;
+Lx=1000;
+Ly=100;
+Point(1) = {0, 0, 0, cl1};
+Point(2) = {Lx, 0, 0, cl1};
+Point(3) = {Lx, Ly, 0, cl1};
+Point(4) = {0, Ly, 0, cl1};
+Line(1) = {1, 2};
+Line(2) = {2, 3};
+Line(3) = {3, 4};
+Line(4) = {4, 1};
+Line Loop(5) = {4, 1, 2, 3};
+Plane Surface(6) = {5};
+Physical Line(1) = {4};
+Physical Line(2) = {2};
+Physical Surface(3) = {6};
+Physical Line(4) = {1};
