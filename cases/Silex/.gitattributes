@@ -1,0 +1,9 @@
+silex.msh filter=lfs diff=lfs merge=lfs -text
+silex-VM.png filter=lfs diff=lfs merge=lfs -text
+silex.stl filter=lfs diff=lfs merge=lfs -text
+Results_silexsurf3.msh filter=lfs diff=lfs merge=lfs -text
+Results_silexVolum.msh filter=lfs diff=lfs merge=lfs -text
+Results_silex_external_surface.msh filter=lfs diff=lfs merge=lfs -text
+Results_silexsurf2.msh filter=lfs diff=lfs merge=lfs -text
+silex.x3d filter=lfs diff=lfs merge=lfs -text
+Results_silex.msh filter=lfs diff=lfs merge=lfs -text
