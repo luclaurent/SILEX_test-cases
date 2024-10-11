@@ -1,3 +1,354 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:0ecf123ee337cb3fe3941a459382ab632eb3c8d53602569aff6559b2249f37ba
-size 15996
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE X3D PUBLIC "ISO//Web3D//DTD X3D 3.3//EN" "http://www.web3d.org/specifications/x3d-3.3.dtd">
+<X3D profile='Interchange' version='3.3'  xmlns:xsd='http://www.w3.org/2001/XMLSchema-instance' >
+  <head>
+    <meta name='title' content='PView'/> 
+    <meta name='description' content='/home/legay/Codes/SILEX3.4/calculs/Aile-maquette/toto.x3d'/>
+    <meta name='creator' content='gmsh'/> 
+    <meta name='created' content=' Wed Feb  1 14:31:38 2017
+    '/>
+  </head>
+  <Scene>
+    <Viewpoint description='Book View' orientation='0 0. 1. 0.' position='0.0775433 0.25 0.634197'/> 
+    <Background skyColor='.7 .7 1'/> 
+    <ProtoDeclare appinfo='Heads-up display (HUD)' name='HeadsUpDisplay'> 
+      <ProtoInterface> 
+        <field accessType='inputOutput' appinfo='offset position for HUD' name='screenOffset' type='SFVec3f' value='0.0775433 0.25 0.656229'/> 
+        <field accessType='inputOutput' appinfo='X3D content positioned at HUD offset' name='children' type='MFNode'>   
+        </field>  
+        <field accessType='outputOnly' appinfo='HUD position update (in world coordinates) relative to original location' name='position_changed' type='SFVec3f'/>   
+        <field accessType='outputOnly' appinfo='HUD orientation update relative to original location' name='orientation_changed' type='SFRotation'/> 
+      </ProtoInterface> 
+      <ProtoBody> 
+        <Group bboxCenter="0.0775433 0.25 0.005508"> 
+          <Transform DEF='HudContainer'> 
+            <Transform> 
+              <IS> 
+                <connect nodeField='translation' protoField='screenOffset'/> 
+              </IS> 
+              <Group> 
+                <IS> 
+                  <connect nodeField='children' protoField='children'/> 
+                </IS> 
+              </Group> 
+            </Transform> 
+          </Transform> 
+          <ProximitySensor DEF='HereIAm' size='10000000 10000000 10000000'> 
+            <IS> 
+              <connect nodeField='position_changed' protoField='position_changed'/> 
+              <connect nodeField='orientation_changed' protoField='orientation_changed'/> 
+            </IS> 
+          </ProximitySensor> 
+          <ROUTE fromField='orientation_changed' fromNode='HereIAm' toField='rotation' toNode='HudContainer'/> 
+          <ROUTE fromField='position_changed' fromNode='HereIAm' toField='translation' toNode='HudContainer'/> 
+        </Group> 
+      </ProtoBody> 
+    </ProtoDeclare>  
+    <Viewpoint description='Book View' orientation='0 0. 1. 0.' position='0.0775433 0.25 0.634197'/> 
+    <!-- ProtoDeclare is the "cookie cutter" template, ProtoInstance creates an actual occurrence --> 
+    <ProtoInstance DEF='HeadsUpDisplay' name='HeadsUpDisplay'> 
+      <!-- example: upper left-hand corner of screen (x=-2, y=1) and set back z=-5 from user view --> 
+      <fieldValue name='screenOffset' value='0.0775433 0.25 -0.0992735'/> 
+      <fieldValue name='children'> 
+      <Shape> 
+        <IndexedFaceSet colorPerVertex='true' normalPerVertex='true' coordIndex='0 1 2 3 -1' solid='false' ccw='true' > 
+          <Coordinate point='-2.250000e-01 -2.660000e-01 0.000000e+00 -1.800000e-01 -2.660000e-01 0.000000e+00 -1.800000e-01 -2.516000e-01 0.000000e+00 -2.250000e-01 -2.516000e-01 0.000000e+00       '/> 
+          <Color color=' 0 0 0.560784  0 0 0.952941  0 0 0.952941  0 0 0.560784 '/>
+        </IndexedFaceSet> 
+      </Shape> 
+      <Shape> 
+        <IndexedFaceSet colorPerVertex='true' normalPerVertex='true' coordIndex='0 1 2 3 -1' solid='false' ccw='true' > 
+          <Coordinate point='-1.800000e-01 -2.660000e-01 0.000000e+00 -1.350000e-01 -2.660000e-01 0.000000e+00 -1.350000e-01 -2.516000e-01 0.000000e+00 -1.800000e-01 -2.516000e-01 0.000000e+00       '/> 
+          <Color color=' 0 0 0.952941  0 0.34902 1  0 0.34902 1  0 0 0.952941 '/>
+        </IndexedFaceSet> 
+      </Shape> 
+      <Shape> 
+        <IndexedFaceSet colorPerVertex='true' normalPerVertex='true' coordIndex='0 1 2 3 -1' solid='false' ccw='true' > 
+          <Coordinate point='-1.350000e-01 -2.660000e-01 0.000000e+00 -9.000000e-02 -2.660000e-01 0.000000e+00 -9.000000e-02 -2.516000e-01 0.000000e+00 -1.350000e-01 -2.516000e-01 0.000000e+00       '/> 
+          <Color color=' 0 0.34902 1  0 0.756863 1  0 0.756863 1  0 0.34902 1 '/>
+        </IndexedFaceSet> 
+      </Shape> 
+      <Shape> 
+        <IndexedFaceSet colorPerVertex='true' normalPerVertex='true' coordIndex='0 1 2 3 -1' solid='false' ccw='true' > 
+          <Coordinate point='-9.000000e-02 -2.660000e-01 0.000000e+00 -4.500000e-02 -2.660000e-01 0.000000e+00 -4.500000e-02 -2.516000e-01 0.000000e+00 -9.000000e-02 -2.516000e-01 0.000000e+00       '/> 
+          <Color color=' 0 0.756863 1  0.152941 1 0.87451  0.152941 1 0.87451  0 0.756863 1 '/>
+        </IndexedFaceSet> 
+      </Shape> 
+      <Shape> 
+        <IndexedFaceSet colorPerVertex='true' normalPerVertex='true' coordIndex='0 1 2 3 -1' solid='false' ccw='true' > 
+          <Coordinate point='-4.500000e-02 -2.660000e-01 0.000000e+00 -2.775558e-17 -2.660000e-01 0.000000e+00 -2.775558e-17 -2.516000e-01 0.000000e+00 -4.500000e-02 -2.516000e-01 0.000000e+00       '/> 
+          <Color color=' 0.152941 1 0.87451  0.560784 1 0.466667  0.560784 1 0.466667  0.152941 1 0.87451 '/>
+        </IndexedFaceSet> 
+      </Shape> 
+      <Shape> 
+        <IndexedFaceSet colorPerVertex='true' normalPerVertex='true' coordIndex='0 1 2 3 -1' solid='false' ccw='true' > 
+          <Coordinate point='-2.775558e-17 -2.660000e-01 0.000000e+00 4.500000e-02 -2.660000e-01 0.000000e+00 4.500000e-02 -2.516000e-01 0.000000e+00 -2.775558e-17 -2.516000e-01 0.000000e+00       '/> 
+          <Color color=' 0.560784 1 0.466667  0.952941 1 0.0745098  0.952941 1 0.0745098  0.560784 1 0.466667 '/>
+        </IndexedFaceSet> 
+      </Shape> 
+      <Shape> 
+        <IndexedFaceSet colorPerVertex='true' normalPerVertex='true' coordIndex='0 1 2 3 -1' solid='false' ccw='true' > 
+          <Coordinate point='4.500000e-02 -2.660000e-01 0.000000e+00 9.000000e-02 -2.660000e-01 0.000000e+00 9.000000e-02 -2.516000e-01 0.000000e+00 4.500000e-02 -2.516000e-01 0.000000e+00       '/> 
+          <Color color=' 0.952941 1 0.0745098  1 0.678431 0  1 0.678431 0  0.952941 1 0.0745098 '/>
+        </IndexedFaceSet> 
+      </Shape> 
+      <Shape> 
+        <IndexedFaceSet colorPerVertex='true' normalPerVertex='true' coordIndex='0 1 2 3 -1' solid='false' ccw='true' > 
+          <Coordinate point='9.000000e-02 -2.660000e-01 0.000000e+00 1.350000e-01 -2.660000e-01 0.000000e+00 1.350000e-01 -2.516000e-01 0.000000e+00 9.000000e-02 -2.516000e-01 0.000000e+00       '/> 
+          <Color color=' 1 0.678431 0  1 0.270588 0  1 0.270588 0  1 0.678431 0 '/>
+        </IndexedFaceSet> 
+      </Shape> 
+      <Shape> 
+        <IndexedFaceSet colorPerVertex='true' normalPerVertex='true' coordIndex='0 1 2 3 -1' solid='false' ccw='true' > 
+          <Coordinate point='1.350000e-01 -2.660000e-01 0.000000e+00 1.800000e-01 -2.660000e-01 0.000000e+00 1.800000e-01 -2.516000e-01 0.000000e+00 1.350000e-01 -2.516000e-01 0.000000e+00       '/> 
+          <Color color=' 1 0.270588 0  0.87451 0 0  0.87451 0 0  1 0.270588 0 '/>
+        </IndexedFaceSet> 
+      </Shape> 
+      <Shape> 
+        <IndexedFaceSet colorPerVertex='true' normalPerVertex='true' coordIndex='0 1 2 3 -1' solid='false' ccw='true' > 
+          <Coordinate point='1.800000e-01 -2.660000e-01 0.000000e+00 2.250000e-01 -2.660000e-01 0.000000e+00 2.250000e-01 -2.516000e-01 0.000000e+00 1.800000e-01 -2.516000e-01 0.000000e+00       '/> 
+          <Color color=' 0.87451 0 0  0.466667 0 0  0.466667 0 0  0.87451 0 0 '/>
+        </IndexedFaceSet> 
+      </Shape> 
+      <Transform translation='-0.225 -0.2426 0'>  
+        <Shape> 
+          <Text string='"0"'>
+            <FontStyle justify='"MIDDLE" "MIDDLE"' size=' 0 '/>  
+          </Text>
+          <Appearance>
+            <Material diffuseColor='0. 0. 0. '/>
+          </Appearance>
+        </Shape>
+      </Transform> 
+      <Transform translation='-0.18 -0.2426 0'>  
+        <Shape> 
+          <Text string='"0.2"'>
+            <FontStyle justify='"MIDDLE" "MIDDLE"' size=' 0 '/>  
+          </Text>
+          <Appearance>
+            <Material diffuseColor='0. 0. 0. '/>
+          </Appearance>
+        </Shape>
+      </Transform> 
+      <Transform translation='-0.135 -0.2426 0'>  
+        <Shape> 
+          <Text string='"0.4"'>
+            <FontStyle justify='"MIDDLE" "MIDDLE"' size=' 0 '/>  
+          </Text>
+          <Appearance>
+            <Material diffuseColor='0. 0. 0. '/>
+          </Appearance>
+        </Shape>
+      </Transform> 
+      <Transform translation='-0.09 -0.2426 0'>  
+        <Shape> 
+          <Text string='"0.6"'>
+            <FontStyle justify='"MIDDLE" "MIDDLE"' size=' 0 '/>  
+          </Text>
+          <Appearance>
+            <Material diffuseColor='0. 0. 0. '/>
+          </Appearance>
+        </Shape>
+      </Transform> 
+      <Transform translation='-0.045 -0.2426 0'>  
+        <Shape> 
+          <Text string='"0.8"'>
+            <FontStyle justify='"MIDDLE" "MIDDLE"' size=' 0 '/>  
+          </Text>
+          <Appearance>
+            <Material diffuseColor='0. 0. 0. '/>
+          </Appearance>
+        </Shape>
+      </Transform> 
+      <Transform translation='-2.77556e-17 -0.2426 0'>  
+        <Shape> 
+          <Text string='"1"'>
+            <FontStyle justify='"MIDDLE" "MIDDLE"' size=' 0 '/>  
+          </Text>
+          <Appearance>
+            <Material diffuseColor='0. 0. 0. '/>
+          </Appearance>
+        </Shape>
+      </Transform> 
+      <Transform translation='0.045 -0.2426 0'>  
+        <Shape> 
+          <Text string='"1.2"'>
+            <FontStyle justify='"MIDDLE" "MIDDLE"' size=' 0 '/>  
+          </Text>
+          <Appearance>
+            <Material diffuseColor='0. 0. 0. '/>
+          </Appearance>
+        </Shape>
+      </Transform> 
+      <Transform translation='0.09 -0.2426 0'>  
+        <Shape> 
+          <Text string='"1.4"'>
+            <FontStyle justify='"MIDDLE" "MIDDLE"' size=' 0 '/>  
+          </Text>
+          <Appearance>
+            <Material diffuseColor='0. 0. 0. '/>
+          </Appearance>
+        </Shape>
+      </Transform> 
+      <Transform translation='0.135 -0.2426 0'>  
+        <Shape> 
+          <Text string='"1.6"'>
+            <FontStyle justify='"MIDDLE" "MIDDLE"' size=' 0 '/>  
+          </Text>
+          <Appearance>
+            <Material diffuseColor='0. 0. 0. '/>
+          </Appearance>
+        </Shape>
+      </Transform> 
+      <Transform translation='0.18 -0.2426 0'>  
+        <Shape> 
+          <Text string='"1.8"'>
+            <FontStyle justify='"MIDDLE" "MIDDLE"' size=' 0 '/>  
+          </Text>
+          <Appearance>
+            <Material diffuseColor='0. 0. 0. '/>
+          </Appearance>
+        </Shape>
+      </Transform> 
+      <Transform translation='0.225 -0.2426 0'>  
+        <Shape> 
+          <Text string='"2"'>
+            <FontStyle justify='"MIDDLE" "MIDDLE"' size=' 0 '/>  
+          </Text>
+          <Appearance>
+            <Material diffuseColor='0. 0. 0. '/>
+          </Appearance>
+        </Shape>
+      </Transform> 
+      <Transform translation='0 -0.221 0'>  
+        <Shape> 
+          <Text string='"Force"'>
+            <FontStyle justify='"MIDDLE" "MIDDLE"' size=' 0 '/>  
+          </Text>
+          <Appearance>
+            <Material diffuseColor='0. 0. 0. '/>
+          </Appearance>
+        </Shape>
+      </Transform> 
+      </fieldValue> 
+    </ProtoInstance> 
+    <Shape> 
+      <IndexedLineSet coordIndex=' '>
+        <Coordinate DEF='TurnPoints' point=' '/> 
+      </IndexedLineSet> 
+      <Appearance> 
+        <Material emissiveColor='0 0 0'/>
+        <LineProperties containerField='lineProperties'> 
+        </LineProperties> 
+      </Appearance> 
+    </Shape>
+    <Transform rotation='-0.666667 0 -0 1.5708' translation='5.014965e-02 4.984324e-01 -3.031506e-01' >
+      <Shape>
+        <Cone bottomRadius='0.0318122' height='0.636245'/>
+        <Appearance>
+          <Material diffuseColor='0 0.882353 1'/>
+        </Appearance>
+      </Shape>
+    </Transform>
+    <Transform rotation='-0.666667 0 -0 1.5708' translation='5.014965e-02 4.994128e-01 -3.040998e-01' >
+      <Shape>
+        <Cone bottomRadius='0.0318122' height='0.636245'/>
+        <Appearance>
+          <Material diffuseColor='0 0.882353 1'/>
+        </Appearance>
+      </Shape>
+    </Transform>
+    <Transform rotation='-0.666667 0 -0 1.5708' translation='5.158665e-02 5.000000e-01 -3.030971e-01' >
+      <Shape>
+        <Cone bottomRadius='0.0318122' height='0.636245'/>
+        <Appearance>
+          <Material diffuseColor='0 0.882353 1'/>
+        </Appearance>
+      </Shape>
+    </Transform>
+    <Transform rotation='-0.666667 0 -0 1.5708' translation='5.081021e-02 5.000000e-01 -3.040750e-01' >
+      <Shape>
+        <Cone bottomRadius='0.0318122' height='0.636245'/>
+        <Appearance>
+          <Material diffuseColor='0 0.882353 1'/>
+        </Appearance>
+      </Shape>
+    </Transform>
+    <Transform rotation='-0.666667 0 -0 1.5708' translation='4.879408e-02 5.000000e-01 -3.029538e-01' >
+      <Shape>
+        <Cone bottomRadius='0.0318122' height='0.636245'/>
+        <Appearance>
+          <Material diffuseColor='0 0.882353 1'/>
+        </Appearance>
+      </Shape>
+    </Transform>
+    <Transform rotation='-0.666667 0 -0 1.5708' translation='4.970630e-02 5.000000e-01 -3.038694e-01' >
+      <Shape>
+        <Cone bottomRadius='0.0318122' height='0.636245'/>
+        <Appearance>
+          <Material diffuseColor='0 0.882353 1'/>
+        </Appearance>
+      </Shape>
+    </Transform>
+    <Transform rotation='-0.666667 0 -0 1.5708' translation='5.014965e-02 4.984324e-01 -3.031506e-01' >
+      <Shape>
+        <Cone bottomRadius='0.0318122' height='0.636245'/>
+        <Appearance>
+          <Material diffuseColor='0 0.882353 1'/>
+        </Appearance>
+      </Shape>
+    </Transform>
+    <Transform rotation='-0.666667 0 -0 1.5708' translation='5.014965e-02 4.994128e-01 -3.040998e-01' >
+      <Shape>
+        <Cone bottomRadius='0.0318122' height='0.636245'/>
+        <Appearance>
+          <Material diffuseColor='0 0.882353 1'/>
+        </Appearance>
+      </Shape>
+    </Transform>
+    <Transform rotation='-0.666667 0 -0 1.5708' translation='5.158665e-02 5.000000e-01 -3.030971e-01' >
+      <Shape>
+        <Cone bottomRadius='0.0318122' height='0.636245'/>
+        <Appearance>
+          <Material diffuseColor='0 0.882353 1'/>
+        </Appearance>
+      </Shape>
+    </Transform>
+    <Transform rotation='-0.666667 0 -0 1.5708' translation='5.081021e-02 5.000000e-01 -3.040750e-01' >
+      <Shape>
+        <Cone bottomRadius='0.0318122' height='0.636245'/>
+        <Appearance>
+          <Material diffuseColor='0 0.882353 1'/>
+        </Appearance>
+      </Shape>
+    </Transform>
+    <Transform rotation='-0.666667 0 -0 1.5708' translation='4.879408e-02 5.000000e-01 -3.029538e-01' >
+      <Shape>
+        <Cone bottomRadius='0.0318122' height='0.636245'/>
+        <Appearance>
+          <Material diffuseColor='0 0.882353 1'/>
+        </Appearance>
+      </Shape>
+    </Transform>
+    <Transform rotation='-0.666667 0 -0 1.5708' translation='4.970630e-02 5.000000e-01 -3.038694e-01' >
+      <Shape>
+        <Cone bottomRadius='0.0318122' height='0.636245'/>
+        <Appearance>
+          <Material diffuseColor='0 0.882353 1'/>
+        </Appearance>
+      </Shape>
+    </Transform>
+    <Transform> 
+      <Shape> 
+        <Appearance> 
+          <Material  transparency='0'            ambientIntensity='0.15'   diffuseColor='.5 .5 .5'    emissiveColor='0 0 0'            shininess='0.1'   specularColor='.1 .1 .1'  />  
+        </Appearance> 
+        <IndexedTriangleSet  solid='true' ccw='true' colorPerVertex='true' 
+          normalPerVertex='true'  containerField='geometry' index='  ' > 
+          <Coordinate point=' '/> 
+          <Color color=' '/>
+        </IndexedTriangleSet> 
+      </Shape> 
+    </Transform> 
+  </Scene>
+</X3D>

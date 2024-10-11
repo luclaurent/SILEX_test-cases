@@ -1,3 +1,37 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:f7b27b0aa58ef8d6fded4c36196f59944283b26b54a9ef9737766406531b8661
-size 1512
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE X3D PUBLIC "ISO//Web3D//DTD X3D 3.3//EN" "http://www.web3d.org/specifications/x3d-3.3.dtd">
+<X3D profile='Interchange' version='3.3'  xmlns:xsd='http://www.w3.org/2001/XMLSchema-instance' >
+  <head>
+    <meta name='title' content='PView'/> 
+    <meta name='description' content='/home/legay/Codes/SILEX3.4/calculs/Aile-maquette/aile_mesh.x3d'/>
+    <meta name='creator' content='gmsh'/> 
+    <meta name='created' content=' Tue Apr  5 11:08:45 2016
+    '/>
+  </head>
+  <Scene>
+    <Viewpoint description='Book View' orientation='0 0. 1. 0.' position='0 0 0'/> 
+    <Background skyColor='.7 .7 1'/> 
+    <Shape> 
+      <IndexedLineSet coordIndex=' '>
+        <Coordinate DEF='TurnPoints' point=' '/> 
+      </IndexedLineSet> 
+      <Appearance> 
+        <Material emissiveColor='0 0 0'/>
+        <LineProperties containerField='lineProperties'> 
+        </LineProperties> 
+      </Appearance> 
+    </Shape>
+    <Transform> 
+      <Shape> 
+        <Appearance> 
+          <Material  transparency='0'            ambientIntensity='0.15'   diffuseColor='.5 .5 .5'    emissiveColor='0 0 0'            shininess='0.1'   specularColor='.1 .1 .1'  />  
+        </Appearance> 
+        <IndexedTriangleSet  solid='true' ccw='true' colorPerVertex='true' 
+          normalPerVertex='true'  containerField='geometry' index='  ' > 
+          <Coordinate point=' '/> 
+          <Color color=' '/>
+        </IndexedTriangleSet> 
+      </Shape> 
+    </Transform> 
+  </Scene>
+</X3D>
