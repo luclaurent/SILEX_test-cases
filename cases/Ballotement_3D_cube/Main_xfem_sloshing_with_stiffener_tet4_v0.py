@@ -18,6 +18,7 @@ import utils_acoustics as ua
 
 
 from SILEXlib import silex_lib_acou_tet4 as libF
+from SILEXlib import silex_lib_xfem_acou_tet4 as libF_xfem
 #from SILEXlib import silex_lib_dkt as libS
 from SILEXlib import silex_lib_acou_tri3 as libFreeSurf
 from SILEXlib import silex_lib_gmsh
@@ -49,16 +50,18 @@ mycomm=comm_mumps_one_proc()
 dataPb = dict()
 
 # parallepipedic cavity with plane structure
-mesh_file=Path(__file__).parent / 'cube_ballotement_tet4'
-results_file=Path(__file__).parent / 'cube_ballotement_tet4'
+mesh_file_fluid=Path(__file__).parent / 'cube_xfem_sloshing_Fluid_and_Tank_tet4'
+mesh_file_stiffener=Path(__file__).parent / 'cube_xfem_sloshing_Stiffener_tet4'
+
+results_file=Path(__file__).parent / 'cube_xfem_sloshing_with_stiffener_tet4'
 
 dataPb['freq_ini'] = 0.1
 dataPb['freq_ref'] = 0.1
 dataPb['freq_end'] = 2.0
-dataPb['nb_freq_step'] = 300
+dataPb['nb_freq_step'] = 100
 
 # Flags
-dataPb['flag_eigen_vectors'] = 0
+dataPb['flag_eigen_vectors'] = 1
 
 # fluid
 dataFluid = dict()
@@ -79,13 +82,13 @@ dataFluid['rho'] = 1000.0
 
 
 ##############################################################
-# Load fluid mesh
+# Load fluid mesh and tank
 ##############################################################
 
 tic = time.process_time()
 
 gmsh.initialize()
-gmsh.open(mesh_file.as_posix()+'.geo')
+gmsh.open(mesh_file_fluid.as_posix()+'.geo')
 # mesh generation
 gmsh.model.mesh.generate(3)
 
@@ -133,11 +136,78 @@ gmsh.finalize()
 
 
 # gmsh output to check
-#silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Fluid_volume',datafluidmesh['nodes'],datafluidmesh['fluid_volume_elts'],4)
-#silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Tank_surfaces',datafluidmesh['nodes'],datafluidmesh['structure_surface_elts'],2)
-#silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Fluid_Free_surface',datafluidmesh['nodes'],datafluidmesh['free_fluid_surface_elts'],2)
+silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Fluid_volume',datafluidmesh['nodes'],datafluidmesh['fluid_volume_elts'],4)
+silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Tank_surfaces',datafluidmesh['nodes'],datafluidmesh['structure_surface_elts'],2)
+silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Fluid_Free_surface',datafluidmesh['nodes'],datafluidmesh['free_fluid_surface_elts'],2)
+
+##############################################################
+# Load stiffener mesh / compute Level Set 
+##############################################################
+
+tic = time.process_time()
+
+gmsh.initialize()
+gmsh.open(mesh_file_stiffener.as_posix()+'.geo')
+# mesh generation
+gmsh.model.mesh.generate(3)
+
+# get fluid nodes
+_,_nodes,_ = gmsh.model.mesh.getNodes()
+stiffener_nodes = np.reshape(_nodes,(int(len(_nodes)/3),3))
+
+# check physical groups
+physical_groups = gmsh.model.getPhysicalGroups()
+
+stiffener_surface = (2,50) # stiffener surface physical group
+stiffener_edge = (1,60) # stiffener edge physical group
+
+if not stiffener_surface in physical_groups:
+    raise ValueError('stiffener surface physical group not found')
+if not stiffener_edge in physical_groups:
+    raise ValueError('stiffener edge physical group not found')
+
+# get entities per physical group
+stiffener_surface_entities = gmsh.model.getEntitiesForPhysicalGroup(*stiffener_surface)
+stiffener_edge_entities = gmsh.model.getEntitiesForPhysicalGroup(*stiffener_edge)
+
+# get elements
+stiffener_surface_elements = u.getElementsFromEntities(gmsh,stiffener_surface[0],stiffener_surface_entities)
+stiffener_edge_elements = u.getElementsFromEntities(gmsh,stiffener_edge[0],stiffener_edge_entities)
+
+print(' ----  stiffener_surface_elements : ',stiffener_surface_elements)
+print(' ----  stiffener_edge_elements : ',stiffener_edge_elements)
 
 
+dataXfemStiffener = dict()
+dataXfemStiffener['nodes'] = stiffener_nodes
+dataXfemStiffener['stiffener_surface_elements'] = stiffener_surface_elements
+dataXfemStiffener['stiffener_edge_elements'] = stiffener_edge_elements
+
+gmsh.finalize()
+
+
+# gmsh output to check
+silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Stiffener_surface',
+                            dataXfemStiffener['nodes'],
+                            dataXfemStiffener['stiffener_surface_elements'],2)
+
+# compute Level Set to stiffener
+Stiffener_LS,Stiffener_distance = libF_xfem.computelevelset(datafluidmesh['nodes'],
+                                         dataXfemStiffener['nodes'],
+                                         dataXfemStiffener['stiffener_surface_elements'])
+# make perpendicular mesh to the stiffener along the edge
+Stiffener_tangent_nodes,Stiffener_tangent_mesh=libF_xfem.buildtangentedgemesh(dataXfemStiffener['nodes'],
+                                                                         dataXfemStiffener['stiffener_surface_elements'],
+                                                                         dataXfemStiffener['stiffener_edge_elements'])
+
+silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_LevelSet',
+                             datafluidmesh['nodes'],
+                             datafluidmesh['fluid_volume_elts'],
+                             4,
+                             [[[Stiffener_LS],'nodal',1,'Level set']])
+
+
+STOP
 
 ##############################################################
 # Compute Standard Fluid Matrices : VOLUME
@@ -235,7 +305,7 @@ if dataPb['flag_eigen_vectors']==1:
                                  4,
                                  [[eigen_vector_list,'nodal',1,'modes']])
 
-
+stop
 
 ##############################################################
 # Compute FRF
@@ -244,7 +314,7 @@ press=[]
 frequencies=[]
 QuantityOfInterest=[]
 damping=None
-#SolvedDofF=list(range(fluid_ndof))
+
 print ("Time at the beginning of the FRF:",time.ctime())
 for f in np.linspace(dataPb['freq_ini'],
                     dataPb['freq_end'],

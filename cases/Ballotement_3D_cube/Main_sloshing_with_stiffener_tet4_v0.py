@@ -49,16 +49,16 @@ mycomm=comm_mumps_one_proc()
 dataPb = dict()
 
 # parallepipedic cavity with plane structure
-mesh_file=Path(__file__).parent / 'cube_ballotement_tet4'
-results_file=Path(__file__).parent / 'cube_ballotement_tet4'
+mesh_file=Path(__file__).parent / 'cube_sloshing_with_stiffener_tet4'
+results_file=Path(__file__).parent / 'cube_sloshing_with_stiffener_tet4'
 
 dataPb['freq_ini'] = 0.1
 dataPb['freq_ref'] = 0.1
 dataPb['freq_end'] = 2.0
-dataPb['nb_freq_step'] = 300
+dataPb['nb_freq_step'] = 100
 
 # Flags
-dataPb['flag_eigen_vectors'] = 0
+dataPb['flag_eigen_vectors'] = 1
 
 # fluid
 dataFluid = dict()
@@ -133,9 +133,9 @@ gmsh.finalize()
 
 
 # gmsh output to check
-#silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Fluid_volume',datafluidmesh['nodes'],datafluidmesh['fluid_volume_elts'],4)
-#silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Tank_surfaces',datafluidmesh['nodes'],datafluidmesh['structure_surface_elts'],2)
-#silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Fluid_Free_surface',datafluidmesh['nodes'],datafluidmesh['free_fluid_surface_elts'],2)
+silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Fluid_volume',datafluidmesh['nodes'],datafluidmesh['fluid_volume_elts'],4)
+silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Tank_surfaces',datafluidmesh['nodes'],datafluidmesh['structure_surface_elts'],2)
+silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Fluid_Free_surface',datafluidmesh['nodes'],datafluidmesh['free_fluid_surface_elts'],2)
 
 
 
@@ -235,7 +235,7 @@ if dataPb['flag_eigen_vectors']==1:
                                  4,
                                  [[eigen_vector_list,'nodal',1,'modes']])
 
-
+stop
 
 ##############################################################
 # Compute FRF
@@ -244,7 +244,7 @@ press=[]
 frequencies=[]
 QuantityOfInterest=[]
 damping=None
-#SolvedDofF=list(range(fluid_ndof))
+
 print ("Time at the beginning of the FRF:",time.ctime())
 for f in np.linspace(dataPb['freq_ini'],
                     dataPb['freq_end'],
