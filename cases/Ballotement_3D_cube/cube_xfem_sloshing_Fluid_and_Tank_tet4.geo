@@ -5,7 +5,7 @@ lz1 = 0.6;
 
 
 // size of elements
-h =  lx1/20;
+h =  lx1/40;
 
 Mesh.CharacteristicLengthMax=10*h;
 Mesh.ElementOrder = 1;

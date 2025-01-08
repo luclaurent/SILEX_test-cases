@@ -4,7 +4,7 @@ ly1 = 0.8;
 lz1 = 0.6;
 
 lxa = 0.41;
-th = 0.01;
+th = 0.002;
 lza = 0.33;
 
 // size of elements
@@ -23,15 +23,15 @@ Point(6) = {lx1,    0  , lz1, h};
 Point(7) = {lx1,    ly1 , lz1, h};
 Point(8) = {0 ,    ly1 , lz1, h};
 
-Point(10) = {lxa,   0  , 0, h};
-Point(11) = {lxa+th,   0  , 0, h};
-Point(12) = {lxa,   0  , lza , h};
-Point(13) = {lxa+th,   0  , lza , h};
+Point(10) = {lxa-th/2,   0  , 0, h};
+Point(11) = {lxa+th/2,   0  , 0, h};
+Point(12) = {lxa-th/2,   0  , lza , h};
+Point(13) = {lxa+th/2,   0  , lza , h};
 
-Point(20) = {lxa,    ly1, 0, h};
-Point(21) = {lxa+th, ly1, 0, h};
-Point(22) = {lxa,    ly1, lza , h};
-Point(23) = {lxa+th, ly1, lza , h};
+Point(20) = {lxa-th/2,    ly1, 0, h};
+Point(21) = {lxa+th/2, ly1, 0, h};
+Point(22) = {lxa-th/2,    ly1, lza , h};
+Point(23) = {lxa+th/2, ly1, lza , h};
 
 
 // Cavity: lines

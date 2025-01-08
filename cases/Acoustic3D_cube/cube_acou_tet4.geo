@@ -7,7 +7,7 @@ lz1 = 1.0;
 a = 0.66;
 
 // size of elements
-h =  lx1/30;
+h =  lx1/20;
 //h2 = lz1/20;
 
 //h  = lx1*10;

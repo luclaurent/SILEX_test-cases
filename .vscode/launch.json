@@ -1,46 +1,46 @@
-{
-    // Utilisez IntelliSense pour en savoir plus sur les attributs possibles.
-    // Pointez pour afficher la description des attributs existants.
-    // Pour plus d'informations, visitez : https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
+// {
+//     // Utilisez IntelliSense pour en savoir plus sur les attributs possibles.
+//     // Pointez pour afficher la description des attributs existants.
+//     // Pour plus d'informations, visitez : https://go.microsoft.com/fwlink/?linkid=830387
+//     "version": "0.2.0",
+//     "configurations": [
 
-        {
-            "name": "Python : debug class",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/debugClass.py",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "name": "Python + Fortran : debug class",
-            "type": "lldb",
-            "request": "launch",
-            "program": "python",
-            "args": "debugClass.py",//[],//"-o", "debug", "-g","-O0","*.f08","*.f90"],
-            // "stopAtEntry": false ,
-            "cwd": "${workspaceRoot}",
-            // "environment": [],
-            // "preLaunchTask": "buildFortran",
-            // "MIMode": "gdb",
-            // "miDebuggerPath": "/usr/local/bin/gdb",
-            // "setupCommands":[
-            //  {
-            //      "description": "Enable pretty-printing for gdb",
-            //      "text": "-enable-pretty-printing",
-            //      "ignoreFailures": true
-            //  }
-            // ]
-        },
-        {
-            "name": "Python debugPlot",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/debugPlot.py",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}"
-        },
-    ]
-}
+//         {
+//             "name": "Python : debug class",
+//             "type": "python",
+//             "request": "launch",
+//             "program": "${workspaceFolder}/debugClass.py",
+//             "console": "integratedTerminal",
+//             "cwd": "${workspaceFolder}"
+//         },
+//         {
+//             "name": "Python + Fortran : debug class",
+//             "type": "lldb",
+//             "request": "launch",
+//             "program": "python",
+//             "args": "debugClass.py",//[],//"-o", "debug", "-g","-O0","*.f08","*.f90"],
+//             // "stopAtEntry": false ,
+//             "cwd": "${workspaceRoot}",
+//             // "environment": [],
+//             // "preLaunchTask": "buildFortran",
+//             // "MIMode": "gdb",
+//             // "miDebuggerPath": "/usr/local/bin/gdb",
+//             // "setupCommands":[
+//             //  {
+//             //      "description": "Enable pretty-printing for gdb",
+//             //      "text": "-enable-pretty-printing",
+//             //      "ignoreFailures": true
+//             //  }
+//             // ]
+//         },
+//         {
+//             "name": "Python debugPlot",
+//             "type": "python",
+//             "request": "launch",
+//             "program": "${workspaceFolder}/debugPlot.py",
+//             "console": "integratedTerminal",
+//             "cwd": "${workspaceFolder}"
+//         },
+//     ]
+// }
 
