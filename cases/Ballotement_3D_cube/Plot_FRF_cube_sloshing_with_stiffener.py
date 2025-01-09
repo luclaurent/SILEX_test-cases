@@ -60,6 +60,7 @@ pl.xlabel('Frequency (Hz)')
 pl.ylabel('Pressure [Pa] : Upper corner point 8')
 pl.grid('on')
 pl.legend(loc=4)
+
 pl.show()
 
 
