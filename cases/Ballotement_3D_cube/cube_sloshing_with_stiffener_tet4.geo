@@ -4,6 +4,7 @@ ly1 = 0.8;
 lz1 = 0.6;
 
 lxa = 0.41;
+lxashift = 0.1;
 th = 0.002;
 lza = 0.33;
 
@@ -28,10 +29,10 @@ Point(11) = {lxa+th/2,   0  , 0, h};
 Point(12) = {lxa-th/2,   0  , lza , h};
 Point(13) = {lxa+th/2,   0  , lza , h};
 
-Point(20) = {lxa-th/2,    ly1, 0, h};
-Point(21) = {lxa+th/2, ly1, 0, h};
-Point(22) = {lxa-th/2,    ly1, lza , h};
-Point(23) = {lxa+th/2, ly1, lza , h};
+Point(20) = {lxa+lxashift-th/2, ly1, 0,    h};
+Point(21) = {lxa+lxashift+th/2, ly1, 0,    h};
+Point(22) = {lxa+lxashift-th/2, ly1, lza , h};
+Point(23) = {lxa+lxashift+th/2, ly1, lza , h};
 
 
 // Cavity: lines

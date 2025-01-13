@@ -5,12 +5,13 @@ lz1 = 0.6;
 
 
 lxa = 0.41;
+lxashift = 0.0;
 // th = 0.01;
-lza = 0.33;
+lza = 0.23;
 
 
 // size of elements
-h =  lx1/50;
+h =  lx1/80;
 
 Mesh.CharacteristicLengthMax=10*h;
 Mesh.ElementOrder = 1;
@@ -25,16 +26,15 @@ Mesh.ElementOrder = 1;
 //Point(7) = {lx1,    ly1 , lz1, h};
 //Point(8) = {0 ,    ly1 , lz1, h};
 
-
 // stiffener 
 Point(10) = {lxa,   0  , 0, h};
 //Point(11) = {lxa+th,   0  , 0, h};
 Point(12) = {lxa,   0  , lza , h};
 //Point(13) = {lxa+th,   0  , lza , h};
 
-Point(20) = {lxa,    ly1, 0, h};
+Point(20) = {lxa+lxashift,    ly1, 0, h};
 //Point(21) = {lxa+th, ly1, 0, h};
-Point(22) = {lxa,    ly1, lza , h};
+Point(22) = {lxa+lxashift,    ly1, lza , h};
 //Point(23) = {lxa+th, ly1, lza , h};
 
 

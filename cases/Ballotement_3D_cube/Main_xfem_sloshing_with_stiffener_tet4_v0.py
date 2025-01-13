@@ -61,6 +61,9 @@ dataPb['freq_ref'] = 0.1
 dataPb['freq_end'] = 2.0
 dataPb['nb_freq_step'] = 100
 
+# Imposed acceleration on tank and stiffener surfaces 
+dataPb['U_dot_dot_imposed'] = np.array([1.0,0.0,0.0])
+
 # Flags
 dataPb['flag_eigen_vectors'] = 0
 dataPb['flag_FRF'] = 1
@@ -139,6 +142,7 @@ gmsh.finalize()
 
 fluid_ndof = datafluidmesh['nodes'].shape[0]
 
+print('node 8 :', datafluidmesh['nodes'][8-1])
 
 # gmsh output to check
 if dataPb['flag_write_gmsh_results']==1:
@@ -294,17 +298,18 @@ SFF=scipy.sparse.csc_matrix( (VSFF,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )/
 
 #print(libF.sloshimposedacc.__doc__)
 
-U_dot_dot_imposed = np.array([1.0,0.0,0.0])
+
 
 CF,VecNormalEltsF = libF.sloshimposedacc(
                         np.array(datafluidmesh['nodes']),
                         np.array(datafluidmesh['structure_surface_elts']),
-                        U_dot_dot_imposed)
+                        dataPb['U_dot_dot_imposed'])
 
 CF=CF*dataFluid['rho']
 
 # check if normal vectors are pointing out of the fluid volume
-silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Normal_to_tank_surfaces',
+if dataPb['flag_write_gmsh_results']==1:
+    silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Normal_to_tank_surfaces',
                             datafluidmesh['nodes'],
                             datafluidmesh['structure_surface_elts'],
                             2,
@@ -315,18 +320,22 @@ silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Normal_to_tank_surfac
 ##############################################################
 print(libF_xfem.sloshimposedacc_xfem1.__doc__)
 
+flag_write_quadrature_points_in_a_file=0
+
 CA,VecNormalEltsA = libF_xfem.sloshimposedacc_xfem1(
                         np.array(datafluidmesh['nodes']),
                         np.array(dataXfemStiffener['nodes']),
                         np.array(datafluidmesh['fluid_volume_elts']),
                         np.array(dataXfemStiffener['stiffener_surface_elements']),
-                        EnrichedElements-1,
-                        U_dot_dot_imposed)
+                        EnrichedElements,
+                        dataPb['U_dot_dot_imposed'],
+                        flag_write_quadrature_points_in_a_file)
 
 CA=CA*dataFluid['rho']
 
 # check if normal vectors are pointing out of the fluid volume
-silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Normal_to_stiffener',
+if dataPb['flag_write_gmsh_results']==1:
+    silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Normal_to_stiffener',
                             dataXfemStiffener['nodes'],
                             dataXfemStiffener['stiffener_surface_elements'],
                             2,
@@ -377,7 +386,7 @@ if dataPb['flag_eigen_vectors']==1:
                                                               sigma=0,which='LM')
 
     freq_eigv_S=list(np.sqrt(eigen_values)/(2*np.pi))
-
+    print('XFEM eigen frequencies : ',freq_eigv_S)
     eigen_vector_list=[]
     for i in range(eigen_values.shape[0]):
         Q=np.zeros(fluid_ndof)
@@ -385,7 +394,8 @@ if dataPb['flag_eigen_vectors']==1:
         eigen_vector_list.append(Q)
 
 
-    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_Eigen_modes',
+    if dataPb['flag_write_gmsh_results']==1:
+        silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_Eigen_modes',
                                  datafluidmesh['nodes'],
                                  datafluidmesh['fluid_volume_elts'],
                                  4,
@@ -421,8 +431,9 @@ if dataPb['flag_FRF']==1:
 
     frfsave=[np.array(frequencies),np.array(QuantityOfInterest)]
 
-    print('QuantityOfInterest : ',QuantityOfInterest)
-    silex_lib_gmsh.WriteResults2(results_file.as_posix() +'_results_fluid_frf',
+    if dataPb['flag_write_gmsh_results']==1:
+        print('QuantityOfInterest : ',QuantityOfInterest)
+        silex_lib_gmsh.WriteResults2(results_file.as_posix() +'_results_fluid_frf',
                                 datafluidmesh['nodes'],
                                 datafluidmesh['fluid_volume_elts'],
                                 4,

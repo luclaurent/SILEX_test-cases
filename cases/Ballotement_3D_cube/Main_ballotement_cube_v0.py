@@ -132,6 +132,8 @@ datafluidmesh['free_fluid_surface_elts'] = free_fluid_surface_elements
 gmsh.finalize()
 
 
+#print('node 8 :', datafluidmesh['nodes'][8-1])
+
 # gmsh output to check
 #silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Fluid_volume',datafluidmesh['nodes'],datafluidmesh['fluid_volume_elts'],4)
 #silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Tank_surfaces',datafluidmesh['nodes'],datafluidmesh['structure_surface_elts'],2)

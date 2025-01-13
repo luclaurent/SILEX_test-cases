@@ -57,8 +57,13 @@ dataPb['freq_ref'] = 0.1
 dataPb['freq_end'] = 2.0
 dataPb['nb_freq_step'] = 100
 
+# Imposed acceleration on tank and stiffener surfaces 
+dataPb['U_dot_dot_imposed'] = np.array([1.0,0.0,0.0])
+
 # Flags
 dataPb['flag_eigen_vectors'] = 1
+dataPb['flag_FRF'] = 1
+dataPb['flag_write_gmsh_results'] = 1
 
 # fluid
 dataFluid = dict()
@@ -131,11 +136,13 @@ datafluidmesh['free_fluid_surface_elts'] = free_fluid_surface_elements
 
 gmsh.finalize()
 
+print('node 8 :', datafluidmesh['nodes'][8-1])
 
 # gmsh output to check
-silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Fluid_volume',datafluidmesh['nodes'],datafluidmesh['fluid_volume_elts'],4)
-silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Tank_surfaces',datafluidmesh['nodes'],datafluidmesh['structure_surface_elts'],2)
-silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Fluid_Free_surface',datafluidmesh['nodes'],datafluidmesh['free_fluid_surface_elts'],2)
+if dataPb['flag_write_gmsh_results'] == 1:
+    silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Fluid_volume',datafluidmesh['nodes'],datafluidmesh['fluid_volume_elts'],4)
+    silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Tank_surfaces',datafluidmesh['nodes'],datafluidmesh['structure_surface_elts'],2)
+    silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Fluid_Free_surface',datafluidmesh['nodes'],datafluidmesh['free_fluid_surface_elts'],2)
 
 
 
@@ -178,16 +185,17 @@ SFF=scipy.sparse.csc_matrix( (VSFF,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )/
 CF,VecNormalElts = libF.sloshimposedacc(
     np.array(datafluidmesh['nodes']),
                                  np.array(datafluidmesh['structure_surface_elts']),
-                                 np.array([1.0,0.0,0.0]))
+                                 dataPb['U_dot_dot_imposed'])
 
 CF=CF*dataFluid['rho']
 
 # check if normal vectors are pointing out of the fluid volume
-silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Normal_to_tank_surfaces',
-                            datafluidmesh['nodes'],
-                            datafluidmesh['structure_surface_elts'],
-                            2,
-                            [[VecNormalElts,'elemental',3,'Normal to tank elements']])
+if dataPb['flag_write_gmsh_results'] == 1:
+    silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Normal_to_tank_surfaces',
+                                datafluidmesh['nodes'],
+                                datafluidmesh['structure_surface_elts'],
+                                2,
+                                [[VecNormalElts,'elemental',3,'Normal to tank elements']])
 
 
 ##############################################################
@@ -221,6 +229,7 @@ if dataPb['flag_eigen_vectors']==1:
                                                               sigma=0,which='LM')
 
     freq_eigv_S=list(np.sqrt(eigen_values)/(2*np.pi))
+    print('Classic eigen frequencies : ',freq_eigv_S)
 
     eigen_vector_list=[]
     for i in range(eigen_values.shape[0]):
@@ -229,54 +238,56 @@ if dataPb['flag_eigen_vectors']==1:
         eigen_vector_list.append(Q)
 
 
-    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_Eigen_modes',
-                                 datafluidmesh['nodes'],
-                                 datafluidmesh['fluid_volume_elts'],
-                                 4,
-                                 [[eigen_vector_list,'nodal',1,'modes']])
-
-stop
+    if dataPb['flag_write_gmsh_results'] == 1:
+        silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_Eigen_modes',
+                                    datafluidmesh['nodes'],
+                                    datafluidmesh['fluid_volume_elts'],
+                                    4,
+                                    [[eigen_vector_list,'nodal',1,'modes']])
 
 ##############################################################
 # Compute FRF
 ##############################################################
-press=[]
-frequencies=[]
-QuantityOfInterest=[]
-damping=None
+if dataPb['flag_FRF'] == 1:
 
-print ("Time at the beginning of the FRF:",time.ctime())
-for f in np.linspace(dataPb['freq_ini'],
-                    dataPb['freq_end'],
-                    dataPb['nb_freq_step']):
-    
-    print('Solve freq : ',f)
-    frequencies.append(f)
+    press=[]
+    frequencies=[]
+    QuantityOfInterest=[]
+    damping=None
 
-    omega=2*np.pi*f
-    forceType ='float'
+    print ("Time at the beginning of the FRF:",time.ctime())
+    for f in np.linspace(dataPb['freq_ini'],
+                        dataPb['freq_end'],
+                        dataPb['nb_freq_step']):
 
-#    sol = scipy.sparse.linalg.spsolve(KFF-omega**2*MFF,FF)
-    sol = mumps.spsolve( HFF-omega**2*SFF , CF , comm=mycomm )
-    press.append(sol.copy())
+        print('Solve freq : ',f)
+        frequencies.append(f)
 
-    QuantityOfInterest.append(sol[8-1]) # upper corner
-    
+        omega=2*np.pi*f
+        forceType ='float'
+
+    #    sol = scipy.sparse.linalg.spsolve(KFF-omega**2*MFF,FF)
+        sol = mumps.spsolve( HFF-omega**2*SFF , CF , comm=mycomm )
+        press.append(sol.copy())
+
+        QuantityOfInterest.append(sol[8-1]) # upper corner
 
 
-frfsave=[np.array(frequencies),np.array(QuantityOfInterest)]
 
-print('QuantityOfInterest : ',QuantityOfInterest)
-silex_lib_gmsh.WriteResults2(results_file.as_posix() +'_results_fluid_frf',
-                             datafluidmesh['nodes'],
-                             datafluidmesh['fluid_volume_elts'],
-                             4,
-                             [[press,'nodal',1,'pressure']]
-                             )
+    frfsave=[np.array(frequencies),np.array(QuantityOfInterest)]
 
-print ("Time at the end of the FRF:",time.ctime())
+    if dataPb['flag_write_gmsh_results'] == 1:
+        print('QuantityOfInterest : ',QuantityOfInterest)
+        silex_lib_gmsh.WriteResults2(results_file.as_posix() +'_results_fluid_frf',
+                                    datafluidmesh['nodes'],
+                                    datafluidmesh['fluid_volume_elts'],
+                                    4,
+                                    [[press,'nodal',1,'pressure']]
+                                    )
 
-f=open(results_file.as_posix() +'_results.frf','wb')
-pickle.dump(frfsave, f)
-f.close()
+    print ("Time at the end of the FRF:",time.ctime())
+
+    f=open(results_file.as_posix() +'_results.frf','wb')
+    pickle.dump(frfsave, f)
+    f.close()
 
