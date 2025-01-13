@@ -25,7 +25,7 @@ mycomm=comm_mumps_one_proc()
 print("SILEX CODE - calcul d'un assemblage - SUPER BEAM ELEMENT condensation statique")
 #############################################################################
 
-tic = time.clock()
+tic = time.process_time()
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
@@ -86,24 +86,24 @@ elementS204,IdnodeS204=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,204
 dofS204=scipy.hstack([(IdnodeS204-1)*3,(IdnodeS204-1)*3+1,(IdnodeS204-1)*3+2])
 
 # SUPER BEAM ELEMENTS : bas-haut
-elementBeam = scipy.array([[1,5],[2,6],[3,7],[4,8]])
+elementBeam = np.array([[1,5],[2,6],[3,7],[4,8]])
 B = 100.0e-3     # hauteur de la liaison, sans les plaques en metal
 E = 2.0e-3       # epaisseur des plaques dessus et dessous
 L1 = 600.0e-3    # entraxe entre les diabolos
 L2 = 1000.0e-3   # entraxe entre les diabolos
 
-SuperNodes = scipy.array([[0.0,0.0,0.0],[L1,0.0,0.0],[L1,0.0,L2],[0.0,0.0,L2],
+SuperNodes = np.array([[0.0,0.0,0.0],[L1,0.0,0.0],[L1,0.0,L2],[0.0,0.0,L2],
                           [0.0,B+2.0*E,0.0],[L1,B+2.0*E,0.0],[L1,B+2.0*E,L2],[0.0,B+2.0*E,L2]])
 
-IdSuperNodesDown  = scipy.array([1,2,3,4])
-IdSuperNodesUp    = scipy.array([5,6,7,8])
+IdSuperNodesDown  = np.array([1,2,3,4])
+IdSuperNodesUp    = np.array([5,6,7,8])
 
-IdSuperNodesFixed_x = scipy.array([])
-IdSuperNodesFixed_y = scipy.array([1,2,3,4])
-IdSuperNodesFixed_z = scipy.array([])
-IdSuperNodesFixed_rotx = scipy.array([1,2,3,4])
-IdSuperNodesFixed_roty = scipy.array([])
-IdSuperNodesFixed_rotz = scipy.array([1,2,3,4])
+IdSuperNodesFixed_x = np.array([])
+IdSuperNodesFixed_y = np.array([1,2,3,4])
+IdSuperNodesFixed_z = np.array([])
+IdSuperNodesFixed_rotx = np.array([1,2,3,4])
+IdSuperNodesFixed_roty = np.array([])
+IdSuperNodesFixed_rotz = np.array([1,2,3,4])
 
 # write the surface mesh in a gmsh-format file to verify if its correct
 ##silex_lib_gmsh.WriteResults(ResultsFileName+'_surf101',nodes,elementS101,3)
@@ -141,22 +141,22 @@ param3 = [mu3,Lambda3,0.0,0.0,0.0,0.0,0.0,0.0]  # Material parameter in a vector
 Fixed_Dofs = scipy.hstack([ndof+(IdSuperNodesFixed_x-1)*6,ndof+(IdSuperNodesFixed_y-1)*6+1,ndof+(IdSuperNodesFixed_z-1)*6+2,ndof+(IdSuperNodesFixed_rotx-1)*6+3,ndof+(IdSuperNodesFixed_roty-1)*6+4,ndof+(IdSuperNodesFixed_rotz-1)*6+5])
 
 # DEFINE LOAD : ON SUPER NODE 1 IN y DIRECTION
-##Fprime = scipy.zeros(ndof+6*SuperNodes.shape[0])
-##Fprime[ndof+(1-1)*6+0]=50e-3**2*scipy.pi*1.0e2
+##Fprime = np.zeros(ndof+6*SuperNodes.shape[0])
+##Fprime[ndof+(1-1)*6+0]=50e-3**2*np.pi*1.0e2
 
 # DEFINE LOAD : ON SUPER NODE 1, 2, 3, 4 IN x,y DIRECTION
-Fprime = scipy.zeros(ndof+6*SuperNodes.shape[0])
-Fprime[ndof+(1-1)*6+0]=50e-3**2*scipy.pi*1.0e2
-Fprime[ndof+(1-1)*6+2]=50e-3**2*scipy.pi*1.0e2
-Fprime[ndof+(2-1)*6+0]=50e-3**2*scipy.pi*1.0e2
-Fprime[ndof+(2-1)*6+2]=50e-3**2*scipy.pi*1.0e2
-Fprime[ndof+(3-1)*6+0]=50e-3**2*scipy.pi*1.0e2
-Fprime[ndof+(3-1)*6+2]=50e-3**2*scipy.pi*1.0e2
-Fprime[ndof+(4-1)*6+0]=50e-3**2*scipy.pi*1.0e2
-Fprime[ndof+(4-1)*6+2]=50e-3**2*scipy.pi*1.0e2
+Fprime = np.zeros(ndof+6*SuperNodes.shape[0])
+Fprime[ndof+(1-1)*6+0]=50e-3**2*np.pi*1.0e2
+Fprime[ndof+(1-1)*6+2]=50e-3**2*np.pi*1.0e2
+Fprime[ndof+(2-1)*6+0]=50e-3**2*np.pi*1.0e2
+Fprime[ndof+(2-1)*6+2]=50e-3**2*np.pi*1.0e2
+Fprime[ndof+(3-1)*6+0]=50e-3**2*np.pi*1.0e2
+Fprime[ndof+(3-1)*6+2]=50e-3**2*np.pi*1.0e2
+Fprime[ndof+(4-1)*6+0]=50e-3**2*np.pi*1.0e2
+Fprime[ndof+(4-1)*6+2]=50e-3**2*np.pi*1.0e2
 
 # LOAD ON 1 NODE OF THE TOP SURFACE
-#F = scipy.zeros(ndof)
+#F = np.zeros(ndof)
 #F[(56-1)*3+1]=1.0
 
 # frequency range
@@ -164,7 +164,7 @@ frequencies=scipy.linspace(10,500,500)
 
 flag_damping=0
 
-toc = time.clock()
+toc = time.process_time()
 print("time for the user part:",toc-tic)
 
 
@@ -181,34 +181,34 @@ print("Number of elements:",nelem)
 print("")
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof+6*SuperNodes.shape[0]),Fixed_Dofs)
-SolvedDofs = scipy.setdiff1d(SolvedDofs,scipy.hstack([dofS201,dofS202,dofS203,dofS204]))
+SolvedDofs = np.setdiff1d(range(ndof+6*SuperNodes.shape[0]),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(SolvedDofs,scipy.hstack([dofS201,dofS202,dofS203,dofS204]))
 
 # initialize displacement vector
-Qprime=scipy.zeros(ndof+6*SuperNodes.shape[0],dtype='float')
+Qprime=np.zeros(ndof+6*SuperNodes.shape[0],dtype='float')
 
 #############################################################################
 #      compute stiffness matrix
 #############################################################################
-tic0 = time.clock()
-tic = time.clock()
+tic0 = time.process_time()
+tic = time.process_time()
 
-K3_i,K3_j,K3_v = silex_lib_elt.ktan_dd(nodes,elementV12,scipy.zeros(ndof,dtype='float'),flag3,param3)
+K3_i,K3_j,K3_v = silex_lib_elt.ktan_dd(nodes,elementV12,np.zeros(ndof,dtype='float'),flag3,param3)
 K3 = scipy.sparse.csc_matrix((K3_v,(K3_i,K3_j)),shape=(ndof,ndof))
 
 Ik3,Jk3,Vk3,Vm3=silex_lib_elt.stiffnessmatrix(nodes,elementV12,[1,1,rho3])
 M3 = scipy.sparse.csc_matrix( (Vm3,(Ik3,Jk3)), shape=(ndof,ndof) )
 
-toc = time.clock()
+toc = time.process_time()
 print("time to compute the stiffness and mass matrix :",toc-tic)
 
 # Compute Stiffness matrix of the SUPER-BEAM-ELEMENTS
 Young=2.0*0.1634e6*2*(1+0.45)
 G=E/(2.0*(1+0.45))
 radius=40e-3
-Section=scipy.pi*radius**2
-BendingInertia=scipy.pi*(2.0*radius)**4/64
-TwistingInertia=scipy.pi*(2.0*radius)**4/32
+Section=np.pi*radius**2
+BendingInertia=np.pi*(2.0*radius)**4/64
+TwistingInertia=np.pi*(2.0*radius)**4/32
 Length=100.0e-3
 rho_link=1500.0
 
@@ -293,25 +293,25 @@ M = scipy.sparse.csc_matrix(M+M3)
 
 #Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 ##if flag_damping==1:
-##    Q=scipy.zeros(ndof,dtype=mytype)
+##    Q=np.zeros(ndof,dtype=mytype)
 
 if 1==0:
     eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(K[SolvedDofs,:][:,SolvedDofs],30,M[SolvedDofs,:][:,SolvedDofs],sigma=0,which='LM')
 
-    freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*scipy.pi))
+    freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*np.pi))
 
     eigen_vector_S_list=[]
     for i in range(eigen_values_S.shape[0]):
-        Qprime=scipy.zeros(ndof+6*SuperNodes.shape[0])
+        Qprime=np.zeros(ndof+6*SuperNodes.shape[0])
         Qprime[SolvedDofs]=eigen_vectors_S[:,i]
         tmp=R*Qprime
-        disp=scipy.zeros((nnodes,3))
+        disp=np.zeros((nnodes,3))
         disp[range(nnodes),0]=tmp[list(range(0,ndof,3))].real
         disp[range(nnodes),1]=tmp[list(range(1,ndof,3))].real
         disp[range(nnodes),2]=tmp[list(range(2,ndof,3))].real
         eigen_vector_S_list.append(disp)
 
-    toc = time.clock()
+    toc = time.process_time()
     print ("structure eigen frequencies : ",freq_eigv_S)
     print ("time for computing the structure modes:",toc-tic)
     silex_lib_gmsh.WriteResults2(ResultsFileName+'_structure_modes',nodes,elements,5,[[eigen_vector_S_list,'nodal',3,'modes']])
@@ -329,7 +329,7 @@ disp_save=[]
 for i in range(len(frequencies)):
 
     freq = frequencies[i]
-    omega=2*scipy.pi*freq
+    omega=2*np.pi*freq
 
     print ("frequency=",freq)
 
@@ -338,14 +338,14 @@ for i in range(len(frequencies)):
 ##        Gstar=(G0+Ginf*(1j*omega*tau)**alpha)/(1+(1j*omega*tau)**alpha)
 ##        K = K1 + K2*Gstar/G0 + K3
 
-    Qprime[SolvedDofs] = mumps.spsolve( scipy.sparse.csc_matrix(K[SolvedDofs,:][:,SolvedDofs]-(omega*omega)*M[SolvedDofs,:][:,SolvedDofs],dtype=mytype) , scipy.array(Fprime[SolvedDofs],dtype=mytype), comm=mycomm).T
+    Qprime[SolvedDofs] = mumps.spsolve( scipy.sparse.csc_matrix(K[SolvedDofs,:][:,SolvedDofs]-(omega*omega)*M[SolvedDofs,:][:,SolvedDofs],dtype=mytype) , np.array(Fprime[SolvedDofs],dtype=mytype), comm=mycomm).T
     Q=R*Qprime
 
     #frf.append(scipy.sqrt(Q[(187-1)*3]**2+Q[(187-1)*3+1]**2+Q[(187-1)*3+2]**2))
-    frf.append(scipy.linalg.norm(scipy.array([Q[(123-1)*3],Q[(123-1)*3+1],Q[(123-1)*3+2]])))
+    frf.append(scipy.linalg.norm(np.array([Q[(123-1)*3],Q[(123-1)*3+1],Q[(123-1)*3+2]])))
     #print('node 123: Displacement = ',[Q[(123-1)*3],Q[(123-1)*3+1],Q[(123-1)*3+2]])
     
-    disp=scipy.zeros((nnodes,3),dtype='float')
+    disp=np.zeros((nnodes,3),dtype='float')
     disp[range(nnodes),0]=Q[list(range(0,ndof,3))].real
     disp[range(nnodes),1]=Q[list(range(1,ndof,3))].real
     disp[range(nnodes),2]=Q[list(range(2,ndof,3))].real

@@ -28,12 +28,12 @@ f.close()
 f=open('results/classic_pgd_fluid_cavity.frf','rb')
 frf_classic_pgd=pickle.load(f)
 f.close()
-frf_classic_pgd[1]=scipy.array(frf_classic_pgd[1])
+frf_classic_pgd[1]=np.array(frf_classic_pgd[1])
 
 f=open('results/classic_pgd_fluid_cavity_with_modes.frf','rb')
 frf_classic_pgd_with_modes=pickle.load(f)
 f.close()
-frf_classic_pgd_with_modes=scipy.array(frf_classic_pgd_with_modes)
+frf_classic_pgd_with_modes=np.array(frf_classic_pgd_with_modes)
 
 prefsquare=20e-6*20e-6
 

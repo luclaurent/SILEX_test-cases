@@ -428,7 +428,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     if (Flag_frf_analysis == 1):
         print("Proc. ", rank, " / time at the beginning of the FRF:", time.ctime())
-        time0_frf=time.clock()
+        time0_frf=time.process_time()
 
         if rank == 0:
             print('nb of total dofs: ', len(SolvedDofF)+len(SolvedDofA))
@@ -454,7 +454,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             it=it+1
             #freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
             frequencies.append(freq)
-            omega = 2*scipy.pi*freq
+            omega = 2*np.pi*freq
 
             print("Freq. step ",it,"/",itmax," proc number", rank, "frequency=", freq)
 
@@ -545,7 +545,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         if rank!=0:
             comm.send(frfsave, dest=0, tag=11)
 
-        time1_frf=time.clock()
+        time1_frf=time.process_time()
         print("Proc. ", rank, " / time at the end of the FRF:", time.ctime())
         print("Time for FRF: ", time1_frf-time0_frf)
         print("Mean time for one freq. step: ", (time1_frf-time0_frf)/nbStep)

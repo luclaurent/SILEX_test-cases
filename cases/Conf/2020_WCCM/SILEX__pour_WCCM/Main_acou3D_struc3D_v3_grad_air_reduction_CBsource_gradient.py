@@ -345,7 +345,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     SolvedDofF = list(range(fluid_ndof))
     SolvedDofB=scipy.hstack([9-1]) # 9 : node number where acoustic source is imposed
-    SolvedDofI=scipy.setdiff1d(SolvedDofF,SolvedDofB)
+    SolvedDofI=np.setdiff1d(SolvedDofF,SolvedDofB)
     #SolvedDofI=SolvedDofF
 
     ##################################################################
@@ -376,14 +376,14 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     ##################################################################
     # Compute eigen modes of the fluid: internal dof I
     ##################################################################
-    tic = time.clock()
+    tic = time.process_time()
 
     eigen_values_I,eigen_vectors_I= scipy.sparse.linalg.eigsh(KFF[SolvedDofI,:][:,SolvedDofI],nb_mode_F,MFF[SolvedDofI,:][:,SolvedDofI],sigma=0,which='LM')
 
-    freq_eigv_I=list(scipy.sqrt(eigen_values_I)/(2*scipy.pi))
+    freq_eigv_I=list(scipy.sqrt(eigen_values_I)/(2*np.pi))
     eigen_vector_F_list=[]
     for i in range(nb_mode_F):
-        tmp=scipy.zeros((fluid_ndof) , dtype='float')
+        tmp=np.zeros((fluid_ndof) , dtype='float')
         tmp[SolvedDofI]=eigen_vectors_I[:,i].real
         eigen_vector_F_list.append(tmp)
 
@@ -393,45 +393,45 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     if (flag_write_gmsh_results==1) and (rank==0):
         silex_lib_gmsh.WriteResults2(results_file+'_fluid_modes',fluid_nodes,fluid_elements1,4,[[eigen_vector_F_list,'nodal',1,'pressure']])
 
-    toc = time.clock()
+    toc = time.process_time()
     if rank==0:
         print ("time for computing the fluid modes:",toc-tic)
 
     ##################################################################
     # Compute Psi_IA for the fluid: Psi_IA = - KII^{-1} * KIA
     ##################################################################
-    tic = time.clock()
+    tic = time.process_time()
 
     print ("Compute PSI_IA")
-    #omega_cst=0.0*2.0*scipy.pi
+    #omega_cst=0.0*2.0*np.pi
     #MySolve = scipy.sparse.linalg.factorized( KFF[SolvedDofI,:][:,SolvedDofI]-(omega_cst**2)*MFF[SolvedDofI,:][:,SolvedDofI] ) # Makes LU decomposition.
     MySolve = scipy.sparse.linalg.factorized( KFF[SolvedDofI,:][:,SolvedDofI]) # Makes LU decomposition.
     print("LU decomposition has been made")
-    Psi_IA=scipy.zeros((len(SolvedDofI),len(SolvedDofA)))
+    Psi_IA=np.zeros((len(SolvedDofI),len(SolvedDofA)))
 
     j=0
     for One_dof in SolvedDofA:
         KIA_i_column=-KAF[SolvedDofI,:][:,One_dof]
         Xi=MySolve( KIA_i_column.todense() )
-        Psi_IA[:,j]=scipy.array(Xi)[:,0]
+        Psi_IA[:,j]=np.array(Xi)[:,0]
         j=j+1
 
     Psi_IA=scipy.sparse.csc_matrix(Psi_IA)
-    toc = time.clock()
+    toc = time.process_time()
     print ("time to compute PSI_IA:",toc-tic)
 
     ##################################################################
     # Compute Psi_IB for the fluid: Psi_IB = - KII^{-1} * KIB
     ##################################################################
-    tic = time.clock()
+    tic = time.process_time()
     print ("Compute PSI_IB")
-    Psi_IB=scipy.zeros((len(SolvedDofI),len(SolvedDofB)))
+    Psi_IB=np.zeros((len(SolvedDofI),len(SolvedDofB)))
 
     j=0
     for One_dof in SolvedDofB:
         KIB_i_column=-KFF[SolvedDofI,:][:,One_dof]
         Xi=MySolve( KIB_i_column.todense() )
-        Psi_IB[:,j]=scipy.array(Xi)[:,0]
+        Psi_IB[:,j]=np.array(Xi)[:,0]
         j=j+1
 
 
@@ -439,7 +439,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 ##        print ("Compute PSI_IB")
 ##
 ##    if rank==0:
-##        Psi_IB=scipy.zeros((len(SolvedDofI),len(SolvedDofB)))
+##        Psi_IB=np.zeros((len(SolvedDofI),len(SolvedDofB)))
 ##
 ##    i=0
 ##    j=0
@@ -456,9 +456,9 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 ##                    if k!=0:
 ##                        if i+k<len(SolvedDofB):
 ##                            [Xi,j]=comm.recv(source=k, tag=11)
-##                            Psi_IB[:,j]=scipy.array(Xi)[:,0]
+##                            Psi_IB[:,j]=np.array(Xi)[:,0]
 ##                    else:
-##                        Psi_IB[:,j]=scipy.array(Xi)[:,0]
+##                        Psi_IB[:,j]=np.array(Xi)[:,0]
 ##            i=i+nproc
 
     if rank==0:
@@ -472,7 +472,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 ##        Psi_IB=comm.recv(source=0, tag=11)
 
     Psi_IB=scipy.sparse.csc_matrix(Psi_IB)
-    toc = time.clock()
+    toc = time.process_time()
 
     if rank==0:
         print ("time to compute PSI_FB:",toc-tic)
@@ -534,7 +534,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     UFreduc = np.zeros(fluid_ndof, dtype=float)
     UFreduc[9-1] = 3.1250E-05
-    Freduced_F=scipy.hstack([scipy.zeros(nb_mode_F,dtype=float),UF[SolvedDofB]])
+    Freduced_F=scipy.hstack([np.zeros(nb_mode_F,dtype=float),UF[SolvedDofB]])
 
     #################################################################
     # Compute gradients with respect to parameters
@@ -552,20 +552,20 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         dMFA_dtheta = scipy.sparse.csc_matrix( (Vfam_gradient,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
 
 
-        tic = time.clock()
+        tic = time.process_time()
 
         print ("Compute DPSI_IA_Dtheta")
-        DPsi_IA_Dtheta=scipy.zeros((len(SolvedDofI),len(SolvedDofA)))
+        DPsi_IA_Dtheta=np.zeros((len(SolvedDofI),len(SolvedDofA)))
 
         j=0
         for One_dof in SolvedDofA:
             DKIA_Dtheta_i_column=-dKFA_dtheta[SolvedDofI,:][:,One_dof]
             Xi=MySolve( DKIA_Dtheta_i_column.todense() )
-            DPsi_IA_Dtheta[:,j]=scipy.array(Xi)[:,0]
+            DPsi_IA_Dtheta[:,j]=np.array(Xi)[:,0]
             j=j+1
 
         DPsi_IA_Dtheta=scipy.sparse.csc_matrix(DPsi_IA_Dtheta)
-        toc = time.clock()
+        toc = time.process_time()
         print ("time to compute DPSI_IA_Dtheta:",toc-tic)
 
 
@@ -617,7 +617,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     if (Flag_frf_analysis == 1):
         print("Proc. ", rank, " / time at the beginning of the FRF:", time.ctime())
-        time0_frf=time.clock()
+        time0_frf=time.process_time()
 
         if rank == 0:
             print('nb of total dofs: ', len(SolvedDofF)+len(SolvedDofA))
@@ -643,13 +643,13 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             it=it+1
             #freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
             frequencies.append(freq)
-            omega = 2*scipy.pi*freq
+            omega = 2*np.pi*freq
 
             print("Freq. step ",it,"/",itmax," proc number", rank, "frequency=", freq)
 
             tic = time.process_time()
 
-            Freduc  = scipy.append(omega**2*Freduced_F,scipy.zeros( len(SolvedDofA) , dtype='c16' ))
+            Freduc  = scipy.append(omega**2*Freduced_F,np.zeros( len(SolvedDofA) , dtype='c16' ))
 
             
             if rank>=0:
@@ -661,13 +661,13 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             P_A     = sol_reduc[list(range(nb_mode_F+len(SolvedDofB),nb_mode_F+len(SolvedDofB)+len(SolvedDofA),1))].copy()
             P_I     = eigen_vectors_I.dot(alpha_m)+Psi_IB.dot(P_B)+Psi_IA.dot(P_A)
 
-            press_reduc      = scipy.zeros(fluid_ndof,dtype=complex)
+            press_reduc      = np.zeros(fluid_ndof,dtype=complex)
             press_reduc[SolvedDofI] = P_I.copy()
             press_reduc[SolvedDofB] = P_B.copy()
-            enrichment_reduc = scipy.zeros(fluid_ndof,dtype=complex)
+            enrichment_reduc = np.zeros(fluid_ndof,dtype=complex)
             enrichment_reduc[SolvedDofA]= P_A.copy()
-            CorrectedPressure=scipy.array(press_reduc.copy())
-            CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA].T+scipy.array(enrichment_reduc[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA]).T)
+            CorrectedPressure=np.array(press_reduc.copy())
+            CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA].T+np.array(enrichment_reduc[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA]).T)
 
             ## compute and store FRF on the test volume
             ## frf_reduc.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(
@@ -705,7 +705,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
                 Dpress_Dtheta[SolvedDofB,itP] = DP_B_Dtheta
                 Denrichment_Dtheta[SolvedDofA,itP]= DP_A_Dtheta
                 DCorrectedPressure_Dtheta[:,itP]=np.array(Dpress_Dtheta[:,itP].copy())
-                DCorrectedPressure_Dtheta[SolvedDofA,itP]=DCorrectedPressure_Dtheta[SolvedDofA,itP].T+scipy.array(Denrichment_Dtheta[SolvedDofA,itP]*scipy.sign(LevelSet[SolvedDofA]).T)
+                DCorrectedPressure_Dtheta[SolvedDofA,itP]=DCorrectedPressure_Dtheta[SolvedDofA,itP].T+np.array(Denrichment_Dtheta[SolvedDofA,itP]*scipy.sign(LevelSet[SolvedDofA]).T)
 ##                #Dsol_Dtheta_RAW = mumps.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='c16')  , tmp )
 ##                # Dsol_Dtheta_RAW = scipy.sparse.linalg.spsolve( scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='c16')  , tmp )
 ##                #####################
@@ -746,7 +746,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         if rank!=0:
             comm.send(frfsave, dest=0, tag=11)
 
-        time1_frf=time.clock()
+        time1_frf=time.process_time()
         print("Proc. ", rank, " / time at the end of the FRF:", time.ctime())
         print("Time for FRF: ", time1_frf-time0_frf)
         print("Mean time for one freq. step: ", (time1_frf-time0_frf)/nbStep)

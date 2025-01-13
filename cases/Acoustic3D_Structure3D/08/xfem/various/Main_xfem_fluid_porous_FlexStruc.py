@@ -109,7 +109,7 @@ ce_fl = celerity
 # Load fluid mesh
 ##############################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 fluid_nodes    = silex_lib_gmsh.ReadGmshNodes(mesh_file+'.msh',3)
 fluid_elements1,IdNodes1 = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',4,1) # air, cavity + controlled volume
@@ -149,7 +149,7 @@ new = list(range(1,len(scipy.unique(fluid_elements1))+1))
 new_nodes=fluid_nodes[scipy.unique(fluid_elements1)-1,:]
 
 dico1 = dict(zip(old,new))
-new_elements=scipy.zeros((fluid_nelem1,4),dtype=int)
+new_elements=np.zeros((fluid_nelem1,4),dtype=int)
 for e in range(fluid_nelem1):
     for i in range(4):
         new_elements[e,i]=dico1[fluid_elements1[e][i]]
@@ -157,7 +157,7 @@ for e in range(fluid_nelem1):
 fluid_elements1 = new_elements
 fluid_nodes1    = new_nodes
 
-new_elements=scipy.zeros((fluid_nelem5,4),dtype=int)
+new_elements=np.zeros((fluid_nelem5,4),dtype=int)
 for e in range(fluid_nelem5):
     for i in range(4):
         new_elements[e,i]=dico1[fluid_elements5[e][i]]
@@ -170,7 +170,7 @@ new = list(range(1,len(scipy.unique(fluid_elements2))+1))
 new_nodes=fluid_nodes[scipy.unique(fluid_elements2)-1,:]
 
 dico2 = dict(zip(old,new))
-new_elements=scipy.zeros((fluid_nelem2,4),dtype=int)
+new_elements=np.zeros((fluid_nelem2,4),dtype=int)
 for e in range(fluid_nelem2):
     for i in range(4):
         new_elements[e,i]=dico2[fluid_elements2[e][i]]
@@ -200,13 +200,13 @@ Fixed_Dofs_porous = scipy.hstack([(IdNodesFixed_porous_us_x-1)*6,
                                   ])
 
 # get connectivity at air-porous interface
-IdNodesS3_for_1=scipy.zeros(fluid_nnodes3,dtype=int)
-IdNodesS3_for_2=scipy.zeros(fluid_nnodes3,dtype=int)
+IdNodesS3_for_1=np.zeros(fluid_nnodes3,dtype=int)
+IdNodesS3_for_2=np.zeros(fluid_nnodes3,dtype=int)
 for i in range(fluid_nnodes3):
     IdNodesS3_for_1[i]=dico1[IdNodesS3[i]] # for the air mesh
     IdNodesS3_for_2[i]=dico2[IdNodesS3[i]] # for the porous mesh
 
-InterfaceConnectivity=scipy.zeros((fluid_nelem3,6),dtype=int)
+InterfaceConnectivity=np.zeros((fluid_nelem3,6),dtype=int)
 for e in range(fluid_nelem3):
     for i in range(3):
         InterfaceConnectivity[e,i]   = dico1[fluid_elements_S3[e,i]] # for the air mesh
@@ -254,23 +254,23 @@ FixedStrucDofRz=(FixedStrucNodes-1)*6+5
 
 FixedStrucDof=scipy.hstack([FixedStrucDofUx,FixedStrucDofUy,FixedStrucDofUz,FixedStrucDofRx,FixedStrucDofRy,FixedStrucDofRz])
 
-SolvedDofS=scipy.setdiff1d(range(struc_ndof),FixedStrucDof)
+SolvedDofS=np.setdiff1d(range(struc_ndof),FixedStrucDof)
 
-FS=scipy.zeros(struc_ndof)
+FS=np.zeros(struc_ndof)
 #IddofLoadStructure=[(IdNodeLoadStructure-1)*6+2]
 #FS[IddofLoadStructure]=1.0
 
 ##############################################################
 # Compute structure matrices
 ##############################################################
-tic = time.clock()
+tic = time.process_time()
 
 IIks,JJks,Vks,Vms=silex_lib_dkt.stiffnessmatrix(struc_nodes,struc_elements,material_Struc)
 
 KSS = scipy.sparse.csc_matrix( (Vks,(IIks,JJks)), shape=(struc_ndof,struc_ndof) )
 MSS = scipy.sparse.csc_matrix( (Vms,(IIks,JJks)), shape=(struc_ndof,struc_ndof) )
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time for computing structure:",toc-tic)
 
@@ -279,21 +279,21 @@ if rank==0:
 # compute level set
 ##################################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 LevelSet,distance = silex_lib_xfem_acou_tet4.computelevelset(fluid_nodes1,struc_nodes,struc_elements)
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time to compute level set:",toc-tic)
 
-tic = time.clock()
+tic = time.process_time()
 
 tangent_nodes,tangent_mesh=silex_lib_xfem_acou_tet4.buildtangentedgemesh(struc_nodes,struc_elements,struc_boun)
 
 LevelSetTangent,tmp = silex_lib_xfem_acou_tet4.computelevelset(fluid_nodes1,tangent_nodes,tangent_mesh)
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time to compute tangent level set:",toc-tic)
 
@@ -306,18 +306,18 @@ if (flag_write_gmsh_results==1) and (rank==0):
 ##################################################################
 # Get enriched nodes and elements
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 
 LSEnrichedElements,NbLSEnrichedElements=silex_lib_xfem_acou_tet4.getenrichedelementsfromlevelset(fluid_elements1,LevelSet)
 LSEnrichedElements=LSEnrichedElements[list(range(NbLSEnrichedElements))]
 EnrichedElements,NbEnrichedElements=silex_lib_xfem_acou_tet4.getsurfenrichedelements(struc_nodes,struc_elements,fluid_nodes1,fluid_elements1[LSEnrichedElements])
 EnrichedElements=scipy.unique(EnrichedElements[list(range(NbEnrichedElements))])
 EnrichedElements=LSEnrichedElements[EnrichedElements-1]
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time to find surface enriched elements:",toc-tic)
 
-tic = time.clock()
+tic = time.process_time()
 
 EdgeEnrichedElements,nbenrelts = silex_lib_xfem_acou_tet4.getedgeenrichedelements(struc_nodes,struc_boun,fluid_nodes1,fluid_elements1)
 EdgeEnrichedElements=scipy.unique(EdgeEnrichedElements[list(range(nbenrelts))])-1
@@ -325,13 +325,13 @@ EdgeEnrichedElements=scipy.unique(EdgeEnrichedElements[list(range(nbenrelts))])-
 EdgeEnrichedElementsInAllMesh,nbEdgeEnrichedElementsInAllMesh=silex_lib_xfem_acou_tet4.getenrichedelementsfromlevelset(fluid_elements1,LevelSetTangent)
 EdgeEnrichedElementsInAllMesh=scipy.unique(EdgeEnrichedElementsInAllMesh[list(range(nbEdgeEnrichedElementsInAllMesh))])
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time to find edge enriched elements:",toc-tic)
 
-HeavisideEnrichedElements=scipy.setdiff1d(EnrichedElements,EdgeEnrichedElements)
+HeavisideEnrichedElements=np.setdiff1d(EnrichedElements,EdgeEnrichedElements)
 
-AllElementsExceptEdgeEnrichedElements=scipy.setdiff1d(range(fluid_nelem1),EdgeEnrichedElements)
+AllElementsExceptEdgeEnrichedElements=np.setdiff1d(range(fluid_nelem1),EdgeEnrichedElements)
 
 if (flag_write_gmsh_results==1) and (rank==0):
     silex_lib_gmsh.WriteResults2(results_file+'_LSenriched_elements',fluid_nodes1,fluid_elements1[LSEnrichedElements],4)
@@ -344,14 +344,14 @@ if (flag_write_gmsh_results==1) and (rank==0):
 ##################################################################
 # Compute coupling STRUCTURE / AIR terms
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 
 IIc1,JJc1,Vc1=silex_lib_xfem_acou_tet4.computexfemcoupling1(fluid_nodes1,struc_nodes,fluid_elements1,struc_elements,EnrichedElements)
 IIc2,JJc2,Vc2=silex_lib_xfem_acou_tet4.computexfemcoupling2(fluid_nodes1,struc_nodes,fluid_elements1,struc_elements,EnrichedElements,LevelSet)
 
 CSA=0.5*scipy.sparse.csc_matrix( (Vc1,(IIc1,JJc1)), shape=(struc_ndof,fluid_ndof1) )+0.5*scipy.sparse.csc_matrix( (Vc2,(IIc2,JJc2)), shape=(struc_ndof,fluid_ndof1) )
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time to compute coupling matrices:",toc-tic)
 
@@ -360,7 +360,7 @@ if rank==0:
 # Compute Standard Fluid Matrices
 ##############################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 IIf,JJf,Vffk,Vffm=silex_lib_xfem_acou_tet4.globalacousticmatrices(fluid_elements1,fluid_nodes1,celerity,rho)
 
@@ -374,7 +374,7 @@ SolvedDofF=list(range(fluid_ndof1))
 ##############################################################
 porous_material_prop=[E_sol,nu_sol,ro_sol,to_por,po_por,sg_por,lambda_por,lambda_prime_por,ro_fl,visco_fl,pdtl_fl,gamma_fl,p0_fl,ce_fl]
 
-SolvedDofP=scipy.setdiff1d(range(fluid_ndof2),Fixed_Dofs_porous)
+SolvedDofP=np.setdiff1d(range(fluid_ndof2),Fixed_Dofs_porous)
 
 ##############################################################
 # Compute Coupling Porous-air Matrices
@@ -390,7 +390,7 @@ CPF=scipy.sparse.csc_matrix( (Vpf,(IIpf,JJpf)), shape=(fluid_ndof2,fluid_ndof1) 
 ##################################################################
 # Compute Heaviside enrichment
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 
 #Enrichednodes = scipy.unique(fluid_elements1[HeavisideEnrichedElements])
 Enrichednodes = scipy.unique(fluid_elements1[EnrichedElements])
@@ -414,14 +414,14 @@ MAFheaviside = scipy.sparse.csc_matrix( (Vafm,(IIaf,JJaf)), shape=(fluid_ndof1,f
 
 SolvedDofA=Enrichednodes-1
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time to compute Heaviside enrichment:",toc-tic)
 
 ##################################################################
 # Compute Edge enrichment
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 
 PartiallyPositiveLStgtElements=scipy.hstack([PositiveLStgtElements,EdgeEnrichedElementsInAllMesh])
 
@@ -434,7 +434,7 @@ MAAedge = scipy.sparse.csc_matrix( (vmaa,(II,JJ)), shape=(fluid_ndof1,fluid_ndof
 KAFedge = scipy.sparse.csc_matrix( (vkfa,(II,JJ)), shape=(fluid_ndof1,fluid_ndof1) )
 MAFedge = scipy.sparse.csc_matrix( (vmfa,(II,JJ)), shape=(fluid_ndof1,fluid_ndof1) )
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time to compute edge enrichment:",toc-tic)
 
@@ -456,7 +456,7 @@ if (flag_write_gmsh_results==1) and (rank==0):
 
 # To impose the load on the fluid:
 # fluid node number 1
-UF = scipy.zeros(2*fluid_ndof1+fluid_ndof2+struc_ndof,dtype=float)
+UF = np.zeros(2*fluid_ndof1+fluid_ndof2+struc_ndof,dtype=float)
 UF[9-1]=3.1250E-05
 
 SolvedDof = scipy.hstack([SolvedDofF,SolvedDofA+fluid_ndof1,SolvedDofP+2*fluid_ndof1,SolvedDofS+2*fluid_ndof1+fluid_ndof2])
@@ -478,7 +478,7 @@ if (Flag_frf_analysis==1):
 
         freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
         frequencies.append(freq)
-        omega=2*scipy.pi*freq
+        omega=2*np.pi*freq
 
         print ("proc number",rank,"frequency=",freq)
 
@@ -497,14 +497,14 @@ if (Flag_frf_analysis==1):
                                          [CPF[SolvedDofP,:][:,SolvedDofF],None,MPP[SolvedDofP,:][:,SolvedDofP],None],
                                          [None,        None,       None,                           MSS[SolvedDofS,:][:,SolvedDofS]]] )
 
-        F=scipy.array(omega**2*UF[SolvedDof] , dtype='c16')
+        F=np.array(omega**2*UF[SolvedDof] , dtype='c16')
 
         sol = mumps.spsolve( scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='c16') , F , comm=mycomm )
 
-        press1 = scipy.zeros((fluid_ndof1),dtype=complex)
+        press1 = np.zeros((fluid_ndof1),dtype=complex)
         press1[SolvedDofF]=sol[list(range(len(SolvedDofF)))]
 
-        enrichment=scipy.zeros((fluid_nnodes),dtype=complex)
+        enrichment=np.zeros((fluid_nnodes),dtype=complex)
         enrichment[SolvedDofA]=sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
         CorrectedPressure=press1
         CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA]+enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
@@ -522,8 +522,8 @@ if (Flag_frf_analysis==1):
     print ("Proc. ",rank," / time at the end of the FRF:",time.ctime())
 
     # Save the FRF problem
-    Allfrequencies=scipy.zeros(nb_freq_step)
-    Allfrf=scipy.zeros(nb_freq_step)
+    Allfrequencies=np.zeros(nb_freq_step)
+    Allfrf=np.zeros(nb_freq_step)
     k=0
     if rank==0:
         for i in range(nproc):
@@ -534,7 +534,7 @@ if (Flag_frf_analysis==1):
                 k=k+1
 
         Allfrequencies, Allfrf = zip(*sorted(zip(Allfrequencies, Allfrf)))
-        Allfrfsave=[scipy.array(list(Allfrequencies)),scipy.array(list(Allfrf))]
+        Allfrfsave=[np.array(list(Allfrequencies)),np.array(list(Allfrf))]
         f=open(results_file+'_results.frf','wb')
         pickle.dump(Allfrfsave, f)
         f.close()

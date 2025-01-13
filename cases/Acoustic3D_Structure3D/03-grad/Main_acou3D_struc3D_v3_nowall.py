@@ -64,7 +64,7 @@ def computeFreqPerProc(nbStep, nbProc, freqInit, freqEnd):
     varCase = 1
     if nbFreqProcRemain == 0:
         varCase = 0
-    listFreq = scipy.zeros((nbFreqProc+varCase, nbProc))
+    listFreq = np.zeros((nbFreqProc+varCase, nbProc))
     listAllFreq = scipy.linspace(freqInit, freqEnd, nbStep)
     # print(scipy.linspace(freqInit,freqEnd,nbStep))
     # build array of frequencies
@@ -154,7 +154,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
     # Load fluid mesh
     ##############################################################
 
-    tic = time.clock()
+    tic = time.process_time()
 
     fluid_nodes = silex_lib_gmsh.ReadGmshNodes(mesh_file+'_air.msh', 3)
     fluid_elements1, IdNodes1 = silex_lib_gmsh.ReadGmshElements(
@@ -187,7 +187,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
     # Compute Standard Fluid Matrices
     ##############################################################
 
-    tic = time.clock()
+    tic = time.process_time()
 
     IIf, JJf, Vffk, Vffm = silex_lib_xfem_acou_tet4.globalacousticmatrices(
         fluid_elements1, fluid_nodes, celerity, rho)
@@ -215,7 +215,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
 
     # To impose the load on the fluid:
     # fluid node number 1
-    UF = scipy.zeros(2*fluid_ndof, dtype=float)
+    UF = np.zeros(2*fluid_ndof, dtype=float)
     UF[9-1] = 3.1250E-05
 
     SolvedDof = scipy.hstack([SolvedDofF])
@@ -246,13 +246,13 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
             it=it+1
             #freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
             frequencies.append(freq)
-            omega = 2*scipy.pi*freq
+            omega = 2*np.pi*freq
 
             print("Freq. step ",it," proc number", rank, "frequency=", freq)
 
-            tic = time.clock()
+            tic = time.process_time()
 
-            F = scipy.array(omega**2*UF[SolvedDof], dtype='c16')
+            F = np.array(omega**2*UF[SolvedDof], dtype='c16')
 
             if rank>=0:
                  #print(K)
@@ -267,12 +267,12 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
                  #     K-(omega**2)*M, dtype='c16'), F)
             
             ## pressure field without enrichment
-            press1 = scipy.zeros((fluid_ndof), dtype=complex)
+            press1 = np.zeros((fluid_ndof), dtype=complex)
             press1[SolvedDofF] = sol[list(range(len(SolvedDofF)))]
             ## compute and store FRF on the test volume
             # frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes,CorrectedPressure))
             frf.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(
-                fluid_elements5, fluid_nodes, press1, 0.*press1, scipy.real(0.*press1)+1., press1*0-1.0))
+                fluid_elements5, fluid_nodes, press1, 0.*press1, np.real(0.*press1)+1., press1*0-1.0))
 
             
             if (flag_write_gmsh_results == 1) and (rank == 0):
@@ -287,8 +287,8 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
         if (flag_write_gmsh_results == 1) and (rank == 0):
             dataW=list()
             #prepare pressure field
-            dataW.append([scipy.real(press_save),'nodal',1,'pressure (real)'])
-            dataW.append([scipy.imag(press_save),'nodal',1,'pressure (imaginary)'])
+            dataW.append([np.real(press_save),'nodal',1,'pressure (real)'])
+            dataW.append([np.imag(press_save),'nodal',1,'pressure (imaginary)'])
             dataW.append([scipy.absolute(press_save),'nodal',1,'pressure (norm)'])            
             print("Write pressure field and gradients in msh file")
             silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',
@@ -298,8 +298,8 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
         #####################
         #####################
         # save the FRF problem
-        Allfrequencies=scipy.zeros(nbStep)
-        Allfrf=scipy.zeros(nbStep)
+        Allfrequencies=np.zeros(nbStep)
+        Allfrf=np.zeros(nbStep)
         k=0
         if rank==0:
             for i in range(nproc):
@@ -317,8 +317,8 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
                     k=k+1
             #####################
             IXsort=scipy.argsort(Allfrequencies)
-            AllfreqSorted=scipy.zeros(nbStep)
-            AllfrfSorted=scipy.zeros(nbStep)
+            AllfreqSorted=np.zeros(nbStep)
+            AllfrfSorted=np.zeros(nbStep)
             for itS in range(0,nbStep):
                 AllfreqSorted[itS]=Allfrequencies[IXsort[itS]]
                 AllfrfSorted[itS]=Allfrf[IXsort[itS]]

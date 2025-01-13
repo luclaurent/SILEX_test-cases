@@ -89,7 +89,7 @@ val_critere=0.1
 ##############################################################
 
 nb_node_w  = nb_freq_step
-nodes_w    = scipy.linspace(freq_ini*2.0*scipy.pi, freq_end*2.0*scipy.pi , num=nb_freq_step)
+nodes_w    = scipy.linspace(freq_ini*2.0*np.pi, freq_end*2.0*np.pi , num=nb_freq_step)
 Idnodes_w  = list(range(1,nb_node_w+1,1))
 omega_ndof = nb_node_w
 nb_elem_w  = nb_node_w-1
@@ -104,7 +104,7 @@ for e in range(nb_elem_w):
 # Load fluid mesh
 ##############################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 fluid_nodes    = silex_lib_gmsh.ReadGmshNodes(mesh_file+'.msh',3)
 fluid_elements,tmp = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',4,3)
@@ -128,7 +128,7 @@ struc_boun,struc_boun_id = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',1,1)
 
 # renumbering of structure nodes
 #struc_node_id=scipy.unique(struc_elements_old)
-struc_nodes=scipy.zeros((struc_nnodes,3))
+struc_nodes=np.zeros((struc_nnodes,3))
 for i in range(struc_nnodes):
     struc_nodes[i,0]=fluid_nodes[struc_node_id[i]-1,0]
     struc_nodes[i,1]=fluid_nodes[struc_node_id[i]-1,1]
@@ -136,7 +136,7 @@ for i in range(struc_nnodes):
 
 struc_elements=silex_lib_xfem_acou_tet4.changestructureconnectivity(struc_node_id,struc_elements_old)
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("nnodes for structure=",struc_nnodes)
     print ("time for the reading data part:",toc-tic)
@@ -147,11 +147,11 @@ if rank==0:
 # compute level set: just to make the compatible mesh
 ##################################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 LevelSet,LevelSetDist = silex_lib_xfem_acou_tet4.computelevelset(fluid_nodes,struc_nodes,struc_elements)
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time to compute level set:",toc-tic)
     silex_lib_gmsh.WriteResults2(results_file+'_signed_distance',fluid_nodes,fluid_elements,4,[[[LevelSet],'nodal',1,'Level set']])
@@ -164,7 +164,7 @@ if rank==0:
 #print xvibacoufo.makecompatiblefsimesh.__doc__
 
 #struc_boun_id=scipy.unique(struc_boun)
-interfaceIdnodes = scipy.setdiff1d(struc_node_id,struc_boun_id)
+interfaceIdnodes = np.setdiff1d(struc_node_id,struc_boun_id)
 
 fluid_elements_new,fluid_nodes_new,interface_elements=silex_lib_xfem_acou_tet4.makecompatiblefsimesh(fluid_nodes,
                                                                             fluid_elements,
@@ -213,14 +213,14 @@ FixedStrucDofRz=(FixedStrucNodes-1)*6+5
 ##FixedStrucDofRz=list(range(1,struc_nnodes+1,1))*6+5
 
 FixedStrucDof=scipy.hstack([FixedStrucDofUx,FixedStrucDofUy,FixedStrucDofUz,FixedStrucDofRx,FixedStrucDofRy,FixedStrucDofRz])
-SolvedDofS=scipy.setdiff1d(list(range(struc_ndof)),FixedStrucDof)
+SolvedDofS=np.setdiff1d(list(range(struc_ndof)),FixedStrucDof)
 #SolvedDofS=struc_ndof
 
 # To impose the load on the structure
 IdNodeLoadStructure=13
 
 
-FS=scipy.zeros(struc_ndof)
+FS=np.zeros(struc_ndof)
 #IddofLoadStructure=[(IdNodeLoadStructure-1)*6 , (IdNodeLoadStructure-1)*6+1 , (IdNodeLoadStructure-1)*6+2]
 IddofLoadStructure=[(IdNodeLoadStructure-1)*6+2]
 FS[IddofLoadStructure]=1.0
@@ -230,7 +230,7 @@ FS[IddofLoadStructure]=1.0
 # Compute Standard Fluid Matrices
 ##############################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 IIf,JJf,Vffk,Vffm=silex_lib_xfem_acou_tet4.globalacousticmatrices(fluid_elements,fluid_nodes,celerity,rho)
 
@@ -247,7 +247,7 @@ SolvedDofF=list(range(fluid_ndof))
 ##############################################################
 # Compute structure matrices
 ##############################################################
-tic = time.clock()
+tic = time.process_time()
 
 
 IIks,JJks,Vks,Vms=silex_lib_dkt.stiffnessmatrix(struc_nodes,struc_elements,material)
@@ -255,20 +255,20 @@ IIks,JJks,Vks,Vms=silex_lib_dkt.stiffnessmatrix(struc_nodes,struc_elements,mater
 KSS = scipy.sparse.csc_matrix( (Vks,(IIks,JJks)), shape=(struc_ndof,struc_ndof) )
 MSS = scipy.sparse.csc_matrix( (Vms,(IIks,JJks)), shape=(struc_ndof,struc_ndof) )
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time for computing the structure:",toc-tic)
 
 ##################################################################
 # Compute coupling terms on interface
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 
 IIc,JJc,Vc=silex_lib_xfem_acou_tet4.computecoupling(fluid_nodes,interface_elements)
 
 CSF=scipy.sparse.csc_matrix( (Vc,(IIc,JJc)), shape=(struc_ndof,fluid_ndof) )
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time for computing the coupling:",toc-tic)
 
@@ -303,7 +303,7 @@ M=scipy.sparse.construct.bmat( [[MFF[SolvedDofF,:][:,SolvedDofF],CSF[SolvedDofS,
 #F = csc_matrix( ([1],([0],[0])), shape=(len(SolvedDofS)+len(SolvedDofF),1) )
 
 
-PP=scipy.zeros((fluid_ndof))
+PP=np.zeros((fluid_ndof))
 P=PP[SolvedDofF]
 P=scipy.append(P,FS[SolvedDofS])
 #P=scipy.sparse.csc_matrix(P)
@@ -315,16 +315,16 @@ P=scipy.append(P,FS[SolvedDofS])
 ndof_x=fluid_ndof+struc_ndof
 ndof_w=omega_ndof
 SolvedDofs_x=scipy.hstack([SolvedDofF,fluid_ndof+SolvedDofS])
-SolvedDofs_w=scipy.array(list(range(ndof_w)))
+SolvedDofs_w=np.array(list(range(ndof_w)))
 ##SolvedDofs_X=scipy.hstack([SolvedDofF,fluid_ndof+SolvedDofS,SolvedDofs_w+fluid_ndof+struc_ndof])
 F_i=[]
 G_i=[]
-alpha_i = scipy.array(  scipy.zeros(5) , dtype=mytype  )
+alpha_i = np.array(  np.zeros(5) , dtype=mytype  )
 
-#F=scipy.zeros(ndof_x)+1.0
-#G=scipy.zeros(ndof_w)+1.0
+#F=np.zeros(ndof_x)+1.0
+#G=np.zeros(ndof_w)+1.0
 
-sum_fi_Gi=scipy.zeros((ndof_x,ndof_w))
+sum_fi_Gi=np.zeros((ndof_x,ndof_w))
 niter=0
 #for i in range(nb_fcts_PGD):
 residu=99.9
@@ -338,7 +338,7 @@ while (residu>val_residu):
 
     #if i!=0:
         #sum_fi_Gi=sum_fi_Gi+scipy.tensordot(F_i[i-1],G_i[i-1],0)
-    sum_fi_Gi=scipy.zeros((ndof_x,ndof_w))
+    sum_fi_Gi=np.zeros((ndof_x,ndof_w))
     for k in range(i):
         sum_fi_Gi=sum_fi_Gi+scipy.tensordot(F_i[k],G_i[k],0)*alpha_i[k]
 
@@ -348,12 +348,12 @@ while (residu>val_residu):
     # initialize displacement vector
     #F=scipy.random.random(ndof_x)
     #G=scipy.random.random(ndof_w)
-    F=scipy.array(  scipy.zeros(ndof_x)+1.0 , dtype=mytype  )
-    G=scipy.array(  scipy.zeros(ndof_w)+1.0 , dtype=mytype  )
+    F=np.array(  np.zeros(ndof_x)+1.0 , dtype=mytype  )
+    G=np.array(  np.zeros(ndof_w)+1.0 , dtype=mytype  )
     #X=scipy.hstack([F,G])
 ##    if i==0:
-##        F=scipy.zeros(ndof_x)+1.0
-##        G=scipy.zeros(ndof_w)+1.0
+##        F=np.zeros(ndof_x)+1.0
+##        G=np.zeros(ndof_w)+1.0
 ##    F=F/scipy.linalg.norm(F)
 ##    G=G/scipy.linalg.norm(G)
     
@@ -364,8 +364,8 @@ while (residu>val_residu):
 ##        G=G_i[i-1].copy()+scipy.random.random(ndof_w)*max(G_i[i-1])*1e-1
 
     while (critere>val_critere):
-        F_new=scipy.zeros(ndof_x, dtype=mytype)
-        G_new=scipy.zeros(ndof_w, dtype=mytype)
+        F_new=np.zeros(ndof_x, dtype=mytype)
+        G_new=np.zeros(ndof_w, dtype=mytype)
 
         G_old=G.copy()
         F_old=F.copy()
@@ -455,9 +455,9 @@ while (residu>val_residu):
     G_i.append(G.copy())
 
     # Projection on the new basis
-    Ktilde=scipy.zeros((i+1,i+1), dtype=mytype)
-    Mtilde=scipy.zeros((i+1,i+1), dtype=mytype)
-    second_member_alpha = scipy.zeros( i+1 , dtype=mytype)
+    Ktilde=np.zeros((i+1,i+1), dtype=mytype)
+    Mtilde=np.zeros((i+1,i+1), dtype=mytype)
+    second_member_alpha = np.zeros( i+1 , dtype=mytype)
 
     for l in range(i+1):
         second_member_alpha[l] = scipy.dot(bb,G_i[l])*scipy.dot(P,F_i[l][SolvedDofs_x])
@@ -477,8 +477,8 @@ frf=[]
 frequencies=[]
 press_save=[]
 for omi in range(nb_node_w):
-    press = scipy.zeros(fluid_ndof)
-    freq  = nodes_w[omi]/(2.0*scipy.pi)
+    press = np.zeros(fluid_ndof)
+    freq  = nodes_w[omi]/(2.0*np.pi)
     frequencies.append(freq)
     for i in range(nb_fcts_PGD):
         press[SolvedDofF]=press[SolvedDofF]+F_i[i][list(range(len(SolvedDofF)))]*G_i[i][omi]*alpha_i[i]
@@ -500,7 +500,7 @@ prefsquare=20e-6*20e-6
 
 pl.figure(1)
 for i in range(nb_fcts_PGD):
-    pl.plot(frequencies,scipy.array(G_i[i]),label='G'+str(i), linewidth=2)
+    pl.plot(frequencies,np.array(G_i[i]),label='G'+str(i), linewidth=2)
 
 pl.show()
 

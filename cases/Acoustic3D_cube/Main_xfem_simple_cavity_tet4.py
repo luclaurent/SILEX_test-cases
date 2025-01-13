@@ -116,7 +116,7 @@ new = list(range(1,len(scipy.unique(fluid_elements1))+1))
 new_nodes=fluid_nodes[scipy.unique(fluid_elements1)-1,:]
 
 dico1 = dict(zip(old,new))
-new_elements=scipy.zeros((fluid_nelem1,4),dtype=int)
+new_elements=np.zeros((fluid_nelem1,4),dtype=int)
 for e in range(fluid_nelem1):
     for i in range(4):
         new_elements[e,i]=dico1[fluid_elements1[e][i]]
@@ -208,7 +208,7 @@ toc = time.process_time()
 if rank==0:
     print ("time to find edge enriched elements:",toc-tic)
 
-HeavisideEnrichedElements=scipy.setdiff1d(EnrichedElements,EdgeEnrichedElements)
+HeavisideEnrichedElements=np.setdiff1d(EnrichedElements,EdgeEnrichedElements)
 
 if (flag_write_gmsh_results==1) and (rank==0):
     silex_lib_gmsh.WriteResults2(results_file+'_LSenriched_elements',fluid_nodes1,fluid_elements1[LSEnrichedElements],4)
@@ -298,7 +298,7 @@ M=scipy.sparse.construct.bmat( [
 
 # To impose the load on the fluid:
 # fluid node number 1
-UF = scipy.zeros(2*fluid_ndof1,dtype=float)
+UF = np.zeros(2*fluid_ndof1,dtype=float)
 UF[1-1]=3.1250E-05
 
 SolvedDof = scipy.hstack([SolvedDofF,SolvedDofA+fluid_ndof1])
@@ -326,23 +326,23 @@ if (Flag_frf_analysis==1):
 
         #freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
         frequencies.append(freq)
-        omega=2*scipy.pi*freq
+        omega=2*np.pi*freq
         #print('omega = ',omega)
 
         print ("proc number",rank,"frequency=",freq)
 
         tic = time.process_time()        
         
-        F=scipy.array(omega**2*UF[SolvedDof] , dtype='float')
+        F=np.array(omega**2*UF[SolvedDof] , dtype='float')
 
         sol = mumps.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='float')  , F , comm=mycomm  )
-        #sol=scipy.sparse.linalg.spsolve( scipy.sparse.csc_matrix(K-(omega**2)*M,dtype=float) , scipy.array(F , dtype=float) )
+        #sol=scipy.sparse.linalg.spsolve( scipy.sparse.csc_matrix(K-(omega**2)*M,dtype=float) , np.array(F , dtype=float) )
 
-        press1 = scipy.zeros((fluid_ndof1),dtype=complex)
+        press1 = np.zeros((fluid_ndof1),dtype=complex)
         press1[SolvedDofF]=sol[list(range(len(SolvedDofF)))]
-        enrichment=scipy.zeros((fluid_nnodes),dtype=complex)
+        enrichment=np.zeros((fluid_nnodes),dtype=complex)
         enrichment[SolvedDofA]=sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
-        CorrectedPressure=scipy.zeros((fluid_ndof1),dtype=complex)
+        CorrectedPressure=np.zeros((fluid_ndof1),dtype=complex)
         CorrectedPressure[SolvedDofA]=press1[SolvedDofA]+enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
         #frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes,CorrectedPressure))
         frf.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(fluid_elements5,fluid_nodes,press1,enrichment,LevelSet,LevelSet*0-1.0))
@@ -355,7 +355,7 @@ if (Flag_frf_analysis==1):
         if (flag_write_gmsh_results==1) and (rank==0):
             press_save.append(CorrectedPressure.real)        
 
-    frfsave=[scipy.array(frequencies),scipy.array(frf)]
+    frfsave=[np.array(frequencies),np.array(frf)]
 
     print ("Proc. ",rank," / time at the end of the FRF:",time.ctime())
 

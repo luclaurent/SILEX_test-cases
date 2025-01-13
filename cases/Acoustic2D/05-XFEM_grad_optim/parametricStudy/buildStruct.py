@@ -21,28 +21,28 @@ def buildStruct(paraVal,fluidNodes,caseDefine):
         nbNodesSC=25
         nbNodesWall=1
         #
-        angleU=angleStruct*scipy.pi/180
+        angleU=angleStruct*np.pi/180
         thicknessU=1.
         # points
-        xc2=x_pos_struc-radius_hcircle*scipy.cos(angleU)
-        yc2=y_pos_struc-radius_hcircle*scipy.sin(angleU)
-        xc4=x_pos_struc+radius_hcircle*scipy.cos(angleU)
-        yc4=y_pos_struc+radius_hcircle*scipy.sin(angleU)
+        xc2=x_pos_struc-radius_hcircle*np.cos(angleU)
+        yc2=y_pos_struc-radius_hcircle*np.sin(angleU)
+        xc4=x_pos_struc+radius_hcircle*np.cos(angleU)
+        yc4=y_pos_struc+radius_hcircle*np.sin(angleU)
         #parameter for circles
-        thetaHC=scipy.linspace(-angleU-scipy.pi/2,-angleU+scipy.pi/2,nbNodesHC)
-        thetaSC=scipy.linspace(-angleU-scipy.pi/2,-angleU+scipy.pi/2,nbNodesSC)
+        thetaHC=scipy.linspace(-angleU-np.pi/2,-angleU+np.pi/2,nbNodesHC)
+        thetaSC=scipy.linspace(-angleU-np.pi/2,-angleU+np.pi/2,nbNodesSC)
         #inner large circle
-        xNodesIHC=x_pos_struc-(radius_hcircle-thicknessU/2.)*scipy.sin(thetaHC)
-        yNodesIHC=y_pos_struc-(radius_hcircle-thicknessU/2.)*scipy.cos(thetaHC)
+        xNodesIHC=x_pos_struc-(radius_hcircle-thicknessU/2.)*np.sin(thetaHC)
+        yNodesIHC=y_pos_struc-(radius_hcircle-thicknessU/2.)*np.cos(thetaHC)
         #outer larger circle
-        xNodesOHC=x_pos_struc-(radius_hcircle+thicknessU/2.)*scipy.sin(thetaHC[::-1])
-        yNodesOHC=y_pos_struc-(radius_hcircle+thicknessU/2.)*scipy.cos(thetaHC[::-1])
+        xNodesOHC=x_pos_struc-(radius_hcircle+thicknessU/2.)*np.sin(thetaHC[::-1])
+        yNodesOHC=y_pos_struc-(radius_hcircle+thicknessU/2.)*np.cos(thetaHC[::-1])
         #small circle 2
-        xNodesC2=xc2-thicknessU/2*scipy.sin(thetaSC[::-1]+scipy.pi)
-        yNodesC2=yc2-thicknessU/2*scipy.cos(thetaSC[::-1]+scipy.pi)
+        xNodesC2=xc2-thicknessU/2*np.sin(thetaSC[::-1]+np.pi)
+        yNodesC2=yc2-thicknessU/2*np.cos(thetaSC[::-1]+np.pi)
         #small circle 4
-        xNodesC4=xc4+thicknessU/2*scipy.sin(thetaSC[::-1])
-        yNodesC4=yc4+thicknessU/2*scipy.cos(thetaSC[::-1])
+        xNodesC4=xc4+thicknessU/2*np.sin(thetaSC[::-1])
+        yNodesC4=yc4+thicknessU/2*np.cos(thetaSC[::-1])
 
         strucNodes=scipy.vstack([scipy.hstack([xNodesIHC,xNodesC2[1:],xNodesOHC[1:],xNodesC4[1:]]),scipy.hstack([yNodesIHC,yNodesC2[1:],yNodesOHC[1:],yNodesC4[1:]])]).transpose()
         print(strucNodes)
@@ -56,27 +56,27 @@ def buildStruct(paraVal,fluidNodes,caseDefine):
         print(strucElem)
 
         NbNodesFluid=fluidNodes.shape[0]
-        LevelSet=scipy.zeros(NbNodesFluid)
-        LevelSet_gradient_X=scipy.zeros(NbNodesFluid)
-        LevelSet_gradient_Y=scipy.zeros(NbNodesFluid)
-        LevelSet_gradient_R=scipy.zeros(NbNodesFluid)
-        LevelSet_gradient_T=scipy.zeros(NbNodesFluid)
-        IndicZone=scipy.zeros(NbNodesFluid)
+        LevelSet=np.zeros(NbNodesFluid)
+        LevelSet_gradient_X=np.zeros(NbNodesFluid)
+        LevelSet_gradient_Y=np.zeros(NbNodesFluid)
+        LevelSet_gradient_R=np.zeros(NbNodesFluid)
+        LevelSet_gradient_T=np.zeros(NbNodesFluid)
+        IndicZone=np.zeros(NbNodesFluid)
         # level set 3 cases
         for itN in range(NbNodesFluid):
             xNcurr=fluidNodes[itN,0]
             yNcurr=fluidNodes[itN,1]
             #check areas
-            if angleU != scipy.pi/2 or angleU != 3*scipy.pi/2:
-                zoneA=yNcurr-scipy.tan(angleU)*(xNcurr-x_pos_struc)-y_pos_struc<0
+            if angleU != np.pi/2 or angleU != 3*np.pi/2:
+                zoneA=yNcurr-np.tan(angleU)*(xNcurr-x_pos_struc)-y_pos_struc<0
             else:
                 zoneA=xNcurr-x_pos_struc<0
 
             zoneAA=scipy.sqrt((xNcurr-x_pos_struc)**2+(yNcurr-y_pos_struc)**2)-radius_hcircle>=0
             zoneAB=scipy.sqrt((xNcurr-x_pos_struc)**2+(yNcurr-y_pos_struc)**2)-radius_hcircle<0
-            if angleU != scipy.pi and angleU != 0. and angleU != 2*scipy.pi:
-                zoneB=yNcurr-scipy.tan(angleU+scipy.pi/2)*(xNcurr-x_pos_struc)-y_pos_struc>0
-                zoneC=yNcurr-scipy.tan(angleU+scipy.pi/2)*(xNcurr-x_pos_struc)-y_pos_struc<0
+            if angleU != np.pi and angleU != 0. and angleU != 2*np.pi:
+                zoneB=yNcurr-np.tan(angleU+np.pi/2)*(xNcurr-x_pos_struc)-y_pos_struc>0
+                zoneC=yNcurr-np.tan(angleU+np.pi/2)*(xNcurr-x_pos_struc)-y_pos_struc<0
             else:
                 zoneB=xNcurr-x_pos_struc>0
                 zoneC=xNcurr-x_pos_struc<0
@@ -103,16 +103,16 @@ def buildStruct(paraVal,fluidNodes,caseDefine):
                 LevelSet[itN]=scipy.sqrt((xNcurr-xc2)**2+(yNcurr-yc2)**2)-radiusC2
                 LevelSet_gradient_X[itN]=-(xNcurr-xc2)/(LevelSet[itN]+radiusC2)
                 LevelSet_gradient_Y[itN]=-(yNcurr-yc2)/(LevelSet[itN]+radiusC2)
-                LevelSet_gradient_R[itN]=-scipy.cos(angleU)*LevelSet_gradient_X[itN]-scipy.sin(angleU)*LevelSet_gradient_Y[itN]
-                LevelSet_gradient_T[itN]=radius_hcircle*scipy.sin(angleU)*LevelSet_gradient_X[itN]-radius_hcircle*scipy.cos(angleU)*LevelSet_gradient_Y[itN]
+                LevelSet_gradient_R[itN]=-np.cos(angleU)*LevelSet_gradient_X[itN]-np.sin(angleU)*LevelSet_gradient_Y[itN]
+                LevelSet_gradient_T[itN]=radius_hcircle*np.sin(angleU)*LevelSet_gradient_X[itN]-radius_hcircle*np.cos(angleU)*LevelSet_gradient_Y[itN]
                 IndicZone[itN]=3
             elif zoneB:
                 radiusC4=thicknessU/2.
                 LevelSet[itN]=scipy.sqrt((xNcurr-xc4)**2+(yNcurr-yc4)**2)-radiusC4
                 LevelSet_gradient_X[itN]=-(xNcurr-xc4)/(LevelSet[itN]+radiusC4)
                 LevelSet_gradient_Y[itN]=-(yNcurr-yc4)/(LevelSet[itN]+radiusC4)
-                LevelSet_gradient_R[itN]=scipy.cos(angleU)*LevelSet_gradient_X[itN]+scipy.sin(angleU)*LevelSet_gradient_Y[itN]
-                LevelSet_gradient_T[itN]=-radius_hcircle*scipy.sin(angleU)*LevelSet_gradient_X[itN]+radius_hcircle*scipy.cos(angleU)*LevelSet_gradient_Y[itN]
+                LevelSet_gradient_R[itN]=np.cos(angleU)*LevelSet_gradient_X[itN]+np.sin(angleU)*LevelSet_gradient_Y[itN]
+                LevelSet_gradient_T[itN]=-radius_hcircle*np.sin(angleU)*LevelSet_gradient_X[itN]+radius_hcircle*np.cos(angleU)*LevelSet_gradient_Y[itN]
                 IndicZone[itN]=4
             
         LevelSetTangent=fluidNodes[:,1]-max(fluidNodes[:,1])
@@ -140,10 +140,10 @@ def buildStruct(paraVal,fluidNodes,caseDefine):
         # create coordinates of nodes of the structure (half circle)
         nbNodesHC=50
         nbNodesWall=1
-        thetaHC=scipy.linspace(-scipy.pi/2,scipy.pi/2,nbNodesHC)
+        thetaHC=scipy.linspace(-np.pi/2,np.pi/2,nbNodesHC)
         
-        xNodesHC=x_pos_struc-radius_hcircle*scipy.sin(thetaHC)
-        yNodesHC=y_pos_struc-radius_hcircle*scipy.cos(thetaHC)
+        xNodesHC=x_pos_struc-radius_hcircle*np.sin(thetaHC)
+        yNodesHC=y_pos_struc-radius_hcircle*np.cos(thetaHC)
 
         strucNodes=scipy.vstack([xNodesHC,yNodesHC]).transpose()
         strucNodes=scipy.vstack([strucNodes,[x_pos_struc-radius_hcircle,max(fluidNodes[:,1])],[x_pos_struc+radius_hcircle,max(fluidNodes[:,1])]])
@@ -158,11 +158,11 @@ def buildStruct(paraVal,fluidNodes,caseDefine):
         print(strucElem)
 
         NbNodesFluid=fluidNodes.shape[0]
-        LevelSet=scipy.zeros(NbNodesFluid)
-        LevelSet_gradient_X=scipy.zeros(NbNodesFluid)
-        LevelSet_gradient_Y=scipy.zeros(NbNodesFluid)
-        LevelSet_gradient_R=scipy.zeros(NbNodesFluid)
-        IndicZone=scipy.zeros(NbNodesFluid)
+        LevelSet=np.zeros(NbNodesFluid)
+        LevelSet_gradient_X=np.zeros(NbNodesFluid)
+        LevelSet_gradient_Y=np.zeros(NbNodesFluid)
+        LevelSet_gradient_R=np.zeros(NbNodesFluid)
+        IndicZone=np.zeros(NbNodesFluid)
         # level set 3 cases
         for itN in range(NbNodesFluid):
             if fluidNodes[itN,1]<y_pos_struc:

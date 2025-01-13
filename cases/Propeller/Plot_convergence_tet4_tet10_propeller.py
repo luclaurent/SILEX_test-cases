@@ -1,19 +1,19 @@
 import scipy
 import pylab
 
-htet10 = scipy.array([5.0])
-nbnodes_tet10= scipy.array([17945])
-nbelems_tet10= scipy.array([9460])
-error_tet10=scipy.array([0.423625572631,])
-time_tet10=scipy.array([4.9,])
-MaxDisp_tet10=scipy.array([5.44,])
-MaxVMSmooth_tet10=scipy.array([17.8,])
+htet10 = np.array([5.0])
+nbnodes_tet10= np.array([17945])
+nbelems_tet10= np.array([9460])
+error_tet10=np.array([0.423625572631,])
+time_tet10=np.array([4.9,])
+MaxDisp_tet10=np.array([5.44,])
+MaxVMSmooth_tet10=np.array([17.8,])
 
-htet4 = scipy.array([7.0,5.0,3.0,2.0,1.0])
-error_tet4 = scipy.array([0.387563690685,0.333068250993,0.279235259043,0.228889370747,0.162375347965])
-MaxDisp_tet4=scipy.array([0.0213,0.0231,0.0245,0.0256,0.0267])
-nbnodes_tet4= scipy.array([629,1220,3315,7581,35870])
-MaxVMSmooth_tet4=scipy.array([62.7,70.2,83.5,87.5,116])
+htet4 = np.array([7.0,5.0,3.0,2.0,1.0])
+error_tet4 = np.array([0.387563690685,0.333068250993,0.279235259043,0.228889370747,0.162375347965])
+MaxDisp_tet4=np.array([0.0213,0.0231,0.0245,0.0256,0.0267])
+nbnodes_tet4= np.array([629,1220,3315,7581,35870])
+MaxVMSmooth_tet4=np.array([62.7,70.2,83.5,87.5,116])
 
 pylab.figure(1)
 pylab.plot(htet10,error_tet10,color='b')

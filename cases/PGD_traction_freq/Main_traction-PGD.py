@@ -36,7 +36,7 @@ print("SILEX CODE - analyse frequentielle PGD d'une barre en traction")
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 # Output result file: define the name of the result file (*.msh)
 ResultsFileName='Results_modal_pgd'
@@ -46,8 +46,8 @@ young  = 200000.0e6
 section = 0.01**2 
 k    = young*section
 rho  = 7500.0
-w1   = 100.0*2.0*scipy.pi
-w2   = 10000.0*2.0*scipy.pi
+w1   = 100.0*2.0*np.pi
+w2   = 10000.0*2.0*np.pi
 load = 100.0
 nb_node_x = 100
 nb_elem_x = nb_node_x-1
@@ -85,9 +85,9 @@ for e in range(nb_elem_w):
 #silex_lib_gmsh.WriteResults('toto',nodes,elements,1)
 
 # SPACE : Boundary conditions
-IdNodesFixed_x=scipy.array([1],dtype=int)
+IdNodesFixed_x=np.array([1],dtype=int)
 # initialize force vector
-P=scipy.zeros((nb_node_x))
+P=np.zeros((nb_node_x))
 P[nb_node_x-1]=load
 
 mytype='float'
@@ -105,13 +105,13 @@ ndof_w=nb_node_w
 Fixed_Dofs_x = scipy.hstack([(IdNodesFixed_x-1)*1])
 
 # define free dof
-SolvedDofs_x = scipy.setdiff1d(range(ndof_x),Fixed_Dofs_x)
+SolvedDofs_x = np.setdiff1d(range(ndof_x),Fixed_Dofs_x)
 
 SolvedDofs_w = list(range(nb_node_w))
 
 # initialize displacement vector
-F=scipy.zeros(ndof_x)+1.0
-G=scipy.zeros(ndof_w)+1.0
+F=np.zeros(ndof_x)+1.0
+G=np.zeros(ndof_w)+1.0
 
 #F=nodes_x*load
 #G=1.0/nodes_k
@@ -121,23 +121,23 @@ G=scipy.zeros(ndof_w)+1.0
 #############################################################################
 
 # SPACE : stiffness matrix
-Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(scipy.array(nodes_x),scipy.array(elements_x),[young,section])
+Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(np.array(nodes_x),np.array(elements_x),[young,section])
 K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof_x,ndof_x) )
 
 # SPACE : mass matrix
-Ik,Jk,Vk=silex_lib_elt.massmatrix(scipy.array(nodes_x),scipy.array(elements_x),rho*section)
+Ik,Jk,Vk=silex_lib_elt.massmatrix(np.array(nodes_x),np.array(elements_x),rho*section)
 M=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof_x,ndof_x) )
 
 # PARAMETER matrix A
-Ik,Jk,Vk=silex_lib_pgd.frequency_a_matrix(scipy.array(nodes_w),scipy.array(elements_w))
+Ik,Jk,Vk=silex_lib_pgd.frequency_a_matrix(np.array(nodes_w),np.array(elements_w))
 A=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof_w,ndof_w) )
 
 # PARAMETER matrix B
-Ik,Jk,Vk=silex_lib_pgd.frequency_b_matrix(scipy.array(nodes_w),scipy.array(elements_w))
+Ik,Jk,Vk=silex_lib_pgd.frequency_b_matrix(np.array(nodes_w),np.array(elements_w))
 B=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof_w,ndof_w) )
 
 # PARAMETER second member b
-b=silex_lib_pgd.frequency_om0_second_member(scipy.array(nodes_w),scipy.array(elements_w))
+b=silex_lib_pgd.frequency_om0_second_member(np.array(nodes_w),np.array(elements_w))
 
 
 #############################################################################
@@ -148,7 +148,7 @@ b=silex_lib_pgd.frequency_om0_second_member(scipy.array(nodes_w),scipy.array(ele
 F_i=[]
 G_i=[]
 
-alpha_i = scipy.array(  scipy.zeros(5) , dtype=mytype  )
+alpha_i = np.array(  np.zeros(5) , dtype=mytype  )
 niter=0
 
 #for i in range(nb_fcts_PGD):
@@ -172,7 +172,7 @@ while (residu>1e-2):
     #if i!=0:
     #    sum_fi_GiT=sum_fi_GiT+scipy.tensordot(F_i[i-1],G_i[i-1],0)
 
-    sum_fi_Gi=scipy.zeros((ndof_x,ndof_w))
+    sum_fi_Gi=np.zeros((ndof_x,ndof_w))
     for k in range(i):
         sum_fi_Gi=sum_fi_Gi+scipy.tensordot(F_i[k],G_i[k],0)*alpha_i[k]
 
@@ -181,12 +181,12 @@ while (residu>1e-2):
     # initialize displacement vector
     F=scipy.random.random(ndof_x)
     G=scipy.random.random(ndof_w)
-    #F=scipy.array(  scipy.zeros(ndof_x)+1.0 , dtype=mytype  )
-    #G=scipy.array(  scipy.zeros(ndof_w)+1.0 , dtype=mytype  )
+    #F=np.array(  np.zeros(ndof_x)+1.0 , dtype=mytype  )
+    #G=np.array(  np.zeros(ndof_w)+1.0 , dtype=mytype  )
 
     while (critere>1e-2):
-        F_new=scipy.zeros(ndof_x, dtype=mytype)
-        G_new=scipy.zeros(ndof_w, dtype=mytype)
+        F_new=np.zeros(ndof_x, dtype=mytype)
+        G_new=np.zeros(ndof_w, dtype=mytype)
         G_old=G.copy()
         F_old=F.copy()
 
@@ -215,8 +215,8 @@ while (residu>1e-2):
         print("critere = ",critere,      "niter = ",niter)
         #c=input('?')
 
-    second_member_w = scipy.array(  b*scipy.dot(P[SolvedDofs_x],F[SolvedDofs_x])-scipy.dot(K_sum_fi_Gi_A.T,F[SolvedDofs_x])+scipy.dot(M_sum_fi_Gi_B.T,F[SolvedDofs_x]) , dtype=mytype)
-    second_member_x = scipy.array(  scipy.dot(b,G[SolvedDofs_w])*P[SolvedDofs_x]-scipy.dot(K_sum_fi_Gi_A,G[SolvedDofs_w])+scipy.dot(M_sum_fi_Gi_B,G[SolvedDofs_w]) , dtype=mytype)
+    second_member_w = np.array(  b*scipy.dot(P[SolvedDofs_x],F[SolvedDofs_x])-scipy.dot(K_sum_fi_Gi_A.T,F[SolvedDofs_x])+scipy.dot(M_sum_fi_Gi_B.T,F[SolvedDofs_x]) , dtype=mytype)
+    second_member_x = np.array(  scipy.dot(b,G[SolvedDofs_w])*P[SolvedDofs_x]-scipy.dot(K_sum_fi_Gi_A,G[SolvedDofs_w])+scipy.dot(M_sum_fi_Gi_B,G[SolvedDofs_w]) , dtype=mytype)
     residu=max( scipy.linalg.norm(second_member_w)/(scipy.linalg.norm(b*scipy.dot(P,F))
                                                     +scipy.linalg.norm(scipy.dot(K_sum_fi_Gi_A.T,F[SolvedDofs_x]))
                                                     +scipy.linalg.norm(scipy.dot(M_sum_fi_Gi_B.T,F[SolvedDofs_x])) )
@@ -233,9 +233,9 @@ while (residu>1e-2):
     G_i.append(G.copy())
 
     # Projection on the new basis
-    Ktilde=scipy.zeros((i+1,i+1), dtype=mytype)
-    Mtilde=scipy.zeros((i+1,i+1), dtype=mytype)
-    second_member_alpha = scipy.zeros( i+1 , dtype=mytype)
+    Ktilde=np.zeros((i+1,i+1), dtype=mytype)
+    Mtilde=np.zeros((i+1,i+1), dtype=mytype)
+    second_member_alpha = np.zeros( i+1 , dtype=mytype)
 
     for l in range(i+1):
         second_member_alpha[l] = scipy.dot(b,G_i[l])*scipy.dot(P[SolvedDofs_x],F_i[l][SolvedDofs_x])
@@ -248,7 +248,7 @@ while (residu>1e-2):
     nb_fcts_PGD=nb_fcts_PGD+1
 
     # plot the solution
-    sol=scipy.zeros(ndof_w)
+    sol=np.zeros(ndof_w)
     for i in range(nb_fcts_PGD):
         sol=sol+F_i[i][nb_node_x-1]*G_i[i]*alpha_i[i]
     
@@ -260,14 +260,14 @@ while (residu>1e-2):
 ##    pl.legend(loc=4)
 ##
 ##    pl.figure(2)
-##    pl.plot(nodes_w/(2.0*scipy.pi),scipy.log(G),label='G', linewidth=2)
+##    pl.plot(nodes_w/(2.0*np.pi),np.log(G),label='G', linewidth=2)
 ##    pl.xlabel('freq.')
 ##    pl.ylabel('log(G(w))')
 ##    pl.grid('on')
 ##    pl.legend(loc=1)
 ##
 ##    pl.figure(3)
-##    pl.plot(nodes_w/(2.0*scipy.pi),scipy.log(sol),label='dep. x=L', linewidth=2)
+##    pl.plot(nodes_w/(2.0*np.pi),np.log(sol),label='dep. x=L', linewidth=2)
 ##    pl.xlabel('freq.')
 ##    pl.ylabel('log(dep.)')
 ##    pl.grid('on')
@@ -280,10 +280,10 @@ while (residu>1e-2):
 
 u_ex=[]
 for i in range(10):
-    print("Freq. analytique",((2*(i+1)-1)*scipy.pi*scipy.sqrt(young/rho))/(2.0*L*2.0*scipy.pi))
-    u_ex.append(scipy.sin((2*(i+1)-1)*scipy.pi*nodes_x/(2.0*L)))
+    print("Freq. analytique",((2*(i+1)-1)*np.pi*scipy.sqrt(young/rho))/(2.0*L*2.0*np.pi))
+    u_ex.append(np.sin((2*(i+1)-1)*np.pi*nodes_x/(2.0*L)))
 
-sol=scipy.zeros(ndof_w)
+sol=np.zeros(ndof_w)
 for i in range(nb_fcts_PGD):
     sol=sol+F_i[i][nb_node_x-1]*G_i[i]*alpha_i[i]
 
@@ -313,7 +313,7 @@ pl.legend(loc=4)
 
 pl.figure(2)
 for i in range(nb_fcts_PGD):
-    pl.plot(nodes_w/(2.0*scipy.pi),scipy.log(G_i[i]),label='G_'+str(i), linewidth=2)
+    pl.plot(nodes_w/(2.0*np.pi),np.log(G_i[i]),label='G_'+str(i), linewidth=2)
 pl.xlabel('freq.')
 pl.ylabel('log(G(w))')
 pl.grid('on')
@@ -324,8 +324,8 @@ sol_ref,nodes_w_ref=pickle.load(f)
 f.close()
 
 pl.figure(3)
-pl.plot(nodes_w_ref/(2.0*scipy.pi),scipy.log(sol_ref),label='dep. x=L; ref.', linewidth=2)
-pl.plot(nodes_w/(2.0*scipy.pi),scipy.log(sol),label='dep. x=L; PGD', linewidth=2)
+pl.plot(nodes_w_ref/(2.0*np.pi),np.log(sol_ref),label='dep. x=L; ref.', linewidth=2)
+pl.plot(nodes_w/(2.0*np.pi),np.log(sol),label='dep. x=L; PGD', linewidth=2)
 pl.xlabel('freq.')
 pl.ylabel('log(dep.)')
 pl.grid('on')

@@ -149,9 +149,9 @@ Fixed_Dofs_y = scipy.hstack([(IdnodS2-1)*3+1])
 Fixed_Dofs_z = scipy.hstack([(IdnodS2-1)*3+2])
 
 # Free dof
-SolvedDofs = scipy.setdiff1d(list(range(ndof)),Fixed_Dofs_x)
-SolvedDofs = scipy.setdiff1d(SolvedDofs,Fixed_Dofs_y)
-SolvedDofs = scipy.setdiff1d(SolvedDofs,Fixed_Dofs_z)
+SolvedDofs = np.setdiff1d(list(range(ndof)),Fixed_Dofs_x)
+SolvedDofs = np.setdiff1d(SolvedDofs,Fixed_Dofs_y)
+SolvedDofs = np.setdiff1d(SolvedDofs,Fixed_Dofs_z)
 
 
 #################################################################################################################
@@ -162,7 +162,7 @@ SolvedDofs = scipy.setdiff1d(SolvedDofs,Fixed_Dofs_z)
 
 n = 10                          # Number of increment in the quasistatic part
 load = 1.0e6                     # Quasistatic traction loading (Pa)
-direction = scipy.array([0,1,0]) # force in direction +y
+direction = np.array([0,1,0]) # force in direction +y
 
 # 1e6 Pa ==> 7725.4248593736938 N
 
@@ -179,16 +179,16 @@ NormFext = scipy.linalg.norm(Force)
 
 
 # Global initialization
-Q          = scipy.zeros(ndof)
-QQ         = scipy.zeros(ndof)
-QQQ        = scipy.zeros(ndof)
-niter      = scipy.zeros(n)
-Fext       = scipy.zeros(ndof)
-Fint1      = scipy.zeros(ndof)
-Fint2      = scipy.zeros(ndof)
-disp       = scipy.zeros((nnodes,3))
+Q          = np.zeros(ndof)
+QQ         = np.zeros(ndof)
+QQQ        = np.zeros(ndof)
+niter      = np.zeros(n)
+Fext       = np.zeros(ndof)
+Fint1      = np.zeros(ndof)
+Fint2      = np.zeros(ndof)
+disp       = np.zeros((nnodes,3))
 disp_save  = []
-load       = scipy.zeros((nnodes,3))
+load       = np.zeros((nnodes,3))
 load_save  = []
 sigma_save = []
 Usave      = []
@@ -209,7 +209,7 @@ Fsave      = []
 print('Increment : ',n)
 print('')
 
-tic = time.clock()
+tic = time.process_time()
 
 for t in range(n):
 
@@ -254,7 +254,7 @@ for t in range(n):
         kk = K[SolvedDofs,:][:,SolvedDofs]
 
         # Correction of displacement
-        dQ = scipy.zeros(ndof)
+        dQ = np.zeros(ndof)
         dQ[SolvedDofs] = mumps.spsolve(kk,rr)
         Q = Q + dQ
 
@@ -277,7 +277,7 @@ disp[range(nnodes),1]=Q[list(range(1,ndof,3))]
 disp[range(nnodes),2]=Q[list(range(2,ndof,3))]
 ##    disp_save.append(disp.copy())
 
-toc = time.clock()
+toc = time.process_time()
 tps = toc-tic
 
 ##f=open('U_traction.pkl','wb')

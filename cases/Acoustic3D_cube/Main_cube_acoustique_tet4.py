@@ -130,16 +130,16 @@ if (Flag_frf_analysis==1):
     for freq in scipy.linspace(freq_ini,freq_end,nb_freq_step):
 
         frequencies.append(freq)
-        omega=2*scipy.pi*freq
+        omega=2*np.pi*freq
 
         print ("frequency=",freq)
 
-        F=scipy.array(omega**2*F0 , dtype='d')
-        #F=scipy.array(omega**2*F0 , dtype='c16')
-        #F[SolvedDofF]=-(KFF[SolvedDofF,:][:,1-1]-(omega**2)*MFF[SolvedDofF,:][:,1-1])*(scipy.zeros((len([1])))+1.0)
+        F=np.array(omega**2*F0 , dtype='d')
+        #F=np.array(omega**2*F0 , dtype='c16')
+        #F[SolvedDofF]=-(KFF[SolvedDofF,:][:,1-1]-(omega**2)*MFF[SolvedDofF,:][:,1-1])*(np.zeros((len([1])))+1.0)
 
 
-        #sol=scipy.sparse.linalg.spsolve( scipy.sparse.csc_matrix(K-(omega*omega)*M+omega*D*1j,dtype=complex) , scipy.array(F.todense() , dtype=complex) )
+        #sol=scipy.sparse.linalg.spsolve( scipy.sparse.csc_matrix(K-(omega*omega)*M+omega*D*1j,dtype=complex) , np.array(F.todense() , dtype=complex) )
         #sol = mumps.spsolve( scipy.sparse.csc_matrix(fluid_damping*K-(omega**2)*M,dtype='c16') , F , comm=mycomm )
         #sol = mumps.spsolve( scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='float') , F , comm=mycomm )
 
@@ -147,15 +147,15 @@ if (Flag_frf_analysis==1):
         #sol = mumps.spsolve( scipy.sparse.csc_matrix(fluid_damping*K-(omega**2)*M,dtype='c16') , F , comm=mycomm )
         
 
-        #press = scipy.zeros((fluid_ndof),dtype=float)
-        press = scipy.zeros((fluid_ndof),dtype=complex)
+        #press = np.zeros((fluid_ndof),dtype=float)
+        press = np.zeros((fluid_ndof),dtype=complex)
         press[SolvedDofF]=sol[list(range(len(SolvedDofF)))]
         frf.append(silex_lib_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes,press))
 
         if rank==0:
             press_save.append(press.real)
 
-    frfsave=[scipy.array(frequencies),scipy.array(frf)]
+    frfsave=[np.array(frequencies),np.array(frf)]
 
     if rank==0:
         silex_lib_gmsh.WriteResults2(results_file+'_results_fluid_frf',fluid_nodes,fluid_elements,4,[[press_save,'nodal',1,'pressure']])

@@ -54,7 +54,7 @@ flag_edge_enrichment=0
 # Load fluid mesh
 ##############################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 fluid_nodes    = silex_lib_gmsh.ReadGmshNodes(mesh_file+'_fluid.msh',2)
 fluid_elements,Idnodes = silex_lib_gmsh.ReadGmshElements(mesh_file+'_fluid.msh',2,1)
@@ -77,7 +77,7 @@ print("nelem for fluid=",fluid_nelem)
 # compute level set
 ##################################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 x_pos_struc=0.6200
 h_struc=0.65
@@ -92,36 +92,36 @@ if (flag_write_gmsh_results==1) and (rank==0):
     silex_lib_gmsh.WriteResults(results_file+'_tangent_level_set',fluid_nodes,fluid_elements,2,[[LevelSetTangent,'nodal',1,'Tangent level set']])
     silex_lib_gmsh.WriteResults(results_file+'_level_set',fluid_nodes,fluid_elements,2,[[LevelSet,'nodal',1,'Level set']])
 
-toc = time.clock()
+toc = time.process_time()
 print("time to compute level set:",toc-tic)
 
 
 ##################################################################
 # Get enriched nodes and elements
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 
-struc_nodes=scipy.array([[x_pos_struc,0.0],[x_pos_struc,h_struc/2.0],[x_pos_struc,h_struc]])
-struc_elements=scipy.array([[1,2],[2,3]])
-struc_boun=scipy.array([3])
+struc_nodes=np.array([[x_pos_struc,0.0],[x_pos_struc,h_struc/2.0],[x_pos_struc,h_struc]])
+struc_elements=np.array([[1,2],[2,3]])
+struc_boun=np.array([3])
 
 silex_lib_gmsh.WriteResults(results_file+'_struc_mesh',struc_nodes,struc_elements,1)
 
 EnrichedElements,NbEnrichedElements=silex_lib_tri3_acou.getenrichedelements(struc_nodes,struc_elements,fluid_nodes,fluid_elements)
 EnrichedElements=scipy.unique(EnrichedElements[list(range(NbEnrichedElements))])-1
 
-toc = time.clock()
+toc = time.process_time()
 print("time to find surface enriched elements:",toc-tic)
 
 if (flag_write_gmsh_results==1) and (rank==0):
     silex_lib_gmsh.WriteResults(results_file+'_enriched_elements',fluid_nodes,fluid_elements[EnrichedElements],2)
 
-tic = time.clock()
+tic = time.process_time()
 
 EdgeEnrichedElements,nbenrelts = silex_lib_tri3_acou.getedgeenrichedelements(struc_nodes,struc_boun,fluid_nodes,fluid_elements)
 EdgeEnrichedElements=scipy.unique(EdgeEnrichedElements[list(range(nbenrelts))])-1
 
-toc = time.clock()
+toc = time.process_time()
 print("time to find edge enriched elements:",toc-tic)
 
 if (flag_write_gmsh_results==1) and (rank==0):
@@ -130,25 +130,25 @@ if (flag_write_gmsh_results==1) and (rank==0):
 ##############################################################
 # Compute Standard Fluid Matrices
 ##############################################################
-tic = time.clock()
+tic = time.process_time()
 
 IIf,JJf,Vffk,Vffm=silex_lib_tri3_acou.globalacousticmatrices(fluid_elements,fluid_nodes,celerity,rho)
 
 KFF = scipy.sparse.csc_matrix( (Vffk,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
 MFF = scipy.sparse.csc_matrix( (Vffm,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
 
-SolvedDofF=scipy.setdiff1d(list(range(fluid_ndof)),IdnodeS2-1)
+SolvedDofF=np.setdiff1d(list(range(fluid_ndof)),IdnodeS2-1)
 #SolvedDofF=range(fluid_ndof)
 
-toc = time.clock()
+toc = time.process_time()
 print("time to compute fluid matrices:",toc-tic)
 
 ##################################################################
 # Compute enrichment: Heaviside + Edge
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 
-#HeavisideEnrichedElements=scipy.setdiff1d(EnrichedElements,EdgeEnrichedElements)
+#HeavisideEnrichedElements=np.setdiff1d(EnrichedElements,EdgeEnrichedElements)
 
 #Enrichednodes = scipy.unique(fluid_elements[HeavisideEnrichedElements])
 #Enrichednodes = scipy.unique(fluid_elements[EnrichedElements])
@@ -183,7 +183,7 @@ MAA = scipy.sparse.csc_matrix( (Vaam,(IIaa,JJaa)), shape=(fluid_ndof,fluid_ndof)
 KAF = scipy.sparse.csc_matrix( (Vafk,(IIaf,JJaf)), shape=(fluid_ndof,fluid_ndof) )
 MAF = scipy.sparse.csc_matrix( (Vafm,(IIaf,JJaf)), shape=(fluid_ndof,fluid_ndof) )
 
-toc = time.clock()
+toc = time.process_time()
 print("time to compute Heaviside enrichment:",toc-tic)
 
 #Enrichednodes = scipy.unique(fluid_elements[scipy.hstack(([HeavisideEnrichedElements,EdgeEnrichedElements]))])
@@ -230,25 +230,25 @@ stop
 # FRF computation of the FSI problem
 ##############################################################
 
-FF = scipy.zeros(fluid_ndof)
+FF = np.zeros(fluid_ndof)
 
 freq = freq_ini
-omega=2*scipy.pi*freq
+omega=2*np.pi*freq
 
-FF[SolvedDofF]=-(KFF[SolvedDofF,:][:,IdnodeS2-1]-(omega*omega)*MFF[SolvedDofF,:][:,IdnodeS2-1])*(scipy.zeros((len(IdnodeS2)))+1.0)
-FA = scipy.zeros(fluid_ndof)
+FF[SolvedDofF]=-(KFF[SolvedDofF,:][:,IdnodeS2-1]-(omega*omega)*MFF[SolvedDofF,:][:,IdnodeS2-1])*(np.zeros((len(IdnodeS2)))+1.0)
+FA = np.zeros(fluid_ndof)
 F  = FF[SolvedDofF]
 F  = scipy.append(F,FA[SolvedDofA])
-F  = scipy.array(F)
+F  = np.array(F)
 
 sol = scipy.sparse.linalg.spsolve(K-(omega*omega)*M, F)
 
-press = scipy.zeros(fluid_ndof)
+press = np.zeros(fluid_ndof)
 press[SolvedDofF]=sol[list(range(len(SolvedDofF)))]
-enrichment=scipy.zeros(fluid_nnodes)
+enrichment=np.zeros(fluid_nnodes)
 enrichment[SolvedDofA]=sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
 CorrectedPressure=press
-CorrectedPressure[scipy.ix_(SolvedDofA)]=CorrectedPressure[SolvedDofA]+enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
+CorrectedPressure[np.ix_(SolvedDofA)]=CorrectedPressure[SolvedDofA]+enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
 #quadratic_pressure=silex_lib_tri3_acou.computequadratiquepressure(fluid_elements,fluid_nodes,CorrectedPressure)
 quadratic_pressure=silex_lib_tri3_acou.computexfemcomplexquadratiquepressure(fluid_elements,fluid_nodes,press+0j,enrichment+0j,LevelSet,LevelSetTangent,flag_edge_enrichment)
 

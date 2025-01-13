@@ -11,7 +11,7 @@ from Main_acou3D_struc3D_v3_grad import *
 
 freqMin=10.
 freqMax=150.
-paraVal=scipy.array([1.,1.,0.5,0.8])#[2.0,2.0,1.0,1.0])
+paraVal=np.array([1.,1.,0.5,0.8])#[2.0,2.0,1.0,1.0])
 nbStep=2000
 
 
@@ -25,28 +25,28 @@ dataFRFgrad=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,[0,1,2,3],0)
 
 #finite differences (CD2)
 dd=1e-4
-ddVX=scipy.array([dd,0.,0.,0.])
+ddVX=np.array([dd,0.,0.,0.])
 paraValBX=paraVal-ddVX
 paraValFX=paraVal+ddVX
 
 dataFRFBX=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValBX,saveResults=0)
 dataFRFFX=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValFX,saveResults=0)
 
-ddVY=scipy.array([0.,dd,0.,0.])
+ddVY=np.array([0.,dd,0.,0.])
 paraValBY=paraVal-ddVY
 paraValFY=paraVal+ddVY
 
 dataFRFBY=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValBY,saveResults=0)
 dataFRFFY=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValFY,saveResults=0)
 
-ddVZ=scipy.array([0.,0.,dd,0.])
+ddVZ=np.array([0.,0.,dd,0.])
 paraValBZ=paraVal-ddVZ
 paraValFZ=paraVal+ddVZ
 
 dataFRFBZ=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValBZ,saveResults=0)
 dataFRFFZ=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraValFZ,saveResults=0)
 
-ddVR=scipy.array([0.,0.,0.,dd])
+ddVR=np.array([0.,0.,0.,dd])
 paraValBR=paraVal-ddVR
 paraValFR=paraVal+ddVR
 

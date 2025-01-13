@@ -126,7 +126,7 @@ ce_fl = celerity
 # Load fluid mesh
 ##############################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 fluid_nodes    = silex_lib_gmsh.ReadGmshNodes(mesh_file+'.msh',3)
 fluid_elements1,IdNodes1 = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',4,1) # air, cavity + controlled volume
@@ -171,7 +171,7 @@ new = list(range(1,len(scipy.unique(fluid_elements1))+1))
 new_nodes=fluid_nodes[scipy.unique(fluid_elements1)-1,:]
 
 dico1 = dict(zip(old,new))
-new_elements=scipy.zeros((fluid_nelem1,4),dtype=int)
+new_elements=np.zeros((fluid_nelem1,4),dtype=int)
 for e in range(fluid_nelem1):
     for i in range(4):
         new_elements[e,i]=dico1[fluid_elements1[e][i]]
@@ -179,7 +179,7 @@ for e in range(fluid_nelem1):
 fluid_elements1 = new_elements
 fluid_nodes1    = new_nodes
 
-new_elements=scipy.zeros((fluid_nelem5,4),dtype=int)
+new_elements=np.zeros((fluid_nelem5,4),dtype=int)
 for e in range(fluid_nelem5):
     for i in range(4):
         new_elements[e,i]=dico1[fluid_elements5[e][i]]
@@ -192,7 +192,7 @@ new = list(range(1,len(scipy.unique(fluid_elements2))+1))
 new_nodes=fluid_nodes[scipy.unique(fluid_elements2)-1,:]
 
 dico2 = dict(zip(old,new))
-new_elements=scipy.zeros((fluid_nelem2,4),dtype=int)
+new_elements=np.zeros((fluid_nelem2,4),dtype=int)
 for e in range(fluid_nelem2):
     for i in range(4):
         new_elements[e,i]=dico2[fluid_elements2[e][i]]
@@ -222,13 +222,13 @@ Fixed_Dofs_porous = scipy.hstack([(IdNodesFixed_porous_us_x-1)*6,
                                   ])
 
 # get connectivity at air-porous interface
-IdNodesS3_for_1=scipy.zeros(fluid_nnodes3,dtype=int)
-IdNodesS3_for_2=scipy.zeros(fluid_nnodes3,dtype=int)
+IdNodesS3_for_1=np.zeros(fluid_nnodes3,dtype=int)
+IdNodesS3_for_2=np.zeros(fluid_nnodes3,dtype=int)
 for i in range(fluid_nnodes3):
     IdNodesS3_for_1[i]=dico1[IdNodesS3[i]] # for the air mesh
     IdNodesS3_for_2[i]=dico2[IdNodesS3[i]] # for the porous mesh
 
-InterfaceConnectivity=scipy.zeros((fluid_nelem3,6),dtype=int)
+InterfaceConnectivity=np.zeros((fluid_nelem3,6),dtype=int)
 for e in range(fluid_nelem3):
     for i in range(3):
         InterfaceConnectivity[e,i]   = dico1[fluid_elements_S3[e,i]] # for the air mesh
@@ -293,23 +293,23 @@ FixedStrucDofRz=(FixedStrucNodes-1)*6+5
 
 FixedStrucDof=scipy.hstack([FixedStrucDofUx,FixedStrucDofUy,FixedStrucDofUz,FixedStrucDofRx,FixedStrucDofRy,FixedStrucDofRz])
 
-SolvedDofS=scipy.setdiff1d(range(struc_ndof),FixedStrucDof)
+SolvedDofS=np.setdiff1d(range(struc_ndof),FixedStrucDof)
 
-FS=scipy.zeros(struc_ndof)
+FS=np.zeros(struc_ndof)
 #IddofLoadStructure=[(IdNodeLoadStructure-1)*6+2]
 #FS[IddofLoadStructure]=1.0
 
 ##############################################################
 # Compute structure matrices
 ##############################################################
-tic = time.clock()
+tic = time.process_time()
 
 IIks,JJks,Vks,Vms=silex_lib_dkt.stiffnessmatrix(struc_nodes,struc_elements,material_Struc)
 
 KSS = scipy.sparse.csc_matrix( (Vks,(IIks,JJks)), shape=(struc_ndof,struc_ndof) )
 MSS = scipy.sparse.csc_matrix( (Vms,(IIks,JJks)), shape=(struc_ndof,struc_ndof) )
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time for computing structure:",toc-tic)
 
@@ -318,21 +318,21 @@ if rank==0:
 ##################################################################
 
 if 1==1:
-    tic = time.clock()
+    tic = time.process_time()
 
     eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(KSS[SolvedDofS,:][:,SolvedDofS],nb_mode_S,MSS[SolvedDofS,:][:,SolvedDofS],sigma=0,which='LM')
 
-    freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*scipy.pi))
+    freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*np.pi))
 
-    toc = time.clock()
+    toc = time.process_time()
     if rank==0:
         print ("time for computing the structure modal basis:",toc-tic)
 
     eigen_vector_S_list=[]
     for i in range(nb_mode_S):
-        Q=scipy.zeros(struc_ndof)
+        Q=np.zeros(struc_ndof)
         Q[SolvedDofS]=eigen_vectors_S[:,i]
-        disp=scipy.zeros((struc_nnodes,3))
+        disp=np.zeros((struc_nnodes,3))
         disp[range(struc_nnodes),0]=Q[list(range(0,struc_ndof,6))]
         disp[range(struc_nnodes),1]=Q[list(range(1,struc_ndof,6))]
         disp[range(struc_nnodes),2]=Q[list(range(2,struc_ndof,6))]
@@ -345,21 +345,21 @@ if 1==1:
 # compute level set
 ##################################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 LevelSet,distance = silex_lib_xfem_acou_tet4.computelevelset(fluid_nodes1,struc_nodes,struc_elements)
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time to compute level set:",toc-tic)
 
-tic = time.clock()
+tic = time.process_time()
 
 tangent_nodes,tangent_mesh=silex_lib_xfem_acou_tet4.buildtangentedgemesh(struc_nodes,struc_elements,struc_boun)
 
 LevelSetTangent,tmp = silex_lib_xfem_acou_tet4.computelevelset(fluid_nodes1,tangent_nodes,tangent_mesh)
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time to compute tangent level set:",toc-tic)
 
@@ -372,18 +372,18 @@ if (flag_write_gmsh_results==1) and (rank==0):
 ##################################################################
 # Get enriched nodes and elements
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 
 LSEnrichedElements,NbLSEnrichedElements=silex_lib_xfem_acou_tet4.getenrichedelementsfromlevelset(fluid_elements1,LevelSet)
 LSEnrichedElements=LSEnrichedElements[list(range(NbLSEnrichedElements))]
 EnrichedElements,NbEnrichedElements=silex_lib_xfem_acou_tet4.getsurfenrichedelements(struc_nodes,struc_elements,fluid_nodes1,fluid_elements1[LSEnrichedElements])
 EnrichedElements=scipy.unique(EnrichedElements[list(range(NbEnrichedElements))])
 EnrichedElements=LSEnrichedElements[EnrichedElements-1]
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time to find surface enriched elements:",toc-tic)
 
-tic = time.clock()
+tic = time.process_time()
 
 EdgeEnrichedElements,nbenrelts = silex_lib_xfem_acou_tet4.getedgeenrichedelements(struc_nodes,struc_boun,fluid_nodes1,fluid_elements1)
 EdgeEnrichedElements=scipy.unique(EdgeEnrichedElements[list(range(nbenrelts))])-1
@@ -391,13 +391,13 @@ EdgeEnrichedElements=scipy.unique(EdgeEnrichedElements[list(range(nbenrelts))])-
 EdgeEnrichedElementsInAllMesh,nbEdgeEnrichedElementsInAllMesh=silex_lib_xfem_acou_tet4.getenrichedelementsfromlevelset(fluid_elements1,LevelSetTangent)
 EdgeEnrichedElementsInAllMesh=scipy.unique(EdgeEnrichedElementsInAllMesh[list(range(nbEdgeEnrichedElementsInAllMesh))])
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time to find edge enriched elements:",toc-tic)
 
-HeavisideEnrichedElements=scipy.setdiff1d(EnrichedElements,EdgeEnrichedElements)
+HeavisideEnrichedElements=np.setdiff1d(EnrichedElements,EdgeEnrichedElements)
 
-AllElementsExceptEdgeEnrichedElements=scipy.setdiff1d(range(fluid_nelem1),EdgeEnrichedElements)
+AllElementsExceptEdgeEnrichedElements=np.setdiff1d(range(fluid_nelem1),EdgeEnrichedElements)
 
 if (flag_write_gmsh_results==1) and (rank==0):
     silex_lib_gmsh.WriteResults2(results_file+'_LSenriched_elements',fluid_nodes1,fluid_elements1[LSEnrichedElements],4)
@@ -409,14 +409,14 @@ if (flag_write_gmsh_results==1) and (rank==0):
 ##################################################################
 # Compute coupling STRUCTURE / AIR terms
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 
 IIc1,JJc1,Vc1=silex_lib_xfem_acou_tet4.computexfemcoupling1(fluid_nodes1,struc_nodes,fluid_elements1,struc_elements,EnrichedElements)
 IIc2,JJc2,Vc2=silex_lib_xfem_acou_tet4.computexfemcoupling2(fluid_nodes1,struc_nodes,fluid_elements1,struc_elements,EnrichedElements,LevelSet)
 
 CSA=0.5*scipy.sparse.csc_matrix( (Vc1,(IIc1,JJc1)), shape=(struc_ndof,fluid_ndof1) )+0.5*scipy.sparse.csc_matrix( (Vc2,(IIc2,JJc2)), shape=(struc_ndof,fluid_ndof1) )
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time to compute coupling matrices:",toc-tic)
 
@@ -424,7 +424,7 @@ if rank==0:
 # Compute Standard Fluid Matrices
 ##############################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 ##IIf,JJf,Vffk,Vffm=silex_lib_xfem_acou_tet4.globalacousticmatrices(fluid_elements1,fluid_nodes1,celerity,rho)
 ##
@@ -434,14 +434,14 @@ tic = time.clock()
 SolvedDofF=list(range(fluid_ndof1))
 
 SolvedDofB=scipy.hstack([IdNodesS3_for_1-1,9-1]) # 9 : node number where acoustic source is imposed
-SolvedDofI=scipy.setdiff1d(SolvedDofF,SolvedDofB)
+SolvedDofI=np.setdiff1d(SolvedDofF,SolvedDofB)
 
 ##############################################################
 # Compute Porous Matrices
 ##############################################################
 porous_material_prop=[E_sol,nu_sol,ro_sol,to_por,po_por,sg_por,lambda_por,lambda_prime_por,ro_fl,visco_fl,pdtl_fl,gamma_fl,p0_fl,ce_fl]
 
-SolvedDofP=scipy.setdiff1d(range(fluid_ndof2),Fixed_Dofs_porous)
+SolvedDofP=np.setdiff1d(range(fluid_ndof2),Fixed_Dofs_porous)
 
 ##############################################################
 # Compute Coupling Porous-air Matrices
@@ -459,7 +459,7 @@ SolvedDofP=scipy.setdiff1d(range(fluid_ndof2),Fixed_Dofs_porous)
 ##################################################################
 # Compute Heaviside enrichment
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 
 #Enrichednodes = scipy.unique(fluid_elements1[HeavisideEnrichedElements])
 Enrichednodes = scipy.unique(fluid_elements1[EnrichedElements])
@@ -483,14 +483,14 @@ MAFheaviside = scipy.sparse.csc_matrix( (Vafm,(IIaf,JJaf)), shape=(fluid_ndof1,f
 
 SolvedDofA=Enrichednodes-1
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time to compute Heaviside enrichment:",toc-tic)
 
 ##################################################################
 # Compute Edge enrichment
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 
 PartiallyPositiveLStgtElements=scipy.hstack([PositiveLStgtElements,EdgeEnrichedElementsInAllMesh])
 
@@ -505,7 +505,7 @@ MAAedge = scipy.sparse.csc_matrix( (vmaa,(II,JJ)), shape=(fluid_ndof1,fluid_ndof
 KAFedge = scipy.sparse.csc_matrix( (vkfa,(II,JJ)), shape=(fluid_ndof1,fluid_ndof1) )
 MAFedge = scipy.sparse.csc_matrix( (vmfa,(II,JJ)), shape=(fluid_ndof1,fluid_ndof1) )
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time to compute edge enrichment:",toc-tic)
 
@@ -554,14 +554,14 @@ CSA_gradient = scipy.sparse.csc_matrix( (Vc_gradient,(IIc1,JJc1)), shape=(struc_
 ##################################################################
 # Compute eigen modes of the fluid: internal dof I
 ##################################################################
-##tic = time.clock()
+##tic = time.process_time()
 ##
 ##eigen_values_I,eigen_vectors_I= scipy.sparse.linalg.eigsh(KFF[SolvedDofI,:][:,SolvedDofI],nb_mode_F,MFF[SolvedDofI,:][:,SolvedDofI],sigma=0,which='LM')
 ##
-##freq_eigv_I=list(scipy.sqrt(eigen_values_I)/(2*scipy.pi))
+##freq_eigv_I=list(scipy.sqrt(eigen_values_I)/(2*np.pi))
 ##eigen_vector_F_list=[]
 ##for i in range(nb_mode_F):
-##    tmp=scipy.zeros((fluid_ndof1) , dtype='float')
+##    tmp=np.zeros((fluid_ndof1) , dtype='float')
 ##    tmp[SolvedDofI]=eigen_vectors_I[:,i].real
 ##    eigen_vector_F_list.append(tmp)
 ##
@@ -571,7 +571,7 @@ CSA_gradient = scipy.sparse.csc_matrix( (Vc_gradient,(IIc1,JJc1)), shape=(struc_
 ##if (flag_write_gmsh_results==1) and (rank==0):
 ##    silex_lib_gmsh.WriteResults2(results_file+'_fluid_modes',fluid_nodes1,fluid_elements1,4,[[eigen_vector_F_list,'nodal',1,'pressure']])
 ##
-##toc = time.clock()
+##toc = time.process_time()
 ##if rank==0:
 ##    print ("time for computing the fluid modes:",toc-tic)
 
@@ -579,20 +579,20 @@ CSA_gradient = scipy.sparse.csc_matrix( (Vc_gradient,(IIc1,JJc1)), shape=(struc_
 ##################################################################
 # Compute Psi_IA for the fluid: Psi_IA = - KII^{-1} * KIA
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 
 if rank==0:
     print ("Compute PSI_IA")
 
-omega_cst=1.0*2.0*scipy.pi
+omega_cst=1.0*2.0*np.pi
 MySolve = scipy.sparse.linalg.factorized( KFF[SolvedDofI,:][:,SolvedDofI]-(omega_cst**2)*MFF[SolvedDofI,:][:,SolvedDofI] ) # Makes LU decomposition.
 
 if rank==0:
     print("LU decomposition has been made")
 
 if rank==0:
-    Psi_IA=scipy.zeros((len(SolvedDofI),len(SolvedDofA)))
-    DPsi_IA_Dtheta=scipy.zeros((len(SolvedDofI),len(SolvedDofA)))
+    Psi_IA=np.zeros((len(SolvedDofI),len(SolvedDofA)))
+    DPsi_IA_Dtheta=np.zeros((len(SolvedDofI),len(SolvedDofA)))
 
 i=0
 j=0
@@ -601,7 +601,7 @@ while j<len(SolvedDofA):
     if j<len(SolvedDofA):
         One_dof=[SolvedDofA[j]]
         KIA_i_column=-KAF[SolvedDofI,:][:,One_dof]
-        #tmp=scipy.zeros(len(SolvedDofF))
+        #tmp=np.zeros(len(SolvedDofF))
         #tmp[SolvedDofI]=KIA_i_column.todense()
         Xi=MySolve( KIA_i_column.todense() )
         if rank!=0:
@@ -611,9 +611,9 @@ while j<len(SolvedDofA):
                 if k!=0:
                     if i+k<len(SolvedDofA):
                         [Xi,j]=comm.recv(source=k, tag=11)
-                        Psi_IA[:,j]=scipy.array(Xi)[:,0]
+                        Psi_IA[:,j]=np.array(Xi)[:,0]
                 else:
-                    Psi_IA[:,j]=scipy.array(Xi)[:,0]
+                    Psi_IA[:,j]=np.array(Xi)[:,0]
         i=i+nproc
 
 if rank==0:
@@ -634,7 +634,7 @@ while j<len(SolvedDofA):
         One_dof=[SolvedDofA[j]]
         DKIA_Dtheta_i_column=-KFA_gradient[SolvedDofI,:][:,One_dof]
         print('hello')
-        #tmp=scipy.zeros(len(SolvedDofF))
+        #tmp=np.zeros(len(SolvedDofF))
         #tmp[SolvedDofI]=KIA_i_column.todense()
         DXi=MySolve( DKIA_Dtheta_i_column.todense() )
         if rank!=0:
@@ -644,9 +644,9 @@ while j<len(SolvedDofA):
                 if k!=0:
                     if i+k<len(SolvedDofA):
                         [DXi,j]=comm.recv(source=k, tag=11)
-                        DPsi_IA_Dtheta[:,j]=scipy.array(DXi)[:,0]
+                        DPsi_IA_Dtheta[:,j]=np.array(DXi)[:,0]
                 else:
-                    DPsi_IA_Dtheta[:,j]=scipy.array(DXi)[:,0]
+                    DPsi_IA_Dtheta[:,j]=np.array(DXi)[:,0]
         i=i+nproc
 
 if rank==0:
@@ -660,7 +660,7 @@ if rank!=0:
     DPsi_IA_Dtheta=comm.recv(source=0, tag=11)
 
 DPsi_IA_Dtheta=scipy.sparse.csc_matrix(DPsi_IA_Dtheta)
-toc = time.clock()
+toc = time.process_time()
 
 if rank==0:
     print ("time to compute Psi and DPsi_IA_Dtheta:",toc-tic)
@@ -668,7 +668,7 @@ if rank==0:
 ##if rank==0:
 ##    eigen_vector_I_list=[]
 ##    for i in range(len(SolvedDofA)):
-##        tmp=scipy.zeros((fluid_ndof1) , dtype='float')
+##        tmp=np.zeros((fluid_ndof1) , dtype='float')
 ##        tmp[SolvedDofI]=Psi_IA[:,i].todense()
 ##        eigen_vector_I_list.append(tmp)
 ##
@@ -679,13 +679,13 @@ if rank==0:
 ##################################################################
 # Compute Psi_IB for the fluid: Psi_IB = - KII^{-1} * KIB
 ##################################################################
-##tic = time.clock()
+##tic = time.process_time()
 ##
 ##if rank==0:
 ##    print ("Compute PSI_IB")
 ##
 ##if rank==0:
-##    Psi_IB=scipy.zeros((len(SolvedDofI),len(SolvedDofB)))
+##    Psi_IB=np.zeros((len(SolvedDofI),len(SolvedDofB)))
 ##
 ##i=0
 ##j=0
@@ -702,9 +702,9 @@ if rank==0:
 ##                if k!=0:
 ##                    if i+k<len(SolvedDofB):
 ##                        [Xi,j]=comm.recv(source=k, tag=11)
-##                        Psi_IB[:,j]=scipy.array(Xi)[:,0]
+##                        Psi_IB[:,j]=np.array(Xi)[:,0]
 ##                else:
-##                    Psi_IB[:,j]=scipy.array(Xi)[:,0]
+##                    Psi_IB[:,j]=np.array(Xi)[:,0]
 ##        i=i+nproc
 ##
 ##if rank==0:
@@ -718,7 +718,7 @@ if rank==0:
 ##    Psi_IB=comm.recv(source=0, tag=11)
 ##
 ##Psi_IB=scipy.sparse.csc_matrix(Psi_IB)
-##toc = time.clock()
+##toc = time.process_time()
 ##
 ##if rank==0:
 ##    print ("time to compute PSI_FB:",toc-tic)
@@ -726,7 +726,7 @@ if rank==0:
 ##if rank==0:
 ##    eigen_vector_I_list=[]
 ##    for i in range(len(SolvedDofB)):
-##        tmp=scipy.zeros((fluid_ndof1) , dtype='float')
+##        tmp=np.zeros((fluid_ndof1) , dtype='float')
 ##        tmp[SolvedDofI]=Psi_IB[:,i].todense()
 ##        eigen_vector_I_list.append(tmp)
 ##
@@ -769,7 +769,7 @@ D = scipy.sparse.coo_matrix( (VDnn,(IIDnn,JJDnn)), shape=(totaldofs,totaldofs) )
 ##################################################################
 
 # Fluid part
-tic = time.clock()
+tic = time.process_time()
 
 ##VK_diag_mm = eigen_values_I
 ##VM_diag_mm = eigen_values_I/eigen_values_I
@@ -791,21 +791,21 @@ Khat_BA = KFF[SolvedDofB,:][:,SolvedDofI]*Psi_IA
 DKhat_BA_Dtheta = KFF[SolvedDofB,:][:,SolvedDofI]*DPsi_IA_Dtheta
 
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time to compute Khat_hat:",toc-tic)
 
-tic = time.clock()
+tic = time.process_time()
 
 Mstar_IA = MFF[SolvedDofI,:][:,SolvedDofI]*Psi_IA+MAF[SolvedDofI,:][:,SolvedDofA]
 DMstar_IA_Dtheta= MFF[SolvedDofI,:][:,SolvedDofI]*DPsi_IA_Dtheta+MFA_gradient[SolvedDofI,:][:,SolvedDofA]
 ##Mstar_IB = MFF[SolvedDofI,:][:,SolvedDofI]*Psi_IB+MFF[SolvedDofI,:][:,SolvedDofB]
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time to compute Mstar:",toc-tic)
 
-tic = time.clock()
+tic = time.process_time()
 
 Mhat_AA = MAA[SolvedDofA,:][:,SolvedDofA]+scipy.sparse.csc_matrix((Psi_IA.T).todense()*Mstar_IA.todense())+MAF[SolvedDofA,:][:,SolvedDofI]*Psi_IA
 DMhat_AA_Dtheta = scipy.sparse.csc_matrix((DPsi_IA_Dtheta.T).todense()*Mstar_IA.todense())+scipy.sparse.csc_matrix((Psi_IA.T).todense()*DMstar_IA_Dtheta.todense())+MAF[SolvedDofA,:][:,SolvedDofI]*DPsi_IA_Dtheta+MFA_gradient[SolvedDofA,:][:,SolvedDofI]*Psi_IA
@@ -817,7 +817,7 @@ DMhat_AA_Dtheta = scipy.sparse.csc_matrix((DPsi_IA_Dtheta.T).todense()*Mstar_IA.
 ####Mhat_AA = MAA[SolvedDofA,:][:,SolvedDofA]+scipy.dot((Psi_IA.T).todense(),Mstar_IA.todense())+MAF[SolvedDofA,:][:,SolvedDofI]*Psi_IA
 ####Mhat_BB = MFF[SolvedDofB,:][:,SolvedDofB]+scipy.dot((Psi_IB.T).todense(),Mstar_IB.todense())+MFF[SolvedDofB,:][:,SolvedDofI]*Psi_IB
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("time to compute Mhat:",toc-tic)
 
@@ -841,11 +841,11 @@ DMhat_BA_Dtheta = scipy.sparse.csc_matrix((Psi_IB.T).todense()*DMstar_IA_Dtheta.
 
 # To impose the load on the fluid:
 # fluid node number 1
-UF = scipy.zeros(fluid_ndof1,dtype=float)
+UF = np.zeros(fluid_ndof1,dtype=float)
 UF[9-1]=3.1250E-05
 
 #SolvedDof = scipy.hstack([SolvedDofF,SolvedDofA+fluid_ndof1,SolvedDofP+2*fluid_ndof1])
-Freduced_F=scipy.hstack([scipy.zeros(nb_mode_F,dtype=float),UF[SolvedDofB]])
+Freduced_F=scipy.hstack([np.zeros(nb_mode_F,dtype=float),UF[SolvedDofB]])
 
 ##############################################################
 # FRF computation
@@ -868,11 +868,11 @@ if (Flag_frf_analysis==1):
 
         freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
         frequencies.append(freq)
-        omega=2*scipy.pi*freq
+        omega=2*np.pi*freq
 
         print ("proc number",rank,"frequency=",freq)
 
-        tic = time.clock()
+        tic = time.process_time()
         IIp,JJp,Vppk,Vppm=silex_lib_porous_tet4_fortran.stiffnessmassmatrix(fluid_nodes2,fluid_elements2,porous_material_prop,omega)
         KPP=scipy.sparse.csc_matrix( (Vppk,(IIp,JJp)), shape=(fluid_ndof2,fluid_ndof2) )
         MPP=scipy.sparse.csc_matrix( (Vppm,(IIp,JJp)), shape=(fluid_ndof2,fluid_ndof2) )
@@ -910,7 +910,7 @@ if (Flag_frf_analysis==1):
                                        )
 
 
-        F  = scipy.append(omega**2*Freduced_F,scipy.zeros((len(SolvedDofA)+len(SolvedDofP)+nb_mode_S) , dtype='c16'))
+        F  = scipy.append(omega**2*Freduced_F,np.zeros((len(SolvedDofA)+len(SolvedDofP)+nb_mode_S) , dtype='c16'))
 
         sol = mumps.spsolve(  scipy.sparse.coo_matrix(K-(omega**2)*M+omega*D*1j,dtype='c16')  , F , comm=mycomm )
 
@@ -925,14 +925,14 @@ if (Flag_frf_analysis==1):
         
         P_I        = eigen_vectors_I*alpha_m+Psi_IB*P_B+Psi_IA*P_A
         
-        press      = scipy.zeros(fluid_ndof1,dtype=complex)
+        press      = np.zeros(fluid_ndof1,dtype=complex)
         press[SolvedDofI] = P_I
         press[SolvedDofB] = P_B
-        enrichment = scipy.zeros(fluid_ndof1,dtype=complex)
+        enrichment = np.zeros(fluid_ndof1,dtype=complex)
         enrichment[SolvedDofA]= P_A
-        CorrectedPressure=scipy.array(press)
+        CorrectedPressure=np.array(press)
         
-        CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA].T+scipy.array(enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA]).T)
+        CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA].T+np.array(enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA]).T)
         frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes1,CorrectedPressure))
         #frf.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(fluid_elements5,fluid_nodes1,press,enrichment,LevelSet,LevelSetTangent))
 
@@ -940,23 +940,23 @@ if (Flag_frf_analysis==1):
         DP_B_Dtheta        = Dsol_Dtheta[list(range(nb_mode_F,nb_mode_F+len(SolvedDofB),1))]
         DP_A_Dtheta       = Dsol_Dtheta[list(range(nb_mode_F+len(SolvedDofB),nb_mode_F+len(SolvedDofB)+len(SolvedDofA),1))]
         DP_I_Dtheta       = eigen_vectors_I*Dalpha_m_Dtheta+Psi_IB*DP_B_Dtheta+Psi_IA*DP_A_Dtheta+DPsi_IA_Dtheta*P_A
-        Dpress_Dtheta      = scipy.zeros(fluid_ndof1,dtype=complex)
+        Dpress_Dtheta      = np.zeros(fluid_ndof1,dtype=complex)
         Dpress_Dtheta[SolvedDofI] = DP_I_Dtheta
         Dpress_Dtheta[SolvedDofB] = DP_B_Dtheta
-        Denrichment_Dtheta = scipy.zeros(fluid_ndof1,dtype=complex)
+        Denrichment_Dtheta = np.zeros(fluid_ndof1,dtype=complex)
         Denrichment_Dtheta[SolvedDofA]= DP_A_Dtheta
-        DCorrectedPressure_Dtheta=scipy.array(Dpress_Dtheta)
+        DCorrectedPressure_Dtheta=np.array(Dpress_Dtheta)
 
-        DCorrectedPressure_Dtheta[SolvedDofA]=DCorrectedPressure_Dtheta[SolvedDofA].T+scipy.array(Denrichment_Dtheta[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA]).T)
+        DCorrectedPressure_Dtheta[SolvedDofA]=DCorrectedPressure_Dtheta[SolvedDofA].T+np.array(Denrichment_Dtheta[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA]).T)
         frfgradient.append(silex_lib_xfem_acou_tet4.computegradientcomplexquadratiquepressure(fluid_elements5,fluid_nodes1,CorrectedPressure,DCorrectedPressure_Dtheta))
         #frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes1,CorrectedPressure))
         
         if (flag_write_gmsh_results==1) and (rank==0):
             press_save.append(CorrectedPressure.real)
             alpha_n=sol[list(range(nb_mode_F+len(SolvedDofB)+len(SolvedDofA)+len(SolvedDofP),nb_mode_F+len(SolvedDofB)+len(SolvedDofA)+len(SolvedDofP)+nb_mode_S,1))].real
-            Q=scipy.zeros((struc_ndof),dtype=float)
+            Q=np.zeros((struc_ndof),dtype=float)
             Q[SolvedDofS]=eigen_vectors_S*alpha_n
-            disp=scipy.zeros((struc_nnodes,3))
+            disp=np.zeros((struc_nnodes,3))
             disp[range(struc_nnodes),0]=Q[list(range(0,struc_ndof,6))]
             disp[range(struc_nnodes),1]=Q[list(range(1,struc_ndof,6))]
             disp[range(struc_nnodes),2]=Q[list(range(2,struc_ndof,6))]
@@ -973,9 +973,9 @@ if (Flag_frf_analysis==1):
         silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_struct_frf',struc_nodes,struc_elements,2,[[disp_save,'nodal',3,'displacement']])
 
     # Save the FRF problem
-    Allfrequencies=scipy.zeros(nb_freq_step)
-    Allfrf=scipy.zeros(nb_freq_step)
-    Allfrfgradient=scipy.zeros(nb_freq_step)
+    Allfrequencies=np.zeros(nb_freq_step)
+    Allfrf=np.zeros(nb_freq_step)
+    Allfrfgradient=np.zeros(nb_freq_step)
     k=0
     if rank==0:
         for i in range(nproc):
@@ -987,7 +987,7 @@ if (Flag_frf_analysis==1):
                 k=k+1
 
         Allfrequencies, Allfrf,Allfrfgradient = zip(*sorted(zip(Allfrequencies, Allfrf,Allfrfgradient)))
-        Allfrfsave=[scipy.array(list(Allfrequencies)),scipy.array(list(Allfrf)),scipy.array(list(Allfrfgradient))]
+        Allfrfsave=[np.array(list(Allfrequencies)),np.array(list(Allfrf)),np.array(list(Allfrfgradient))]
         f=open(results_file+'_results.frf','wb')
         pickle.dump(Allfrfsave, f)
         f.close()

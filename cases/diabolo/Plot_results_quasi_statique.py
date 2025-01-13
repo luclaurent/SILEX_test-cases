@@ -35,7 +35,7 @@ D = 10e-2  # diametre du diabolo
 ##f = open('U_compression','r')
 ##U2 = pickle.load(f)
 ##f.close()
-##U2 = scipy.array(U2)
+##U2 = np.array(U2)
 ##
 ##file='lsdyna_compression'
 ##data = scipy.loadtxt(file)
@@ -45,7 +45,7 @@ D = 10e-2  # diametre du diabolo
 ##f = open('U_cisaillement','r')
 ##U3 = pickle.load(f)
 ##f.close()
-##U3 = scipy.array(U3)
+##U3 = np.array(U3)
 ##
 ##file='lsdyna_cisaillement'
 ##data = scipy.loadtxt(file)

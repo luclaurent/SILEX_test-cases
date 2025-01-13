@@ -91,7 +91,7 @@ x_pos_struc=x_pos_struc/100000
 # Load fluid mesh
 ##############################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 fluid_nodes    = silex_lib_gmsh.ReadGmshNodes(mesh_file+'_fluid.msh',2)
 fluid_elements,Idnodes = silex_lib_gmsh.ReadGmshElements(mesh_file+'_fluid.msh',2,1)
@@ -116,7 +116,7 @@ print("nelem for fluid=",fluid_nelem)
 # compute level set
 ##################################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 LevelSet=fluid_nodes[:,0]-x_pos_struc
 LevelSetTangent=fluid_nodes[:,1]-h_struc
@@ -128,36 +128,36 @@ if (flag_write_gmsh_results==1) and (rank==0):
     silex_lib_gmsh.WriteResults(results_file+'_tangent_level_set',fluid_nodes,fluid_elements,2,[[LevelSetTangent,'nodal',1,'Tangent level set']])
     silex_lib_gmsh.WriteResults(results_file+'_level_set',fluid_nodes,fluid_elements,2,[[LevelSet,'nodal',1,'Level set']])
 
-toc = time.clock()
+toc = time.process_time()
 print("time to compute level set:",toc-tic)
 
 
 ##################################################################
 # Get enriched nodes and elements
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 
-struc_nodes=scipy.array([[x_pos_struc,0.0],[x_pos_struc,h_struc/2.0],[x_pos_struc,h_struc]])
-struc_elements=scipy.array([[1,2],[2,3]])
-struc_boun=scipy.array([3])
+struc_nodes=np.array([[x_pos_struc,0.0],[x_pos_struc,h_struc/2.0],[x_pos_struc,h_struc]])
+struc_elements=np.array([[1,2],[2,3]])
+struc_boun=np.array([3])
 
 silex_lib_gmsh.WriteResults(results_file+'_struc_mesh',struc_nodes,struc_elements,1)
 
 EnrichedElements,NbEnrichedElements=silex_lib_tri3_acou.getenrichedelements(struc_nodes,struc_elements,fluid_nodes,fluid_elements)
 EnrichedElements=scipy.unique(EnrichedElements[list(range(NbEnrichedElements))])-1
 
-toc = time.clock()
+toc = time.process_time()
 print("time to find surface enriched elements:",toc-tic)
 
 if (flag_write_gmsh_results==1) and (rank==0):
     silex_lib_gmsh.WriteResults(results_file+'_enriched_elements',fluid_nodes,fluid_elements[EnrichedElements],2)
 
-tic = time.clock()
+tic = time.process_time()
 
 EdgeEnrichedElements,nbenrelts = silex_lib_tri3_acou.getedgeenrichedelements(struc_nodes,struc_boun,fluid_nodes,fluid_elements)
 EdgeEnrichedElements=scipy.unique(EdgeEnrichedElements[list(range(nbenrelts))])-1
 
-toc = time.clock()
+toc = time.process_time()
 print("time to find edge enriched elements:",toc-tic)
 
 if (flag_write_gmsh_results==1) and (rank==0):
@@ -166,25 +166,25 @@ if (flag_write_gmsh_results==1) and (rank==0):
 ##############################################################
 # Compute Standard Fluid Matrices
 ##############################################################
-tic = time.clock()
+tic = time.process_time()
 
 IIf,JJf,Vffk,Vffm=silex_lib_tri3_acou.globalacousticmatrices(fluid_elements,fluid_nodes,celerity,rho)
 
 KFF = scipy.sparse.csc_matrix( (Vffk,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
 MFF = scipy.sparse.csc_matrix( (Vffm,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
 
-SolvedDofF=scipy.setdiff1d(list(range(fluid_ndof)),IdnodeS2-1)
+SolvedDofF=np.setdiff1d(list(range(fluid_ndof)),IdnodeS2-1)
 #SolvedDofF=range(fluid_ndof)
 
-toc = time.clock()
+toc = time.process_time()
 print("time to compute fluid matrices:",toc-tic)
 
 ##################################################################
 # Compute enrichment: Heaviside + Edge
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 
-#HeavisideEnrichedElements=scipy.setdiff1d(EnrichedElements,EdgeEnrichedElements)
+#HeavisideEnrichedElements=np.setdiff1d(EnrichedElements,EdgeEnrichedElements)
 
 #Enrichednodes = scipy.unique(fluid_elements[HeavisideEnrichedElements])
 #Enrichednodes = scipy.unique(fluid_elements[EnrichedElements])
@@ -219,7 +219,7 @@ MAA = scipy.sparse.csc_matrix( (Vaam,(IIaa,JJaa)), shape=(fluid_ndof,fluid_ndof)
 KAF = scipy.sparse.csc_matrix( (Vafk,(IIaf,JJaf)), shape=(fluid_ndof,fluid_ndof) )
 MAF = scipy.sparse.csc_matrix( (Vafm,(IIaf,JJaf)), shape=(fluid_ndof,fluid_ndof) )
 
-toc = time.clock()
+toc = time.process_time()
 print("time to compute Heaviside enrichment:",toc-tic)
 
 #Enrichednodes = scipy.unique(fluid_elements[scipy.hstack(([HeavisideEnrichedElements,EdgeEnrichedElements]))])
@@ -275,7 +275,7 @@ dM=scipy.sparse.construct.bmat( [[None,dMFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
 ##############################################################
 
 Flag_frf_analysis=1
-FF = scipy.zeros(fluid_ndof)
+FF = np.zeros(fluid_ndof)
 frequencies=[]
 frf=[]
 frfgradient=[]
@@ -291,11 +291,11 @@ if (Flag_frf_analysis==1):
 
         freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
         frequencies.append(freq)
-        omega=2*scipy.pi*freq
+        omega=2*np.pi*freq
         print("proc number",rank,"frequency=",freq)
 
         FF[SolvedDofF]=-(KFF[SolvedDofF,:][:,IdnodeS2-1]-(omega**2)*MFF[SolvedDofF,:][:,IdnodeS2-1])*(scipy.ones((len(IdnodeS2))))
-        FA = scipy.zeros(fluid_ndof)
+        FA = np.zeros(fluid_ndof)
         F  = FF[SolvedDofF]
         F  = scipy.append(F,FA[SolvedDofA])
         #F  = scipy.sparse.csc_matrix(F)
@@ -306,10 +306,10 @@ if (Flag_frf_analysis==1):
         Dsol_Dtheta = mumps.spsolve(  scipy.sparse.coo_matrix(K-(omega**2)*M,dtype='float')  , tmp , comm=mycomm )
 
 
-        press = scipy.zeros(fluid_ndof)
+        press = np.zeros(fluid_ndof)
         press[IdnodeS2-1] = scipy.ones(len(IdnodeS2))
         press[SolvedDofF]=sol[list(range(len(SolvedDofF)))]
-        enrichment=scipy.zeros(fluid_nnodes)
+        enrichment=np.zeros(fluid_nnodes)
         enrichment[SolvedDofA]=sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
         CorrectedPressure=press
         CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA]+enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
@@ -318,12 +318,12 @@ if (Flag_frf_analysis==1):
         #frf[i]=xvibacoufo.computexfemcomplexquadratiquepressure(fluid_elements,fluid_nodes,CorrectedPressure+0j,0.0*enrichment+0j,LevelSet,LevelSetTangent)
         press_save.append(CorrectedPressure)
 
-        Dpress_Dtheta = scipy.zeros(fluid_ndof,dtype=float)
+        Dpress_Dtheta = np.zeros(fluid_ndof,dtype=float)
         Dpress_Dtheta[SolvedDofF] = Dsol_Dtheta[list(range(len(SolvedDofF)))]
-        Denrichment_Dtheta = scipy.zeros(fluid_ndof,dtype=float)
+        Denrichment_Dtheta = np.zeros(fluid_ndof,dtype=float)
         Denrichment_Dtheta[SolvedDofA]= Dsol_Dtheta[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
-        #DCorrectedPressure_Dtheta=scipy.array(Dpress_Dtheta)
-        #DCorrectedPressure_Dtheta[SolvedDofA]=DCorrectedPressure_Dtheta[SolvedDofA].T+scipy.array(Denrichment_Dtheta[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA]).T)
+        #DCorrectedPressure_Dtheta=np.array(Dpress_Dtheta)
+        #DCorrectedPressure_Dtheta[SolvedDofA]=DCorrectedPressure_Dtheta[SolvedDofA].T+np.array(Denrichment_Dtheta[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA]).T)
         frfgradient.append(silex_lib_tri3_acou.computexfemcomplexquadratiquepressuregradient(fluid_elements5,fluid_nodes,press+0j,enrichment+0j,Dpress_Dtheta+0j,Denrichment_Dtheta+0j,LevelSet,LevelSetTangent,flag_edge_enrichment))
         dpress_save.append(Dpress_Dtheta)
     
@@ -335,9 +335,9 @@ if (Flag_frf_analysis==1):
         silex_lib_gmsh.WriteResults2(results_file+'_results_fluid_frf',fluid_nodes,fluid_elements,2,[[press_save,'nodal',1,'pressure'],[dpress_save,'nodal',1,'pressure gradient']])
 
     # save the FRF problem
-    Allfrequencies=scipy.zeros(nb_freq_step)
-    Allfrf=scipy.zeros(nb_freq_step)
-    Allfrfgradient=scipy.zeros(nb_freq_step)
+    Allfrequencies=np.zeros(nb_freq_step)
+    Allfrf=np.zeros(nb_freq_step)
+    Allfrfgradient=np.zeros(nb_freq_step)
     k=0
     if rank==0:
         for i in range(nproc):
@@ -349,7 +349,7 @@ if (Flag_frf_analysis==1):
                 k=k+1
 
         Allfrequencies, Allfrf,Allfrfgradient = zip(*sorted(zip(Allfrequencies, Allfrf,Allfrfgradient)))
-        Allfrfsave=[scipy.array(list(Allfrequencies)),scipy.array(list(Allfrf)),scipy.array(list(Allfrfgradient)),press_save,dpress_save]
+        Allfrfsave=[np.array(list(Allfrequencies)),np.array(list(Allfrf)),np.array(list(Allfrfgradient)),press_save,dpress_save]
         f=open(results_file+'_results.frf','wb')
         pickle.dump(Allfrfsave, f)
         f.close()

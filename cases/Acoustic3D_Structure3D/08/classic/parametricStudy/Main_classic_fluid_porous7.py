@@ -46,7 +46,7 @@ def computeFreqPerProc(nbStep,nbProc,freqInit,freqEnd):
     varCase=1
     if nbFreqProcRemain==0:
         varCase=0
-    listFreq=scipy.zeros((nbFreqProc+varCase,nbProc))
+    listFreq=np.zeros((nbFreqProc+varCase,nbProc))
     listAllFreq=scipy.linspace(freqInit,freqEnd,nbStep)
     #print(scipy.linspace(freqInit,freqEnd,nbStep))
     #build array of frequencies
@@ -116,7 +116,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
     # Load fluid mesh
     ##############################################################
 
-    tic = time.clock()
+    tic = time.process_time()
 
     fluid_nodes    = silex_lib_gmsh.ReadGmshNodes(mesh_file+'.msh',3)
     fluid_elements1,IdNodes1 = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',4,1) # air, cavity + controlled volume
@@ -166,7 +166,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
     new_nodes=fluid_nodes[scipy.unique(fluid_elements1)-1,:]
 
     dico1 = dict(zip(old,new))
-    new_elements=scipy.zeros((fluid_nelem1,4),dtype=int)
+    new_elements=np.zeros((fluid_nelem1,4),dtype=int)
     for e in range(fluid_nelem1):
         for i in range(4):
             new_elements[e,i]=dico1[fluid_elements1[e][i]]
@@ -174,7 +174,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
     fluid_elements1 = new_elements
     fluid_nodes1    = new_nodes
 
-    new_elements=scipy.zeros((fluid_nelem5,4),dtype=int)
+    new_elements=np.zeros((fluid_nelem5,4),dtype=int)
     for e in range(fluid_nelem5):
         for i in range(4):
             new_elements[e,i]=dico1[fluid_elements5[e][i]]
@@ -187,7 +187,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
     new_nodes=fluid_nodes[scipy.unique(fluid_elements2)-1,:]
 
     dico2 = dict(zip(old,new))
-    new_elements=scipy.zeros((fluid_nelem2,4),dtype=int)
+    new_elements=np.zeros((fluid_nelem2,4),dtype=int)
     for e in range(fluid_nelem2):
         for i in range(4):
             new_elements[e,i]=dico2[fluid_elements2[e][i]]
@@ -225,13 +225,13 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
                                       ])
 
     # get connectivity at interface
-    IdNodesS3_for_1=scipy.zeros(fluid_nnodes3,dtype=int)
-    IdNodesS3_for_2=scipy.zeros(fluid_nnodes3,dtype=int)
+    IdNodesS3_for_1=np.zeros(fluid_nnodes3,dtype=int)
+    IdNodesS3_for_2=np.zeros(fluid_nnodes3,dtype=int)
     for i in range(fluid_nnodes3):
         IdNodesS3_for_1[i]=dico1[IdNodesS3[i]]
         IdNodesS3_for_2[i]=dico2[IdNodesS3[i]]
 
-    InterfaceConnectivity=scipy.zeros((fluid_nelem3,6),dtype=int)
+    InterfaceConnectivity=np.zeros((fluid_nelem3,6),dtype=int)
     for e in range(fluid_nelem3):
         for i in range(3):
             InterfaceConnectivity[e,i]   = dico1[fluid_elements_S3[e,i]]
@@ -248,7 +248,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
     # Compute Standard Fluid Matrices
     ##############################################################
 
-    tic = time.clock()
+    tic = time.process_time()
 
     IIf,JJf,Vffk,Vffm=silex_lib_xfem_acou_tet4.globalacousticmatrices(fluid_elements1,fluid_nodes1,celerity,rho)
 
@@ -262,7 +262,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
     ##############################################################
     porous_material_prop=[E_sol,nu_sol,ro_sol,to_por,po_por,sg_por,lambda_por,lambda_prime_por,ro_fl,visco_fl,pdtl_fl,gamma_fl,p0_fl,ce_fl]
 
-    SolvedDofP=scipy.setdiff1d(range(fluid_ndof2),Fixed_Dofs_porous)
+    SolvedDofP=np.setdiff1d(range(fluid_ndof2),Fixed_Dofs_porous)
 
     ##############################################################
     # Compute Coupling Porous-air Matrices
@@ -283,10 +283,10 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
     # fluid node number 1
     #F = csc_matrix( ([1],([0],[0])), shape=(len(SolvedDofS)+len(SolvedDofF),1) )
     #ff = 25e-8/(8e-3)! for surface load:/(4*nz*ny)
-    UF = scipy.zeros(fluid_ndof1+fluid_ndof2,dtype=float)
+    UF = np.zeros(fluid_ndof1+fluid_ndof2,dtype=float)
     UF[9-1]=3.1250E-05
 
-    #P=scipy.zeros((fluid_ndof))
+    #P=np.zeros((fluid_ndof))
     #P[13-1]=1.0
     #print(silex_lib_xfem_acou_tet4.forceonsurface.__doc__)
     #P = silex_lib_xfem_acou_tet4.forceonsurface(fluid_nodes,fluid_elements_S2,1.0)
@@ -314,7 +314,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
 
         for freq in freqCompute:
             frequencies.append(freq)
-            omega=2*scipy.pi*freq
+            omega=2*np.pi*freq
 
             print ("proc number",rank,"frequency=",freq)
 
@@ -332,13 +332,13 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
     ##        M=scipy.sparse.construct.bmat( [ [MFF[SolvedDofF,:][:,SolvedDofF],None],
     ##                                         [None,MPP[SolvedDofP,:][:,SolvedDofP]] ] )
             print ("proc number",rank,"frequency=",freq,"Build F")
-            F=scipy.array(omega**2*UF[SolvedDof] , dtype='c16')
+            F=np.array(omega**2*UF[SolvedDof] , dtype='c16')
 
             print ("proc number",rank,"frequency=",freq,"Solve")
-            #sol=scipy.sparse.linalg.spsolve( scipy.sparse.csc_matrix(K-(omega*omega)*M,dtype=complex) , scipy.array(F , dtype=complex) )
+            #sol=scipy.sparse.linalg.spsolve( scipy.sparse.csc_matrix(K-(omega*omega)*M,dtype=complex) , np.array(F , dtype=complex) )
             sol = mumps.spsolve( scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='c16') , F , comm=mycomm )
             #sol = mumps.spsolve( scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='float') , F , comm=mycomm )
-            press1 = scipy.zeros((fluid_ndof1),dtype=complex)
+            press1 = np.zeros((fluid_ndof1),dtype=complex)
             press1[SolvedDofF]=sol[list(range(len(SolvedDofF)))]
             print ("proc number",rank,"frequency=",freq,"Append FRF")
             frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes1,press1))
@@ -362,8 +362,8 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
         print ("Proc. ",rank," / time at the end of the FRF:",time.ctime())
 
         # save the FRF problem
-        Allfrequencies=scipy.zeros(nbStep)
-        Allfrf=scipy.zeros(nbStep)
+        Allfrequencies=np.zeros(nbStep)
+        Allfrf=np.zeros(nbStep)
         k=0
         import numpy
         data_buffer=numpy.zeros(1)
@@ -385,7 +385,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
 
 
             Allfrequencies, Allfrf = zip(*sorted(zip(Allfrequencies, Allfrf)))
-            Allfrfsave=[scipy.array(list(Allfrequencies)),scipy.array(list(Allfrf))]
+            Allfrfsave=[np.array(list(Allfrequencies)),np.array(list(Allfrf))]
             f=open(results_file+'_results.frf','wb')
             pickle.dump(Allfrfsave, f)
             print(Allfrfsave)

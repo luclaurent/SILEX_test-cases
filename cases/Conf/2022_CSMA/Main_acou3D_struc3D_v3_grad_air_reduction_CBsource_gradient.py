@@ -380,7 +380,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     eigen_values_I,eigen_vectors_I= scipy.sparse.linalg.eigsh(KFF[SolvedDofI,:][:,SolvedDofI],nb_mode_F,MFF[SolvedDofI,:][:,SolvedDofI],sigma=0,which='LM')
 
-    freq_eigv_I=list(np.sqrt(eigen_values_I)/(2*scipy.pi))
+    freq_eigv_I=list(np.sqrt(eigen_values_I)/(2*np.pi))
     print(freq_eigv_I)
     eigen_vector_F_list=[]
     for i in range(nb_mode_F):
@@ -404,7 +404,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     tic = time.process_time()
 
     print ("Compute PSI_IA")
-    #omega_cst=0.0*2.0*scipy.pi
+    #omega_cst=0.0*2.0*np.pi
     #MySolve = scipy.sparse.linalg.factorized( KFF[SolvedDofI,:][:,SolvedDofI]-(omega_cst**2)*MFF[SolvedDofI,:][:,SolvedDofI] ) # Makes LU decomposition.
     MySolve = scipy.sparse.linalg.factorized( KFF[SolvedDofI,:][:,SolvedDofI]) # Makes LU decomposition.
     print("LU decomposition has been made")
@@ -644,7 +644,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             it=it+1
             #freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
             frequencies.append(freq)
-            omega = 2*scipy.pi*freq
+            omega = 2*np.pi*freq
 
             print("Freq. step ",it,"/",itmax," proc number", rank, "frequency=", freq)
 

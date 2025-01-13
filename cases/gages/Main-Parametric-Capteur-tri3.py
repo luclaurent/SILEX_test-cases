@@ -22,7 +22,7 @@ print("SILEX CODE - Etude parametrique d'un capteur de force avec des tri3")
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 # Input mesh: define the name of the mesh file (*.msh)
 MeshFileName='capteur-tri3'
@@ -79,10 +79,10 @@ for a in A:
         sigma_max=3.0*Couple/(2.0*20.0**3)
         F=silex_lib_elt.forceonline(nodes,elementsS3,[20.0*sigma_max,-120.0/40.0,-20.0*sigma_max,-120.0/40.0],[192.0,0.0,192.0,40.0])
 
-        toc = time.clock()
+        toc = time.process_time()
         print("time for the reading data part:",toc-tic)
 
-        tic0 = time.clock()
+        tic0 = time.process_time()
         #############################################################################
         #      EXPERT PART
         #############################################################################
@@ -99,47 +99,47 @@ for a in A:
         Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
 
         # define free dof
-        SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+        SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
         # initialize displacement vector
-        Q=scipy.zeros(ndof)
+        Q=np.zeros(ndof)
 
         #############################################################################
         #      compute stiffness matrix
         #############################################################################
-        tic = time.clock()
+        tic = time.process_time()
 
         Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(nodes,elements,[Young,nu,thickness])
 
         K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) )
 
-        toc = time.clock()
+        toc = time.process_time()
         print("time to compute the stiffness matrix:",toc-tic)
 
         #############################################################################
         #       Solve the problem
         #############################################################################
 
-        tic = time.clock()
-        Q[scipy.ix_(SolvedDofs)] = scipy.sparse.linalg.spsolve(K[scipy.ix_(SolvedDofs,SolvedDofs)],F[scipy.ix_(SolvedDofs)])
-        toc = time.clock()
+        tic = time.process_time()
+        Q[np.ix_(SolvedDofs)] = scipy.sparse.linalg.spsolve(K[np.ix_(SolvedDofs,SolvedDofs)],F[np.ix_(SolvedDofs)])
+        toc = time.process_time()
         print("time to solve the problem:",toc-tic)
 
         #############################################################################
         #       compute stress, smooth stress, strain and error
         #############################################################################
-        tic = time.clock()
+        tic = time.process_time()
 
         SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu,thickness],Q)
 
-        toc = time.clock()
+        toc = time.process_time()
         print("time to compute stresses:",toc-tic)
         print("The global error is:",ErrorGlobal)
 
         Eb.append(EpsilonNodes[10-1,0])
     E.append(Eb)
 
-#cas.append([a,b,EpsilonNodes[scipy.ix_([10],[0])][0][0]])
+#cas.append([a,b,EpsilonNodes[np.ix_([10],[0])][0][0]])
 
 
 

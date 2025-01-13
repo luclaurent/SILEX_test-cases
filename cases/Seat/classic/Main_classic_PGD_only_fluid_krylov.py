@@ -63,17 +63,17 @@ def NLsystem(X):
     residue = Big_matrix*scipy.sparse.coo_matrix(X).T
 
 ##    Big_matrix_x = scipy.sparse.csc_matrix(  scipy.dot(G,A*G)*K*fluid_damping-scipy.dot(G,B*G)*M  , dtype=mytype)
-##    second_member_x = scipy.array(  scipy.dot(cc,G)*P-scipy.dot(K_sum_fi_Gi_A,G)*fluid_damping+scipy.dot(M_sum_fi_Gi_B,G) , dtype=mytype)
+##    second_member_x = np.array(  scipy.dot(cc,G)*P-scipy.dot(K_sum_fi_Gi_A,G)*fluid_damping+scipy.dot(M_sum_fi_Gi_B,G) , dtype=mytype)
 ##    F_new = mumps.spsolve( Big_matrix_x , second_member_x , comm=mycomm).T
 ##    F=F_new.copy()
 ##
 ##    Big_matrix_w = scipy.sparse.csc_matrix(  scipy.dot(F,K*F)*A*fluid_damping-scipy.dot(F,M*F)*B  , dtype=mytype)
-##    second_member_w = scipy.array(  cc*scipy.dot(P,F)-scipy.dot(K_sum_fi_Gi_A.T*fluid_damping,F)+scipy.dot(M_sum_fi_Gi_B.T,F) , dtype=mytype)
+##    second_member_w = np.array(  cc*scipy.dot(P,F)-scipy.dot(K_sum_fi_Gi_A.T*fluid_damping,F)+scipy.dot(M_sum_fi_Gi_B.T,F) , dtype=mytype)
 ##    G_new = mumps.spsolve( Big_matrix_w , second_member_w , comm=mycomm).T
 ##    G=G_new.copy()
 
 
-    return scipy.array(residue.todense())
+    return np.array(residue.todense())
 
 ##############################################################
 ##############################################################
@@ -111,7 +111,7 @@ print(mytype)
 nb_fcts_PGD = 1
 
 nb_node_w  = nb_freq_step
-nodes_w    = scipy.linspace(freq_ini*2.0*scipy.pi, freq_end*2.0*scipy.pi , num=nb_freq_step)
+nodes_w    = scipy.linspace(freq_ini*2.0*np.pi, freq_end*2.0*np.pi , num=nb_freq_step)
 Idnodes_w  = list(range(1,nb_node_w+1,1))
 omega_ndof = nb_node_w
 nb_elem_w  = nb_node_w-1
@@ -126,7 +126,7 @@ for e in range(nb_elem_w):
 # Load fluid mesh
 ##############################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 fluid_nodes    = silex_lib_gmsh.ReadGmshNodes(mesh_file+'.msh',3)
 fluid_elements,tmp = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',4,1)
@@ -140,7 +140,7 @@ silex_lib_gmsh.WriteResults(results_file+'Mesh',fluid_nodes,fluid_elements,4)
 # Compute Standard Fluid Matrices
 ##############################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 IIf,JJf,Vffk,Vffm=silex_lib_xfem_acou_tet4.globalacousticmatrices(fluid_elements,fluid_nodes,celerity,rho)
 
@@ -175,7 +175,7 @@ M=MFF[SolvedDofF,:][:,SolvedDofF]
 # node number 1 is at (0,-ly/2,0)
 #F = csc_matrix( ([1],([0],[0])), shape=(len(SolvedDofS)+len(SolvedDofF),1) )
 
-P=scipy.zeros((fluid_ndof))
+P=np.zeros((fluid_ndof))
 P[0]=1.0
 
 #############################################################################
@@ -185,14 +185,14 @@ P[0]=1.0
 ndof_x=fluid_ndof
 ndof_w=omega_ndof
 SolvedDofs_x=SolvedDofF
-SolvedDofs_w=scipy.array(list(range(ndof_w)))
+SolvedDofs_w=np.array(list(range(ndof_w)))
 F_i=[]
 G_i=[]
 
-#F=scipy.zeros(ndof_x)+1.0
-#G=scipy.zeros(ndof_w)+1.0
+#F=np.zeros(ndof_x)+1.0
+#G=np.zeros(ndof_w)+1.0
 
-sum_fi_Gi=scipy.zeros((ndof_x,ndof_w))
+sum_fi_Gi=np.zeros((ndof_x,ndof_w))
 niter=0
 for i in range(nb_fcts_PGD):
     print("------------------------------")
@@ -207,16 +207,16 @@ for i in range(nb_fcts_PGD):
     M_sum_fi_Gi_B=M*sum_fi_Gi[SolvedDofs_x,:][:,SolvedDofs_w]*B
 
     # initialize displacement vector
-##    F=scipy.array(  scipy.random.random(ndof_x) , dtype=mytype  )
-##    G=scipy.array(  scipy.random.random(ndof_w) , dtype=mytype  )
-    F=scipy.array(  scipy.zeros(ndof_x)+1.0 , dtype=mytype  )
-    G=scipy.array(  scipy.zeros(ndof_w)+1.0 , dtype=mytype  )
+##    F=np.array(  scipy.random.random(ndof_x) , dtype=mytype  )
+##    G=np.array(  scipy.random.random(ndof_w) , dtype=mytype  )
+    F=np.array(  np.zeros(ndof_x)+1.0 , dtype=mytype  )
+    G=np.array(  np.zeros(ndof_w)+1.0 , dtype=mytype  )
     X=scipy.hstack([F,G])
 
     X_old=X.copy()
 
 ##        Big_matrix_w = scipy.sparse.csc_matrix(  scipy.dot(F,K*F)*A*fluid_damping-scipy.dot(F,M*F)*B  , dtype=mytype)
-##        second_member_w = scipy.array(  cc*scipy.dot(P,F)-scipy.dot(K_sum_fi_Gi_A.T*fluid_damping,F)+scipy.dot(M_sum_fi_Gi_B.T,F) , dtype=mytype)
+##        second_member_w = np.array(  cc*scipy.dot(P,F)-scipy.dot(K_sum_fi_Gi_A.T*fluid_damping,F)+scipy.dot(M_sum_fi_Gi_B.T,F) , dtype=mytype)
 ##        G_new = mumps.spsolve( Big_matrix_w , second_member_w , comm=mycomm).T
 ##        #G_new = G_new.real
 ##        #G_new = G_new/scipy.linalg.norm(G_new)
@@ -225,7 +225,7 @@ for i in range(nb_fcts_PGD):
 ##        G=G_new.copy()
 ##
 ##        Big_matrix_x = scipy.sparse.csc_matrix(  scipy.dot(G,A*G)*K*fluid_damping-scipy.dot(G,B*G)*M  , dtype=mytype)
-##        second_member_x = scipy.array(  scipy.dot(cc,G)*P-scipy.dot(K_sum_fi_Gi_A,G)*fluid_damping+scipy.dot(M_sum_fi_Gi_B,G) , dtype=mytype)
+##        second_member_x = np.array(  scipy.dot(cc,G)*P-scipy.dot(K_sum_fi_Gi_A,G)*fluid_damping+scipy.dot(M_sum_fi_Gi_B,G) , dtype=mytype)
 ##        F_new = mumps.spsolve( Big_matrix_x , second_member_x , comm=mycomm).T
 ##        #F_new[SolvedDofs_x] = scipy.sparse.linalg.spsolve( Big_matrix_x , second_member_x )
 ##        F=F_new.copy()
@@ -252,8 +252,8 @@ frf=[]
 frequencies=[]
 press_save=[]
 for omi in range(nb_node_w):
-    press = scipy.zeros(fluid_ndof, dtype=mytype)
-    freq  = nodes_w[omi]/(2.0*scipy.pi)
+    press = np.zeros(fluid_ndof, dtype=mytype)
+    freq  = nodes_w[omi]/(2.0*np.pi)
     frequencies.append(freq)
     for i in range(nb_fcts_PGD):
         press[SolvedDofF]=press[SolvedDofF]+F_i[i][list(range(len(SolvedDofF)))]*G_i[i][omi]

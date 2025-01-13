@@ -20,8 +20,8 @@ print 'SILEX CODE - calcul d''une helice avec des tet10'
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
-tic = time.clock()
-tic0 = time.clock()
+tic = time.process_time()
+tic0 = time.process_time()
 
 # Input mesh: define the name of the mesh file (*.msh)
 MeshFileName='propeller-tet10'
@@ -66,20 +66,20 @@ nu     = 0.4
 Fixed_Dofs = scipy.hstack([(IdnodeS5-1)*3,(IdnodeS5-1)*3+1,(IdnodeS5-1)*3+2])
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # initialize displacement vector
-Q=scipy.zeros(ndof)
+Q=np.zeros(ndof)
 
-toc = time.clock()
+toc = time.process_time()
 print "time for the reading data part:",toc-tic
 
-tic = time.clock()
+tic = time.process_time()
 #      compute external forces from pressure
 press=0.01 # 100 bar --> 10 MPa
 F = silex_lib_tet10.forcefrompressure(nodes,elementsS3,press)
 
-toc = time.clock()
+toc = time.process_time()
 print "time to compute the pressure load:",toc-tic
 #############################################################################
 #      EXPERT PART
@@ -97,15 +97,15 @@ print "Number of elements:",nelem
 Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # initialize displacement vector
-Q=scipy.zeros(ndof)
+Q=np.zeros(ndof)
 
 # compute material matrix
 Lambda = nu*Young/((1+nu)*(1-2*nu))
 mu     = Young/(2*(1+nu))
-C=scipy.array([[Lambda+2*mu,Lambda,Lambda,0,0,0],
+C=np.array([[Lambda+2*mu,Lambda,Lambda,0,0,0],
                [Lambda,Lambda+2*mu,Lambda,0,0,0],
                [Lambda,Lambda,Lambda+2*mu,0,0,0],
                [0,0,0,mu,0,0],
@@ -116,7 +116,7 @@ C=scipy.array([[Lambda+2*mu,Lambda,Lambda,0,0,0],
 #############################################################################
 #      compute stiffness matrix
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 #print silex_lib_tet10.globalstiffness.__doc__
 
@@ -124,29 +124,29 @@ Ik,Jk,Vk=silex_lib_tet10.globalstiffness(nodes,elements,C)
 
 K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) )
 
-toc = time.clock()
+toc = time.process_time()
 print "time to compute the stiffness matrix:",toc-tic
 
 #############################################################################
 #       Solve the problem  994458114.85807300 31852.954295327520 
 #############################################################################
 
-tic = time.clock()
-kk = K[scipy.ix_(SolvedDofs,SolvedDofs)]
+tic = time.process_time()
+kk = K[np.ix_(SolvedDofs,SolvedDofs)]
 
-ff = F[scipy.ix_(SolvedDofs)]
+ff = F[np.ix_(SolvedDofs)]
 
 qq = scipy.sparse.linalg.spsolve(kk, ff)
-Q[scipy.ix_(SolvedDofs)]=qq
+Q[np.ix_(SolvedDofs)]=qq
 
-toc = time.clock()
+toc = time.process_time()
 print "time to solve the problem:",toc-tic
 
 ##############################################################################
 ##       compute stress in elements
 ##############################################################################
-tic = time.clock()
-Sigma=scipy.zeros((nelem,7))
+tic = time.process_time()
+Sigma=np.zeros((nelem,7))
 #
 #print silex_lib_tet10.computestressanderror.__doc__
 #
@@ -155,20 +155,20 @@ import numpy.linalg
 
 Sigma,errelem,errglob=silex_lib_tet10.computestressanderror(nodes,elements,C,numpy.linalg.inv(C),Q)
 #
-toc = time.clock()
+toc = time.process_time()
 print "time to compute stress and error:",toc-tic
 print "---------------------------------"
 print "| GLOBAL ERROR = ",errglob
 print "---------------------------------"
 
-toc0 = time.clock()
+toc0 = time.process_time()
 print "time to compute the whole problem:",toc0-tic0
 
 #
 ##############################################################################
 ##       compute error
 ##############################################################################
-#tic = time.clock()
+#tic = time.process_time()
 #
 #SigmaNodes=scipy.vstack([sigma1,sigma2,sigma3,sigma4,sigma5,sigma6,sigma7]).T
 #
@@ -178,7 +178,7 @@ print "time to compute the whole problem:",toc0-tic0
 #                                              SigmaNodes,
 #                                              Sigma)
 #
-#toc = time.clock()
+#toc = time.process_time()
 #print "time to compute global error:",toc-tic
 #print "The global error is:",errglob
 #
@@ -187,10 +187,10 @@ print "time to compute the whole problem:",toc0-tic0
 #############################################################################
 #         Write results to gmsh format
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 # displacement written on 3 columns:
-disp=scipy.zeros((nnodes,3))
+disp=np.zeros((nnodes,3))
 disp[range(nnodes),0]=Q[range(0,ndof,3)]
 disp[range(nnodes),1]=Q[range(1,ndof,3)]
 disp[range(nnodes),2]=Q[range(2,ndof,3)]
@@ -220,13 +220,13 @@ if flag_write_fields==0:
 
 if flag_write_fields==1:
     fields_to_write=[ [disp,'nodal',3,'displacement'],
-                      [Sigma[scipy.ix_(range(nelem),[0])],'elemental',1,'Sigma 11'],
-                      [Sigma[scipy.ix_(range(nelem),[1])],'elemental',1,'Sigma 22'],
-                      [Sigma[scipy.ix_(range(nelem),[2])],'elemental',1,'Sigma 33'],
-                      [Sigma[scipy.ix_(range(nelem),[3])],'elemental',1,'Sigma 12'],
-                      [Sigma[scipy.ix_(range(nelem),[4])],'elemental',1,'Sigma 23'],
-                      [Sigma[scipy.ix_(range(nelem),[5])],'elemental',1,'Sigma 13'],
-                      [Sigma[scipy.ix_(range(nelem),[6])],'elemental',1,'Sigma V.M.'],
+                      [Sigma[np.ix_(range(nelem),[0])],'elemental',1,'Sigma 11'],
+                      [Sigma[np.ix_(range(nelem),[1])],'elemental',1,'Sigma 22'],
+                      [Sigma[np.ix_(range(nelem),[2])],'elemental',1,'Sigma 33'],
+                      [Sigma[np.ix_(range(nelem),[3])],'elemental',1,'Sigma 12'],
+                      [Sigma[np.ix_(range(nelem),[4])],'elemental',1,'Sigma 23'],
+                      [Sigma[np.ix_(range(nelem),[5])],'elemental',1,'Sigma 13'],
+                      [Sigma[np.ix_(range(nelem),[6])],'elemental',1,'Sigma V.M.'],
                       [sigma1,'nodal',1,'Smooth Sigma 11'],
                       [sigma2,'nodal',1,'Smooth Sigma 22'],
                       [sigma3,'nodal',1,'Smooth Sigma 33'],
@@ -241,7 +241,7 @@ if flag_write_fields==1:
 silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,11,fields_to_write)
 
 
-toc = time.clock()
+toc = time.process_time()
 print "time to write results:",toc-tic
 print "total time:",toc-tic0
 print "----- END -----"

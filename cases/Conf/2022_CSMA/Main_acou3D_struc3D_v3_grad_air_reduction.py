@@ -344,7 +344,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     SolvedDofF = list(range(fluid_ndof))
     #SolvedDofB=scipy.hstack([9-1]) # 9 : node number where acoustic source is imposed
-    #SolvedDofI=scipy.setdiff1d(SolvedDofF,SolvedDofB)
+    #SolvedDofI=np.setdiff1d(SolvedDofF,SolvedDofB)
     SolvedDofI=SolvedDofF
 
     ##################################################################
@@ -375,14 +375,14 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     ##################################################################
     # Compute eigen modes of the fluid: internal dof I
     ##################################################################
-    tic = time.clock()
+    tic = time.process_time()
 
     eigen_values_I,eigen_vectors_I= scipy.sparse.linalg.eigsh(KFF[SolvedDofI,:][:,SolvedDofI],nb_mode_F,MFF[SolvedDofI,:][:,SolvedDofI],sigma=0,which='LM')
 
-    freq_eigv_I=list(scipy.sqrt(eigen_values_I)/(2*scipy.pi))
+    freq_eigv_I=list(scipy.sqrt(eigen_values_I)/(2*np.pi))
     eigen_vector_F_list=[]
     for i in range(nb_mode_F):
-        tmp=scipy.zeros((fluid_ndof) , dtype='float')
+        tmp=np.zeros((fluid_ndof) , dtype='float')
         tmp[SolvedDofI]=eigen_vectors_I[:,i].real
         eigen_vector_F_list.append(tmp)
 
@@ -392,20 +392,20 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     if (flag_write_gmsh_results==1) and (rank==0):
         silex_lib_gmsh.WriteResults2(results_file+'_fluid_modes',fluid_nodes,fluid_elements1,4,[[eigen_vector_F_list,'nodal',1,'pressure']])
 
-    toc = time.clock()
+    toc = time.process_time()
     if rank==0:
         print ("time for computing the fluid modes:",toc-tic)
 
     ##################################################################
     # Compute Psi_IA for the fluid: Psi_IA = - KII^{-1} * KIA
     ##################################################################
-    tic = time.clock()
+    tic = time.process_time()
 
     print ("Compute PSI_IA")
-    omega_cst=0.0*2.0*scipy.pi
+    omega_cst=0.0*2.0*np.pi
     MySolve = scipy.sparse.linalg.factorized( KFF[SolvedDofI,:][:,SolvedDofI]-(omega_cst**2)*MFF[SolvedDofI,:][:,SolvedDofI] ) # Makes LU decomposition.
     print("LU decomposition has been made")
-    Psi_IA=scipy.zeros((len(SolvedDofI),len(SolvedDofA)))
+    Psi_IA=np.zeros((len(SolvedDofI),len(SolvedDofA)))
 
 ##    i=0
 ##    j=0
@@ -413,18 +413,18 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 ##        if j<len(SolvedDofA):
 ##            One_dof=[SolvedDofA[j]]
 ##            KIA_i_column=-KAF[SolvedDofI,:][:,One_dof]
-##            #tmp=scipy.zeros(len(SolvedDofF))
+##            #tmp=np.zeros(len(SolvedDofF))
 ##            #tmp[SolvedDofI]=KIA_i_column.todense()
 ##            Xi=MySolve( KIA_i_column.todense() )
-##            Psi_IA[:,j]=scipy.array(Xi)[:,0]
+##            Psi_IA[:,j]=np.array(Xi)[:,0]
 
     for One_dof in SolvedDofA:
         KIA_i_column=-KAF[SolvedDofI,:][:,One_dof]
         Xi=MySolve( KIA_i_column.todense() )
-        Psi_IA[:,j]=scipy.array(Xi)[:,0]
+        Psi_IA[:,j]=np.array(Xi)[:,0]
 
     Psi_IA=scipy.sparse.csc_matrix(Psi_IA)
-    toc = time.clock()
+    toc = time.process_time()
     print ("time to compute PSI_IA:",toc-tic)
 
     ##################################################################
@@ -538,14 +538,14 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             it=it+1
             #freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
             frequencies.append(freq)
-            omega = 2*scipy.pi*freq
+            omega = 2*np.pi*freq
 
             print("Freq. step ",it,"/",itmax," proc number", rank, "frequency=", freq)
 
             tic = time.process_time()
 
             F = np.array(omega**2*UF[SolvedDof], dtype='c16')
-            Freduc = scipy.append(omega**2*Freduced_F,scipy.zeros(len(SolvedDofA) , dtype='c16'))
+            Freduc = scipy.append(omega**2*Freduced_F,np.zeros(len(SolvedDofA) , dtype='c16'))
             
             if rank>=0:
                  #print(K)

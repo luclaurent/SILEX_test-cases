@@ -26,7 +26,7 @@ print("SILEX CODE - calcul d'une ferme de charpente")
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 # Input mesh: define the name of the mesh file (*.msh)
 MeshFileName='truss'
@@ -60,8 +60,8 @@ Section = 0.05**2 # area of the section
 Inertia = 0.05**4/12
 
 # Boundary conditions
-IdNodesFixed_x=scipy.array([1,7,13,19],dtype=int)
-IdNodesFixed_y=scipy.array([1,7,13,19],dtype=int)
+IdNodesFixed_x=np.array([1,7,13,19],dtype=int)
+IdNodesFixed_y=np.array([1,7,13,19],dtype=int)
 
 # If the user wants to have only the mesh for gmsh, uncomment next line
 #silex_lib_gmsh.WriteResults('maillage_seul',nodes,elements,eltype)
@@ -89,7 +89,7 @@ Lfrac = 0.5
 penal = 3.0
 YoungMin = 2e9
 
-dC = scipy.zeros(nelem)
+dC = np.zeros(nelem)
 
 
 ##############################################################################
@@ -104,13 +104,13 @@ xe =scipy.ones(nelem)*Lfrac
 Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # initialize displacement vector
-Q=scipy.zeros(ndof)
+Q=np.zeros(ndof)
 
 # initialize force vector
-F=scipy.zeros((ndof))
+F=np.zeros((ndof))
 
 for i in range(len(LoadX)):
     F[(LoadX[i][0]-1)*2]=LoadX[i][1]
@@ -174,12 +174,12 @@ while change>0.01 and loop<300:
 #############################################################################
 
 # displacement written on 2 columns:
-disp=scipy.zeros((nnodes,2))
+disp=np.zeros((nnodes,2))
 disp[range(nnodes),0]=Q[list(range(0,ndof,2))]
 disp[range(nnodes),1]=Q[list(range(1,ndof,2))]
 
 # external forces written on 2 columns:
-load=scipy.zeros((nnodes,2))
+load=np.zeros((nnodes,2))
 load[range(nnodes),0]=F[list(range(0,ndof,2))]
 load[range(nnodes),1]=F[list(range(1,ndof,2))]
 
@@ -224,10 +224,10 @@ new_elements=[]
 for e in range(nelem):
     if xe[e]>0.95:
         new_elements.append(elements[e])
-new_elements=scipy.array(new_elements)
+new_elements=np.array(new_elements)
 nb_new_elements=new_elements.shape[0]
 
-node_to_be_eliminated=scipy.setdiff1d(range(1,nnodes+1,1),scipy.unique(new_elements))
+node_to_be_eliminated=np.setdiff1d(range(1,nnodes+1,1),scipy.unique(new_elements))
 
 dico=dict(zip(scipy.unique(new_elements),list(range(1,1+len(scipy.unique(new_elements)),1))))
 new_nodes=nodes[scipy.unique(new_elements)-1,:]

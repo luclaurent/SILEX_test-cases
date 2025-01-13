@@ -35,7 +35,7 @@ import mumps
 print ("SILEX CODE - calcul d'une piece col de cygne - A380")
 #############################################################################
 
-tic = time.clock()
+tic = time.process_time()
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
@@ -72,7 +72,7 @@ elementsS4,IdnodeS4=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',2,4)
 # 43140.85 3809.75 -2531.71
 l1=43139.79-43061.90
 d1=2516.34-2512.13
-S1=l1*scipy.pi*d1
+S1=l1*np.pi*d1
 
 # Hole 2:
 # 43045.43 3852.62 -2380.57
@@ -81,7 +81,7 @@ S1=l1*scipy.pi*d1
 # 43124.37 3843.56 -2399.64
 l2=43124.37-43049.11
 d2=2409.75-2399.64
-S2=l2*scipy.pi*d2
+S2=l2*np.pi*d2
 
 # Hole 2:
 # 43100.52 4096.18 -2579.67
@@ -90,7 +90,7 @@ S2=l2*scipy.pi*d2
 # 43143.20 4089.67 -
 l3=43140.13-43100.52
 d3=2604.00-2598.68
-S3=l3*scipy.pi*d3
+S3=l3*np.pi*d3
 
 # write the surface mesh in a gmsh-format file to verify if its correct
 #silex_lib_gmsh.WriteResults(ResultsFileName+'Volum',nodes,elements,1)
@@ -140,7 +140,7 @@ direction3 = [Load3x,Load3y,Load3z]
 F3 = silex_lib_elt.forceonsurface(nodes,elementsS3,press3,direction3)
 F=F1+F2+F3
 
-toc = time.clock()
+toc = time.process_time()
 print ("time for the user part:",toc-tic)
 
 #############################################################################
@@ -159,19 +159,19 @@ print ("Number of elements:",nelem)
 Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # initialize displacement vector
-Q=scipy.zeros(ndof)
+Q=np.zeros(ndof)
 
 #############################################################################
 #      compute stiffness matrix
 #############################################################################
-tic0 = time.clock()
-tic = time.clock()
+tic0 = time.process_time()
+tic = time.process_time()
 #print silex_lib_elt.stiffnessmatrix.__doc__
 Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(nodes,elements,[Young,nu])
-toc = time.clock()
+toc = time.process_time()
 
 K=scipy.sparse.csr_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
 print ("time to compute the stiffness matrix / FORTRAN:",toc-tic)
@@ -180,20 +180,20 @@ print ("time to compute the stiffness matrix / FORTRAN:",toc-tic)
 #       Solve the problem
 #############################################################################
 
-tic = time.clock()
+tic = time.process_time()
 #Q[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs], use_umfpack=True)
 Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
-toc = time.clock()
+toc = time.process_time()
 print ("time to solve the problem:",toc-tic)
 
 #############################################################################
 #       compute smooth stress and error in elements
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu],Q)
 
-toc = time.clock()
+toc = time.process_time()
 print ("time to compute stress and error:",toc-tic)
 print ("The global error is:",ErrorGlobal)
 print ("Total time for the computational part:",toc-tic0)
@@ -201,16 +201,16 @@ print ("Total time for the computational part:",toc-tic0)
 #############################################################################
 #         Write results to gmsh format
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 # displacement written on 3 columns:
-disp=scipy.zeros((nnodes,ndim))
+disp=np.zeros((nnodes,ndim))
 disp[range(nnodes),0]=Q[list(range(0,ndof,3))]
 disp[range(nnodes),1]=Q[list(range(1,ndof,3))]
 disp[range(nnodes),2]=Q[list(range(2,ndof,3))]
 
 # external load written on 3 columns:
-load=scipy.zeros((nnodes,ndim))
+load=np.zeros((nnodes,ndim))
 load[range(nnodes),0]=F[list(range(0,ndof,3))]
 load[range(nnodes),1]=F[list(range(1,ndof,3))]
 load[range(nnodes),2]=F[list(range(2,ndof,3))]
@@ -258,7 +258,7 @@ if flag_write_fields==1:
 # write the mesh and the results in a gmsh-format file
 silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_write)
 
-toc = time.clock()
+toc = time.process_time()
 print ("time to write results:",toc-tic)
 print ("----- END -----")
 

@@ -18,7 +18,7 @@ import silex_lib_extra_python as silex_lib_extra
 print("SILEX CODE - calcul d'une fourche avec des tet4")
 #############################################################################
 
-tic = time.clock()
+tic = time.process_time()
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
@@ -70,13 +70,13 @@ IdNodesFixed_z=IdnodeS1
 
 #direction2 = [-2000.0+3000,-2000.0,0.0]
 #direction3 = [-2000.0-3000,-2000.0,0.0]
-#press2 = scipy.sqrt(direction2[0]**2+direction2[1]**2+direction2[2]**2)/(10.0*scipy.pi*10.0)
-#press3 = scipy.sqrt(direction3[0]**2+direction3[1]**2+direction3[2]**2)/(10.0*scipy.pi*10.0)
+#press2 = scipy.sqrt(direction2[0]**2+direction2[1]**2+direction2[2]**2)/(10.0*np.pi*10.0)
+#press3 = scipy.sqrt(direction3[0]**2+direction3[1]**2+direction3[2]**2)/(10.0*np.pi*10.0)
 #F2 = silex_lib_elt.forceonsurface(nodes,elementsS2,press2,direction2)
 #F3 = silex_lib_elt.forceonsurface(nodes,elementsS3,press3,direction3)
 #F=F2+F3
 
-toc = time.clock()
+toc = time.process_time()
 print("time for the user part:",toc-tic)
 
 
@@ -96,10 +96,10 @@ print("Number of elements:",nelem)
 Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # initialize displacement vector
-Q=scipy.zeros(ndof)
+Q=np.zeros(ndof)
 
 #################################################################################
 #               BUILD THE R MATRIX                                              #
@@ -124,7 +124,7 @@ R = scipy.sparse.construct.bmat( [ [ sparse_ones
 #################################################################################################################
 
 # load calculation
-Fprime = scipy.zeros(ndof+6+6)
+Fprime = np.zeros(ndof+6+6)
 # FACE 2 :
 Fprime[ndof+0]=-2000.0+3000 # Newton / x
 Fprime[ndof+1]=-2000.0 # Newton / y
@@ -145,22 +145,22 @@ Fprime[ndof+11]=0.0 # Newton.metre / MZ
 #################################################################################################################
 
 # Global initialization
-Q          = scipy.zeros(ndof)
-Qprime     = scipy.zeros(ndof+6+6)
+Q          = np.zeros(ndof)
+Qprime     = np.zeros(ndof+6+6)
 
 SolvedDofsPrime = list(range(ndof+6+6))
-SolvedDofsPrime = scipy.setdiff1d(SolvedDofsPrime,Fixed_Dofs)
-SolvedDofsPrime = scipy.setdiff1d(SolvedDofsPrime,dofS2)
-SolvedDofsPrime = scipy.setdiff1d(SolvedDofsPrime,dofS3)
+SolvedDofsPrime = np.setdiff1d(SolvedDofsPrime,Fixed_Dofs)
+SolvedDofsPrime = np.setdiff1d(SolvedDofsPrime,dofS2)
+SolvedDofsPrime = np.setdiff1d(SolvedDofsPrime,dofS3)
 
 #############################################################################
 #      compute stiffness matrix
 #############################################################################
-tic0 = time.clock()
-tic = time.clock()
+tic0 = time.process_time()
+tic = time.process_time()
 #print silex_lib_elt.stiffnessmatrix.__doc__
 Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(nodes,elements,[Young,nu])
-toc = time.clock()
+toc = time.process_time()
 print("time to compute the stiffness matrix / FORTRAN:",toc-tic)
 
 K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
@@ -171,13 +171,13 @@ Kprime=scipy.sparse.csc_matrix(R.T*K*R)
 #       Solve the problem
 #############################################################################
 
-tic = time.clock()
+tic = time.process_time()
 #Q[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 #Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 
 Qprime[SolvedDofsPrime] = mumps.spsolve(Kprime[SolvedDofsPrime,:][:,SolvedDofsPrime],Fprime[SolvedDofsPrime])
 
-toc = time.clock()
+toc = time.process_time()
 print("time to solve the problem:",toc-tic)
 
 Q=R*Qprime
@@ -186,11 +186,11 @@ Q=R*Qprime
 #############################################################################
 #       compute smooth stress and error in elements
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu],Q)
 
-toc = time.clock()
+toc = time.process_time()
 print("time to compute stres and error:",toc-tic)
 print("The global error is:",ErrorGlobal)
 print("Total time for the computational part:",toc-tic0)
@@ -198,16 +198,16 @@ print("Total time for the computational part:",toc-tic0)
 #############################################################################
 #         Write results to gmsh format
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 # displacement written on 3 columns:
-disp=scipy.zeros((nnodes,ndim))
+disp=np.zeros((nnodes,ndim))
 disp[range(nnodes),0]=Q[list(range(0,ndof,3))]
 disp[range(nnodes),1]=Q[list(range(1,ndof,3))]
 disp[range(nnodes),2]=Q[list(range(2,ndof,3))]
 
 # external load written on 3 columns:
-##load=scipy.zeros((nnodes,ndim))
+##load=np.zeros((nnodes,ndim))
 ##load[range(nnodes),0]=F[list(range(0,ndof,3))]
 ##load[range(nnodes),1]=F[list(range(1,ndof,3))]
 ##load[range(nnodes),2]=F[list(range(2,ndof,3))]
@@ -254,7 +254,7 @@ if flag_write_fields==1:
 # write the mesh and the results in a gmsh-format file
 silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_write)
 
-toc = time.clock()
+toc = time.process_time()
 print ("time to write results:",toc-tic)
 print ("----- END -----")
 

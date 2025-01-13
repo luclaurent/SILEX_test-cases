@@ -46,8 +46,8 @@ import mumps
 #results_file='results/cavity2_damping'
 
 import ComputeCavity3
-ANGLES=[0, scipy.pi/8, 2*scipy.pi/8, 3*scipy.pi/8, 4*scipy.pi/8, 5*scipy.pi/8, 6*scipy.pi/8, 7*scipy.pi/8, 8*scipy.pi/8]
-#ANGLES=scipy.linspace(0.0, scipy.pi, num=20)
+ANGLES=[0, np.pi/8, 2*np.pi/8, 3*np.pi/8, 4*np.pi/8, 5*np.pi/8, 6*np.pi/8, 7*np.pi/8, 8*np.pi/8]
+#ANGLES=scipy.linspace(0.0, np.pi, num=20)
 frf=[]
 for angle in ANGLES:
     frf.append(ComputeCavity3.ComputeFRF([angle,1.5,2.0,3.0]))

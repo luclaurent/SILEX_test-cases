@@ -11,17 +11,17 @@ import time
 def Fast_compute(data,F,nodes,elements,material):
     Qbasis=data[0]
     Sigmabasis=data[1]
-    Q=scipy.zeros((len(Qbasis[0])))
+    Q=np.zeros((len(Qbasis[0])))
     nnodes = nodes.shape[0]
 
 
-    SigmaNodes_11=scipy.zeros((nnodes))
-    SigmaNodes_22=scipy.zeros((nnodes))
-    SigmaNodes_33=scipy.zeros((nnodes))
-    SigmaNodes_23=scipy.zeros((nnodes))
-    SigmaNodes_13=scipy.zeros((nnodes))
-    SigmaNodes_12=scipy.zeros((nnodes))
-    VM=scipy.zeros((nnodes))
+    SigmaNodes_11=np.zeros((nnodes))
+    SigmaNodes_22=np.zeros((nnodes))
+    SigmaNodes_33=np.zeros((nnodes))
+    SigmaNodes_23=np.zeros((nnodes))
+    SigmaNodes_13=np.zeros((nnodes))
+    SigmaNodes_12=np.zeros((nnodes))
+    VM=np.zeros((nnodes))
     for i in range(len(F)):
         Q=Q+F[i]*Qbasis[i]
         SigmaNodes_11=SigmaNodes_11+F[i]*Sigmabasis[i][:,0]
@@ -33,7 +33,7 @@ def Fast_compute(data,F,nodes,elements,material):
     VM=scipy.sqrt(1.5*(SigmaNodes_11**2+SigmaNodes_22**2+SigmaNodes_33**2)+2.0*(SigmaNodes_23**2+SigmaNodes_13**2+SigmaNodes_12**2)-0.5*(SigmaNodes_11+SigmaNodes_22+SigmaNodes_33)**2)
 
 ##    SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,material,Q)
-##    return Q,SigmaNodes,max(SigmaNodes[scipy.ix_(range(nnodes),[6])])[0]
+##    return Q,SigmaNodes,max(SigmaNodes[np.ix_(range(nnodes),[6])])[0]
 
 ##    return Q,VM,max(VM)
     return max(VM)
@@ -73,7 +73,7 @@ F5y=0.0
 F5z=0.0
 VM=[]
 case=[]
-tic = time.clock()
+tic = time.process_time()
 for F1x in choice:
     for F1y in choice:
         for F1z in choice:
@@ -94,7 +94,7 @@ for F1x in choice:
                                                                 VM.append(VMmax)
                                                                 case.append(F)
 
-toc = time.clock()
+toc = time.process_time()
 print ("time for the parametric study:",toc-tic)
 
 f=open('Results_parametric','w')

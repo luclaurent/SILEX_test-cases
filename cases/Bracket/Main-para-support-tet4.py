@@ -32,7 +32,7 @@ print ("SILEX CODE - calcul d'un support avec des tet4 sur 3 processeurs")
 #logo='<img src="logo-silex.png">'
 #print logo
 
-tic = time.clock()
+tic = time.process_time()
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
@@ -70,8 +70,8 @@ elementsS2,IdnodeS2=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',2,2)
 elementsS3,IdnodeS3=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',2,3)
 elementsS4,IdnodeS4=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',2,4)
 
-IdnodesV1 = scipy.setdiff1d(IdnodesV1,IdnodeS5)
-IdnodesV2 = scipy.setdiff1d(IdnodesV2,IdnodeS5)
+IdnodesV1 = np.setdiff1d(IdnodesV1,IdnodeS5)
+IdnodesV2 = np.setdiff1d(IdnodesV2,IdnodeS5)
 
 # write the surface mesh in a gmsh-format file to verify if its correct
 #silex_lib_gmsh.WriteResults(ResultsFileName+'surf1',nodes,elementsS1,2)
@@ -89,14 +89,14 @@ IdNodesFixed_y=IdnodeS4
 IdNodesFixed_z=IdnodeS2
 
 # compute external forces from pressure
-press = 5000.0/(10.0*2.0*scipy.pi*7.0) #MPa
+press = 5000.0/(10.0*2.0*np.pi*7.0) #MPa
 # give the direction of the surfacic load:
 #          if [0.0,0.0,0.0] then the local normal to the surface is used
 #          otherwise, the direction is normalized to 1
 direction = [0.0,1.0,0.0]
 F = silex_lib_elt.forceonsurface(nodes,elementsS3,press,direction)
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print( 'Proc ',rank,' time for the user part:',toc-tic)
 
@@ -123,27 +123,27 @@ elements=scipy.vstack([elementsV1,elementsV2])
 Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 Dof1=scipy.hstack([(IdnodesV1-1)*3,(IdnodesV1-1)*3+1,(IdnodesV1-1)*3+2])
 Dof2=scipy.hstack([(IdnodesV2-1)*3,(IdnodesV2-1)*3+1,(IdnodesV2-1)*3+2])
 Dof3=scipy.hstack([(IdnodeS5-1)*3,(IdnodeS5-1)*3+1,(IdnodeS5-1)*3+2])
 
-SolvedDofs1 = scipy.setdiff1d(Dof1,Fixed_Dofs)
-SolvedDofs2 = scipy.setdiff1d(Dof2,Fixed_Dofs)
-SolvedDofs3 = scipy.setdiff1d(Dof3,Fixed_Dofs)
+SolvedDofs1 = np.setdiff1d(Dof1,Fixed_Dofs)
+SolvedDofs2 = np.setdiff1d(Dof2,Fixed_Dofs)
+SolvedDofs3 = np.setdiff1d(Dof3,Fixed_Dofs)
 
 # initialize displacement vector
-Q=scipy.zeros(ndof)
+Q=np.zeros(ndof)
 
 #############################################################################
 #      compute stiffness matrix
 #############################################################################
-tic0 = time.clock()
-tic = time.clock()
+tic0 = time.process_time()
+tic = time.process_time()
 #print silex_lib_elt.stiffnessmatrix.__doc__
 Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(nodes,elements,[Young,nu])
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print("time to compute the stiffness matrix :",toc-tic)
 
@@ -154,17 +154,17 @@ K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
 #############################################################################
 
 if rank==0:
-    tic = time.clock()
+    tic = time.process_time()
 
 if rank==1:
     print("start k1 factorized")
     MySolve = scipy.sparse.linalg.factorized(K[SolvedDofs1,:][:,SolvedDofs1]) # Makes LU decomposition
     print("k1 factorized done")
     U1sl    = MySolve( F[SolvedDofs1] )
-    K11inv_K13=scipy.zeros((len(SolvedDofs1),len(SolvedDofs3)))
+    K11inv_K13=np.zeros((len(SolvedDofs1),len(SolvedDofs3)))
     for i in range(len(SolvedDofs3)):
         One_dof                               = [SolvedDofs3[i]]
-        K13_i_column                          = scipy.zeros(len(SolvedDofs1))
+        K13_i_column                          = np.zeros(len(SolvedDofs1))
         K13_i_column[list(range(len(SolvedDofs1)))] = K[SolvedDofs1,:][:,One_dof].todense()
         K11inv_K13[range(len(SolvedDofs1)),[i]]= MySolve( K13_i_column )
     comm.send([K11inv_K13,U1sl], dest=0, tag=11)
@@ -175,10 +175,10 @@ if rank==2:
     MySolve = scipy.sparse.linalg.factorized(K[SolvedDofs2,:][:,SolvedDofs2]) # Makes LU decomposition
     print("k2 factorized done")
     U2sl    = MySolve( F[SolvedDofs2] )
-    K22inv_K23=scipy.zeros((len(SolvedDofs2),len(SolvedDofs3)))
+    K22inv_K23=np.zeros((len(SolvedDofs2),len(SolvedDofs3)))
     for i in range(len(SolvedDofs3)):
         One_dof                               = [SolvedDofs3[i]]
-        K23_i_column                          = scipy.zeros(len(SolvedDofs2))
+        K23_i_column                          = np.zeros(len(SolvedDofs2))
         K23_i_column[list(range(len(SolvedDofs2)))] = K[SolvedDofs2,:][:,One_dof].todense()
         K22inv_K23[range(len(SolvedDofs2)),[i]]= MySolve( K23_i_column )
     comm.send([K22inv_K23,U2sl], dest=0, tag=11)
@@ -192,7 +192,7 @@ if rank==0:
     K22inv_K23 = data2[0]
     U2sl = data2[1]
     Schur = K[SolvedDofs3,:][:,SolvedDofs3]-K[SolvedDofs3,:][:,SolvedDofs1]*K11inv_K13-K[SolvedDofs3,:][:,SolvedDofs2]*K22inv_K23
-    Schur=scipy.array(Schur)
+    Schur=np.array(Schur)
     tmp=F[SolvedDofs3]-K[SolvedDofs3,:][:,SolvedDofs1]*U1sl-K[SolvedDofs3,:][:,SolvedDofs2]*U2sl
     print("start solve U3 on proc 0")
     U3=scipy.linalg.solve(Schur,tmp)
@@ -206,9 +206,9 @@ if rank==0:
     Q[SolvedDofs2] = U2
     Q[SolvedDofs3] = U3
    
-#Q[scipy.ix_(SolvedDofs)] = scipy.sparse.linalg.spsolve(K[scipy.ix_(SolvedDofs,SolvedDofs)],F[scipy.ix_(SolvedDofs)])
+#Q[np.ix_(SolvedDofs)] = scipy.sparse.linalg.spsolve(K[np.ix_(SolvedDofs,SolvedDofs)],F[np.ix_(SolvedDofs)])
 #if rank==0:
-#    toc = time.clock()
+#    toc = time.process_time()
 #    print "time to solve the problem:",toc-tic
 
 #############################################################################
@@ -216,7 +216,7 @@ if rank==0:
 #############################################################################
 if rank==0:
     SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu],Q)
-    toc = time.clock()
+    toc = time.process_time()
     print("time to compute stres and error:",toc-tic)
     print("The global error is:",ErrorGlobal)
     print("Total time for the computational part:",toc-tic0)
@@ -226,13 +226,13 @@ if rank==0:
 #############################################################################
 if rank==0:
     # displacement written on 3 columns:
-    disp=scipy.zeros((nnodes,ndim))
+    disp=np.zeros((nnodes,ndim))
     disp[range(nnodes),0]=Q[list(range(0,ndof,3))]
     disp[range(nnodes),1]=Q[list(range(1,ndof,3))]
     disp[range(nnodes),2]=Q[list(range(2,ndof,3))]
 
     # external load written on 3 columns:
-    load=scipy.zeros((nnodes,ndim))
+    load=np.zeros((nnodes,ndim))
     load[range(nnodes),0]=F[list(range(0,ndof,3))]
     load[range(nnodes),1]=F[list(range(1,ndof,3))]
     load[range(nnodes),2]=F[list(range(2,ndof,3))]
@@ -279,7 +279,7 @@ if rank==0:
     # write the mesh and the results in a gmsh-format file
     silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_write)
 
-    toc = time.clock()
+    toc = time.process_time()
     print ("time to write results:",toc-tic)
     print ("----- END -----")
 

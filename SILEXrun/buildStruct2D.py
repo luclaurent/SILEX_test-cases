@@ -188,7 +188,7 @@ class struct2D :
 
             #create structure mesh
             nbNodesHC=50
-            thetaHC=scipy.linspace(0,0+scipy.pi,nbNodesHC)
+            thetaHC=scipy.linspace(0,0+np.pi,nbNodesHC)
 
             xNodesHC=x_pos_struc*np.ones(nbNodesHC)
             yNodesHC=(np.max(nodes[:,1])-h_struc)+np.linspace(0,h_struc,nbNodesHC)

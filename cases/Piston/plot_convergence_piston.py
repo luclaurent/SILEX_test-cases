@@ -20,8 +20,8 @@ error_pente_1 =[1,0.01]
 h_pente_2     =[1,0.1]
 error_pente_2 =[1,0.01]
 
-pente_erreur_tet4=(scipy.log(error_tet4[0])-scipy.log(error_tet4[2]))/(scipy.log(h_tet4[0])-scipy.log(h_tet4[2]))
-pente_erreur_tet10=(scipy.log(error_tet10[0])-scipy.log(error_tet10[2]))/(scipy.log(h_tet10[0])-scipy.log(h_tet10[2]))
+pente_erreur_tet4=(np.log(error_tet4[0])-np.log(error_tet4[2]))/(np.log(h_tet4[0])-np.log(h_tet4[2]))
+pente_erreur_tet10=(np.log(error_tet10[0])-np.log(error_tet10[2]))/(np.log(h_tet10[0])-np.log(h_tet10[2]))
 
 print('pente erreur tet4  = ',pente_erreur_tet4)
 print('pente erreur tet10 = ',pente_erreur_tet10)

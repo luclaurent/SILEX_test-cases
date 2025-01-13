@@ -34,7 +34,7 @@ print("SILEX CODE - analyse frequentielle classique d'une barre en traction")
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 # Output result file: define the name of the result file (*.msh)
 ResultsFileName='Results_modal_classic'
@@ -44,8 +44,8 @@ young  = 200000.0e6
 section = 0.01**2 
 k    = young*section
 rho  = 7500.0
-w1   = 100.0*2.0*scipy.pi
-w2   = 10000.0*2.0*scipy.pi
+w1   = 100.0*2.0*np.pi
+w2   = 10000.0*2.0*np.pi
 load = 100.0
 nb_node_x = 100
 nb_elem_x = nb_node_x-1
@@ -74,9 +74,9 @@ for e in range(nb_elem_x):
 nodes_w=scipy.linspace(w1, w2 , num=nb_node_w)
 
 # SPACE : Boundary conditions
-IdNodesFixed_x=scipy.array([1],dtype=int)
+IdNodesFixed_x=np.array([1],dtype=int)
 # initialize force vector
-P=scipy.zeros((nb_node_x))
+P=np.zeros((nb_node_x))
 P[nb_node_x-1]=load
 
 
@@ -92,21 +92,21 @@ ndof_x=nb_node_x
 Fixed_Dofs_x = scipy.hstack([(IdNodesFixed_x-1)*1])
 
 # define free dof
-SolvedDofs_x = scipy.setdiff1d(range(ndof_x),Fixed_Dofs_x)
+SolvedDofs_x = np.setdiff1d(range(ndof_x),Fixed_Dofs_x)
 
 # initialize displacement vector
-U=scipy.zeros(ndof_x,dtype=mytype)
+U=np.zeros(ndof_x,dtype=mytype)
 
 #############################################################################
 #      compute matrices
 #############################################################################
 
 # SPACE : stiffness matrix
-Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(scipy.array(nodes_x),scipy.array(elements_x),[young,section])
+Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(np.array(nodes_x),np.array(elements_x),[young,section])
 K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof_x,ndof_x) )
 
 # SPACE : mass matrix
-Ik,Jk,Vk=silex_lib_elt.massmatrix(scipy.array(nodes_x),scipy.array(elements_x),rho*section)
+Ik,Jk,Vk=silex_lib_elt.massmatrix(np.array(nodes_x),np.array(elements_x),rho*section)
 M=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof_x,ndof_x) )
 
 # SPACE : damping matrix
@@ -121,13 +121,13 @@ for omega in nodes_w:
     
         Big_matrix_x = K[SolvedDofs_x,:][:,SolvedDofs_x]-omega**2*M[SolvedDofs_x,:][:,SolvedDofs_x]+omega*D[SolvedDofs_x,:][:,SolvedDofs_x]
         #U[SolvedDofs_x] = scipy.sparse.linalg.spsolve(Big_matrix_x,P[SolvedDofs_x])
-        U[SolvedDofs_x] = mumps.spsolve(Big_matrix_x,scipy.array(P[SolvedDofs_x],dtype=mytype) , comm=mycomm)
+        U[SolvedDofs_x] = mumps.spsolve(Big_matrix_x,np.array(P[SolvedDofs_x],dtype=mytype) , comm=mycomm)
         sol.append(U[nb_node_x-1])
 
 u_ex=[]
 for i in range(10):
-    print("Freq. analytique",((2*(i+1)-1)*scipy.pi*scipy.sqrt(young/rho))/(2.0*L*2.0*scipy.pi))
-    u_ex.append(scipy.sin((2*(i+1)-1)*scipy.pi*nodes_x/(2.0*L)))
+    print("Freq. analytique",((2*(i+1)-1)*np.pi*scipy.sqrt(young/rho))/(2.0*L*2.0*np.pi))
+    u_ex.append(np.sin((2*(i+1)-1)*np.pi*nodes_x/(2.0*L)))
 
 
 f=open(ResultsFileName+'_frf','wb')
@@ -135,7 +135,7 @@ pickle.dump([sol,nodes_w], f)
 f.close()
 
 pl.figure(3)
-pl.plot(nodes_w/(2.0*scipy.pi),scipy.log(sol),label='dep. x=L', linewidth=2)
+pl.plot(nodes_w/(2.0*np.pi),np.log(sol),label='dep. x=L', linewidth=2)
 pl.xlabel('freq.')
 pl.ylabel('log(dep.)')
 pl.grid('on')

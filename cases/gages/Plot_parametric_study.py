@@ -13,7 +13,7 @@ from matplotlib import cm
 ##f.close()
 ##
 ##A6,B6=scipy.meshgrid(A6,B6)
-##E6=scipy.array(E6)
+##E6=np.array(E6)
 ##
 ##fig=pylab.figure(1)
 ##ax = Axes3D(fig)
@@ -29,7 +29,7 @@ f=open(ResultsFileName+'_epsilon','rb')
 f.close()
 
 A3,B3=scipy.meshgrid(A3,B3)
-E3=scipy.array(E3)
+E3=np.array(E3)
 
 fig=pylab.figure(2)
 ax = Axes3D(fig)

@@ -19,7 +19,7 @@ import silex_lib_gmsh
 print("SILEX CODE - calcul d'une aile d'avion")
 #############################################################################
 
-tic = time.clock()
+tic = time.process_time()
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
@@ -58,7 +58,7 @@ elementsV,IdnodeV=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',4,10)
 elementsS=scipy.vstack([elementsS2,elementsS3])
 
 IdnodeS=scipy.unique(scipy.hstack([IdnodeS1,IdnodeS2,IdnodeS3]))
-InternalNodes = scipy.setdiff1d(IdnodeV,IdnodeS)
+InternalNodes = np.setdiff1d(IdnodeV,IdnodeS)
 
 #dof1=scipy.hstack([IdnodeS1,IdnodeS1*6+1,IdnodeS1*6+2,IdnodeS1+3,IdnodeS1*6+4,IdnodeS1*6+5])
 
@@ -114,7 +114,7 @@ direction = [0.0,0.0,0.0]
 F = silex_lib_dkt.forceonsurface(nodes,elementsS2,press,direction)
 
 
-toc = time.clock()
+toc = time.process_time()
 print("time for the user part:",toc-tic)
 
 #############################################################################
@@ -132,30 +132,30 @@ print("Number of dof:",ndof)
 
 # define fixed dof
 Fixed_Dofs = scipy.hstack([
-    (scipy.array(IdNodesFixed_x)-1)*6,
-    (scipy.array(IdNodesFixed_y)-1)*6+1,
-    (scipy.array(IdNodesFixed_z)-1)*6+2,
-    (scipy.array(IdNodesFixed_rotx)-1)*6+3,
-    (scipy.array(IdNodesFixed_roty)-1)*6+4,
-    (scipy.array(IdNodesFixed_rotz)-1)*6+5])
+    (np.array(IdNodesFixed_x)-1)*6,
+    (np.array(IdNodesFixed_y)-1)*6+1,
+    (np.array(IdNodesFixed_z)-1)*6+2,
+    (np.array(IdNodesFixed_rotx)-1)*6+3,
+    (np.array(IdNodesFixed_roty)-1)*6+4,
+    (np.array(IdNodesFixed_rotz)-1)*6+5])
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # initialize displacement vector
-Q=scipy.zeros(ndof)
+Q=np.zeros(ndof)
 
 #############################################################################
 #      compute stiffness matrix
 #############################################################################
-tic0 = time.clock()
-tic = time.clock()
+tic0 = time.process_time()
+tic = time.process_time()
 #print silex_lib_elt.stiffnessmatrix.__doc__
 #Ik1,Jk1,Vk1,Vm1=silex_lib_dkt.stiffnessmatrix(nodes,elementsS1,[Young1,nu1,thickness1,1000.0])
 Ik2,Jk2,Vk2,Vm2=silex_lib_dkt.stiffnessmatrix(nodes,elementsS2,[Young2,nu2,thickness2,1000.0])
 Ik3,Jk3,Vk3,Vm3=silex_lib_dkt.stiffnessmatrix(nodes,elementsS3,[Young3,nu3,thickness3,1000.0])
 Ik4,Jk4,Vk4=silex_lib_tet4.stiffnessmatrixdktcoupling(nodes,elementsV,[Young4,nu4])
-toc = time.clock()
+toc = time.process_time()
 print("time to compute the stiffness matrix / FORTRAN:",toc-tic)
 
 #K1=scipy.sparse.csc_matrix( (Vk1,(Ik1,Jk1)), shape=(ndof,ndof) ,dtype=float)
@@ -171,19 +171,19 @@ K=K2+K3+K4
 #       Solve the problem
 #############################################################################
 
-tic = time.clock()
+tic = time.process_time()
 #Q[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
-toc = time.clock()
+toc = time.process_time()
 print("time to solve the problem:",toc-tic)
 
 #############################################################################
 #         Get displacement to gmsh format
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 # displacement written on 3 columns:
-disp=scipy.zeros((nnodes,ndim))
+disp=np.zeros((nnodes,ndim))
 disp[range(nnodes),0]=Q[list(range(0,ndof,6))]
 disp[range(nnodes),1]=Q[list(range(1,ndof,6))]
 disp[range(nnodes),2]=Q[list(range(2,ndof,6))]
@@ -191,7 +191,7 @@ disp[range(nnodes),2]=Q[list(range(2,ndof,6))]
 #############################################################################
 #       compute smooth stress and error in elements
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 SigmaElemV,SigmaNodesV,EpsilonElemV,EpsilonNodesV,ErrorElemV,ErrorGlobalV=silex_lib_tet4.compute_stress_strain_error(nodes,elementsV,[Young4,nu4],disp.flat[:])
 output2=silex_lib_dkt.compute_stress_strain_error(nodes,elementsS2,[Young2,nu2,thickness2,7000.0],Q)
@@ -219,13 +219,13 @@ DirPrinPlu2S3  = output3[7]
 DirPrinMin1S3  = output3[8]
 DirPrinMin2S3  = output3[9]
 
-toc = time.clock()
+toc = time.process_time()
 print("time to compute stres and error:",toc-tic)
 print("The global error is (in volume only):",ErrorGlobalV)
 print("Total time for the computational part:",toc-tic0)
 
 # external load written on 3 columns:
-load=scipy.zeros((nnodes,ndim))
+load=np.zeros((nnodes,ndim))
 load[range(nnodes),0]=F[list(range(0,ndof,6))]
 load[range(nnodes),1]=F[list(range(1,ndof,6))]
 load[range(nnodes),2]=F[list(range(2,ndof,6))]
@@ -272,7 +272,7 @@ silex_lib_gmsh.WriteResults(ResultsFileName+'_peau_inferieure',nodes,elementsS2,
 silex_lib_gmsh.WriteResults(ResultsFileName+'_peau_superieure',nodes,elementsS3,2,fields_to_writeS3)
 silex_lib_gmsh.WriteResults(ResultsFileName+'volume',nodes,elementsV,4,fields_to_writeV)
 
-toc = time.clock()
+toc = time.process_time()
 print("time to write results:",toc-tic)
 print("----- END -----")
 

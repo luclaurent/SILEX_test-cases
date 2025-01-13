@@ -14,7 +14,7 @@ print("Calcul d'un treillis de barres")
 #############################################################################
 
 # tableau de coordonnees des noeuds [m]
-nodes=scipy.array([[0.0  ,	   0.0	], # noeud 1
+nodes=np.array([[0.0  ,	   0.0	], # noeud 1
                    [7.0/4.0  , 0.0	], # noeud 2
                    [7.0/2.0   , 0.0	], # ...
                    [3.0*7.0/4  , 0.0],
@@ -24,7 +24,7 @@ nodes=scipy.array([[0.0  ,	   0.0	], # noeud 1
                    [3.0*7.0/4   , 0.75]])
 
 # table de connectivite des elements (les numeros des noeuds commencent a 1)
-elements=scipy.array([[     1 ,	 2], # element 1
+elements=np.array([[     1 ,	 2], # element 1
                       [     2 ,	 3], # element 2
                       [     3 ,	 4], # ...
                       [     4 ,	 5],
@@ -64,17 +64,17 @@ ndof   = nnodes*2 # 2 ddl par noeud
 nelem = elements.shape[0] # pour un calcul automatique a partir du nombre de lignes du tableau nodes
 
 # degres de libertes fixes (attention, python commence a 0)
-Fixed_Dofs = scipy.array([0, 8, 1, 9])
+Fixed_Dofs = np.array([0, 8, 1, 9])
 
 # degres de libertes libres 
-#SolvedDofs = scipy.array([ 2,  3,  4,  5,  6,  7, 10, 11, 12, 13, 14, 15]) # si on le donne directement
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+#SolvedDofs = np.array([ 2,  3,  4,  5,  6,  7, 10, 11, 12, 13, 14, 15]) # si on le donne directement
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # Initialisation des deplacements aux noeuds
-U=scipy.zeros(ndof)
+U=np.zeros(ndof)
 
 # Initialisation des forces aux noeuds
-F=scipy.array([    0.   ,     0.   ,     0.   ,     0.   ,     0.   ,     0.   ,
+F=np.array([    0.   ,     0.   ,     0.   ,     0.   ,     0.   ,     0.   ,
            0.   ,     0.   ,     0.   ,     0.   ,     0.   , -3403.755,
            0.   , -3403.755,     0.   , -3403.755])
 
@@ -83,7 +83,7 @@ F=scipy.array([    0.   ,     0.   ,     0.   ,     0.   ,     0.   ,     0.   ,
 #############################################################################
 
 # Initialisation d'une matrice nulle de taille ndof X ndof
-K=scipy.zeros((ndof,ndof))
+K=np.zeros((ndof,ndof))
 
 # Boucle sur les elements
 for e in range(nelem):

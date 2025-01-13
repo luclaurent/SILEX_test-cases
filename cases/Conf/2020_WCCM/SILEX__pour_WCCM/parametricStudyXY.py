@@ -11,7 +11,7 @@ from Main_acou3D_struc3D_v3_grad import *
 
 freqMin=10.
 freqMax=200.
-paraValN=scipy.array([1.0,1.0,1.,1.0])
+paraValN=np.array([1.0,1.0,1.,1.0])
 nbStep=4
 
 import scipy

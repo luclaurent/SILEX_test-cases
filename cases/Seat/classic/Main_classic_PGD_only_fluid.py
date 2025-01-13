@@ -79,7 +79,7 @@ print("type de resolution: ",mytype)
 #nb_fcts_PGD = 19
 
 nb_node_w  = nb_freq_step
-nodes_w    = scipy.linspace(freq_ini*2.0*scipy.pi, freq_end*2.0*scipy.pi , num=nb_freq_step)
+nodes_w    = scipy.linspace(freq_ini*2.0*np.pi, freq_end*2.0*np.pi , num=nb_freq_step)
 Idnodes_w  = list(range(1,nb_node_w+1,1))
 omega_ndof = nb_node_w
 nb_elem_w  = nb_node_w-1
@@ -94,7 +94,7 @@ for e in range(nb_elem_w):
 # Load fluid mesh
 ##############################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 fluid_nodes    = silex_lib_gmsh.ReadGmshNodes(mesh_file+'.msh',3)
 fluid_elements,tmp = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',4,1)
@@ -109,7 +109,7 @@ silex_lib_gmsh.WriteResults(results_file+'Mesh',fluid_nodes,fluid_elements,4)
 # Compute Standard Fluid Matrices
 ##############################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 IIf,JJf,Vffk,Vffm=silex_lib_xfem_acou_tet4.globalacousticmatrices(fluid_elements,fluid_nodes,celerity,rho)
 
@@ -144,7 +144,7 @@ M=MFF[SolvedDofF,:][:,SolvedDofF]
 # node number 1 is at (0,-ly/2,0)
 #F = csc_matrix( ([1],([0],[0])), shape=(len(SolvedDofS)+len(SolvedDofF),1) )
 
-#P=scipy.zeros((fluid_ndof))
+#P=np.zeros((fluid_ndof))
 #P[0]=1.0
 
 P = silex_lib_xfem_acou_tet4.forceonsurface(fluid_nodes,fluid_elements_S2,1.0)
@@ -156,19 +156,19 @@ P = silex_lib_xfem_acou_tet4.forceonsurface(fluid_nodes,fluid_elements_S2,1.0)
 ndof_x=fluid_ndof
 ndof_w=omega_ndof
 SolvedDofs_x=SolvedDofF
-SolvedDofs_w=scipy.array(list(range(ndof_w)))
+SolvedDofs_w=np.array(list(range(ndof_w)))
 F_i=[]
 G_i=[]
 
-#F=scipy.zeros(ndof_x)+1.0
-#G=scipy.zeros(ndof_w)+1.0
+#F=np.zeros(ndof_x)+1.0
+#G=np.zeros(ndof_w)+1.0
 
-#sum_fi_Gi=scipy.zeros((ndof_x,ndof_w))
+#sum_fi_Gi=np.zeros((ndof_x,ndof_w))
 
-alpha_i = scipy.array(  scipy.zeros(5) , dtype=mytype  )
+alpha_i = np.array(  np.zeros(5) , dtype=mytype  )
 
-##F=scipy.array(  scipy.random.random(ndof_x) , dtype=mytype  )
-##G=scipy.array(  scipy.random.random(ndof_w) , dtype=mytype  )
+##F=np.array(  scipy.random.random(ndof_x) , dtype=mytype  )
+##G=np.array(  scipy.random.random(ndof_w) , dtype=mytype  )
 
 niter=0
 #for i in range(nb_fcts_PGD):
@@ -184,7 +184,7 @@ while (residu>1e-2):
 
     #if i!=0:
         #sum_fi_Gi=sum_fi_Gi+scipy.tensordot(F_i[i-1],G_i[i-1],0)
-    sum_fi_Gi=scipy.zeros((ndof_x,ndof_w))
+    sum_fi_Gi=np.zeros((ndof_x,ndof_w))
     for k in range(i):
         sum_fi_Gi=sum_fi_Gi+scipy.tensordot(F_i[k],G_i[k],0)*alpha_i[k]
 
@@ -193,14 +193,14 @@ while (residu>1e-2):
     M_sum_fi_Gi_B=M*sum_fi_Gi[SolvedDofs_x,:][:,SolvedDofs_w]*B
     #print("hello 1")
     # initialize displacement vector
-##    F=scipy.array(  scipy.random.random(ndof_x) , dtype=mytype  )
-##    G=scipy.array(  scipy.random.random(ndof_w) , dtype=mytype  )
-##    F=scipy.array(  scipy.random.random(ndof_x)+scipy.random.random(ndof_x)*1j , dtype='c16'  )
-##    G=scipy.array(  scipy.random.random(ndof_w)+scipy.random.random(ndof_w)*1j , dtype='c16'  )
+##    F=np.array(  scipy.random.random(ndof_x) , dtype=mytype  )
+##    G=np.array(  scipy.random.random(ndof_w) , dtype=mytype  )
+##    F=np.array(  scipy.random.random(ndof_x)+scipy.random.random(ndof_x)*1j , dtype='c16'  )
+##    G=np.array(  scipy.random.random(ndof_w)+scipy.random.random(ndof_w)*1j , dtype='c16'  )
     #X=scipy.hstack([F,G])
 ##    if i==0:
-##        F=scipy.zeros(ndof_x)+1.0
-##        G=scipy.zeros(ndof_w)+1.0
+##        F=np.zeros(ndof_x)+1.0
+##        G=np.zeros(ndof_w)+1.0
 ##    F=F/scipy.linalg.norm(F)
 ##    G=G/scipy.linalg.norm(G)
     
@@ -210,13 +210,13 @@ while (residu>1e-2):
 ##        F=F_i[i-1].copy()+scipy.random.random(ndof_x)*max(F_i[i-1])*1e-1
 ##        G=G_i[i-1].copy()+scipy.random.random(ndof_w)*max(G_i[i-1])*1e-1
 
-    F=scipy.array(  scipy.zeros(ndof_x)+1.0 , dtype=mytype  )
-    G=scipy.array(  scipy.zeros(ndof_w)+1.0 , dtype=mytype  )
+    F=np.array(  np.zeros(ndof_x)+1.0 , dtype=mytype  )
+    G=np.array(  np.zeros(ndof_w)+1.0 , dtype=mytype  )
 
 
     while (critere>3e-2):
-        F_new=scipy.zeros(ndof_x, dtype=mytype)
-        G_new=scipy.zeros(ndof_w, dtype=mytype)
+        F_new=np.zeros(ndof_x, dtype=mytype)
+        G_new=np.zeros(ndof_w, dtype=mytype)
 
         G_old=G.copy()
         F_old=F.copy()
@@ -225,7 +225,7 @@ while (residu>1e-2):
         
 
         Big_matrix_w = scipy.sparse.csc_matrix(  scipy.dot(F,K*F)*A*fluid_damping-scipy.dot(F,M*F)*B  , dtype=mytype)
-        second_member_w = scipy.array(  cc*scipy.dot(P,F)-scipy.dot(K_sum_fi_Gi_A.T*fluid_damping,F)+scipy.dot(M_sum_fi_Gi_B.T,F) , dtype=mytype)
+        second_member_w = np.array(  cc*scipy.dot(P,F)-scipy.dot(K_sum_fi_Gi_A.T*fluid_damping,F)+scipy.dot(M_sum_fi_Gi_B.T,F) , dtype=mytype)
         G_new = mumps.spsolve( Big_matrix_w , second_member_w , comm=mycomm).T
         #G_new = G_new.real
         #G_new = G_new/scipy.linalg.norm(G_new)
@@ -234,7 +234,7 @@ while (residu>1e-2):
         G=G_new.copy()
 
         Big_matrix_x = scipy.sparse.csc_matrix(  scipy.dot(G,A*G)*K*fluid_damping-scipy.dot(G,B*G)*M  , dtype=mytype)
-        second_member_x = scipy.array(  scipy.dot(cc,G)*P-scipy.dot(K_sum_fi_Gi_A,G)*fluid_damping+scipy.dot(M_sum_fi_Gi_B,G) , dtype=mytype)
+        second_member_x = np.array(  scipy.dot(cc,G)*P-scipy.dot(K_sum_fi_Gi_A,G)*fluid_damping+scipy.dot(M_sum_fi_Gi_B,G) , dtype=mytype)
         F_new = mumps.spsolve( Big_matrix_x , second_member_x , comm=mycomm).T
         #F_new[SolvedDofs_x] = scipy.sparse.linalg.spsolve( Big_matrix_x , second_member_x )
         F=F_new.copy()
@@ -251,13 +251,13 @@ while (residu>1e-2):
             print("forcage!")
             critere=0.0
 ##            print("re-initialisation")
-##            F=scipy.array(  scipy.random.random(ndof_x) , dtype=mytype  )
-##            G=scipy.array(  scipy.random.random(ndof_w) , dtype=mytype  )
+##            F=np.array(  scipy.random.random(ndof_x) , dtype=mytype  )
+##            G=np.array(  scipy.random.random(ndof_w) , dtype=mytype  )
   
         print("critere = ",critere,      "niter = ",niter)
 
-    second_member_w = scipy.array(  cc*scipy.dot(P,F)-scipy.dot(K_sum_fi_Gi_A.T*fluid_damping,F)+scipy.dot(M_sum_fi_Gi_B.T,F) , dtype=mytype)
-    second_member_x = scipy.array(  scipy.dot(cc,G)*P-scipy.dot(K_sum_fi_Gi_A,G)*fluid_damping+scipy.dot(M_sum_fi_Gi_B,G) , dtype=mytype)
+    second_member_w = np.array(  cc*scipy.dot(P,F)-scipy.dot(K_sum_fi_Gi_A.T*fluid_damping,F)+scipy.dot(M_sum_fi_Gi_B.T,F) , dtype=mytype)
+    second_member_x = np.array(  scipy.dot(cc,G)*P-scipy.dot(K_sum_fi_Gi_A,G)*fluid_damping+scipy.dot(M_sum_fi_Gi_B,G) , dtype=mytype)
 ##    residu=max( scipy.linalg.norm(second_member_w)/scipy.linalg.norm(cc*scipy.dot(P,F))
 ##                , scipy.linalg.norm(second_member_x)/scipy.linalg.norm(scipy.dot(cc,G)*P) )
 ##    residu=max( scipy.linalg.norm(second_member_w)/(scipy.linalg.norm(cc*scipy.dot(P,F))
@@ -283,9 +283,9 @@ while (residu>1e-2):
     G_i.append(G.copy())
 
     # Projection on the new basis
-    Ktilde=scipy.zeros((i+1,i+1), dtype=mytype)
-    Mtilde=scipy.zeros((i+1,i+1), dtype=mytype)
-    second_member_alpha = scipy.zeros( i+1 , dtype=mytype)
+    Ktilde=np.zeros((i+1,i+1), dtype=mytype)
+    Mtilde=np.zeros((i+1,i+1), dtype=mytype)
+    second_member_alpha = np.zeros( i+1 , dtype=mytype)
 
     for l in range(i+1):
         second_member_alpha[l] = scipy.dot(cc,G_i[l])*scipy.dot(P,F_i[l])
@@ -299,8 +299,8 @@ while (residu>1e-2):
     nb_fcts_PGD=nb_fcts_PGD+1
 
 ##    # calcul du residu
-##    residu_x = scipy.array(  scipy.zeros(ndof_x) , dtype=mytype )
-##    residu_w = scipy.array(  scipy.zeros(ndof_w) , dtype=mytype )
+##    residu_x = np.array(  np.zeros(ndof_x) , dtype=mytype )
+##    residu_w = np.array(  np.zeros(ndof_w) , dtype=mytype )
 ##
 ##    for k in range(i+1):
 ##        residu_w = residu_w+scipy.dot( scipy.dot(F,K*F)*A*fluid_damping-scipy.dot(F,M*F)*B , )
@@ -321,8 +321,8 @@ frf=[]
 frequencies=[]
 press_save=[]
 for omi in range(nb_node_w):
-    press = scipy.zeros(fluid_ndof, dtype=mytype)
-    freq  = nodes_w[omi]/(2.0*scipy.pi)
+    press = np.zeros(fluid_ndof, dtype=mytype)
+    freq  = nodes_w[omi]/(2.0*np.pi)
     frequencies.append(freq)
     for i in range(nb_fcts_PGD):
         press[SolvedDofF]=press[SolvedDofF]+F_i[i][list(range(len(SolvedDofF)))]*G_i[i][omi]*alpha_i[i]
@@ -344,6 +344,6 @@ prefsquare=20e-6*20e-6
 
 pl.figure(1)
 for i in range(nb_fcts_PGD):
-    pl.plot(frequencies,scipy.array(G_i[i]),label='G'+str(i), linewidth=2)
+    pl.plot(frequencies,np.array(G_i[i]),label='G'+str(i), linewidth=2)
 
 pl.show()

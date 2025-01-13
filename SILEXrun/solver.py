@@ -132,7 +132,7 @@ class solverTools(object):
         # tmp.append(scipy.where(fluid_elements1[:,2]==i))
         # tmp.append(scipy.where(fluid_elements1[:,3]==i))
         #
-        # tmp = scipy.unique(scipy.array(tmp))
+        # tmp = scipy.unique(np.array(tmp))
         # tmp1,elttest0,tmp2=scipy.intersect1d(fluid_elements1[:,0],LSEnrichednodes,return_indices=True)
         # silex_lib_gmsh.WriteResults2(results_file+'_enriched_elements_test0',fluid_nodes,fluid_elements1[tmp],4)
         #[75804, 97252, 97253,34973, 93135, 93137, 93248,83787, 93136,93525]

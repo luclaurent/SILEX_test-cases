@@ -75,7 +75,7 @@ Idnodes = np.unique(fluid_elements.flatten())
 
 fluid_nnodes = fluid_nodes.shape[0]
 fluid_nelem = fluid_elements.shape[0]
-fluid_ndof = fluid_nnodes
+fluid_ndof = len(np.unique(fluid_elements.flatten()))
 
 fluid_elements_boun = mesh.getElements(tag=2)["LIN2"]
 IdnodeS2 = np.unique(fluid_elements_boun.flatten())
@@ -198,7 +198,7 @@ logger.info("time to compute fluid matrices: {}".format(toc - tic))
 ##################################################################
 tic = time.process_time()
 
-# HeavisideEnrichedElements=scipy.setdiff1d(EnrichedElements,EdgeEnrichedElements)
+# HeavisideEnrichedElements=np.setdiff1d(EnrichedElements,EdgeEnrichedElements)
 
 # Enrichednodes = scipy.unique(fluid_elements[HeavisideEnrichedElements])
 # Enrichednodes = scipy.unique(fluid_elements[EnrichedElements])
