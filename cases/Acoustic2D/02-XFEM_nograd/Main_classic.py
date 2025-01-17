@@ -1,5 +1,7 @@
 import string
 import time
+from loguru import logger
+from pathlib import Path
 import numpy as np
 import scipy
 import scipy.sparse
@@ -16,12 +18,14 @@ import pickle
 import sys
 from meshRW import msh, msh2
 from SILEXlib import silex_lib_fem, silex_lib_xfem
-from SILEXlib import MeshField
+
+# load classes
+objFEM = silex_lib_fem.LinearAcousticsTRI3()
+objXFEM = silex_lib_xfem.LinearAcousticsTRI3()
 
 #import xvibacoufo
 #import shell_lib
-import mumps
-from mumps import DMumpsContext
+import mumpspy
 
 
 from mpi4py import MPI
@@ -68,35 +72,48 @@ freq_comparaison = 210.0
 
 tic = time.process_time()
 
-fluid_nodes    = silex_lib_gmsh.ReadGmshNodes(mesh_file+'.msh',2)
-fluid_elements = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',2,1)
+cwd = Path(__file__).resolve().parent
 
-fluid_nnodes   = fluid_nodes.shape[0]
-fluid_nelem    = fluid_elements.shape[0]
-fluid_ndof     = len(np.unique(fluid_elements.flatten()))
+# start reading mesh
+mesh = msh.mshReader(cwd / (mesh_file + "_fluid.msh"))
 
-fluid_elements_boun = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',1,2)
-IdnodeS2=scipy.unique(fluid_elements_boun)
+fluid_nodes = mesh.getNodes()[:, 0:2]
+fluid_elements = mesh.getElements(tag=1)["TRI3"]
+Idnodes = np.unique(fluid_elements.flatten())
 
-fluid_elements_tip = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',1,3)
-IdnodeTip=[]
-for e in range(len(fluid_elements_tip)):
-    IdnodeTip.append(fluid_elements_tip[e][0])
-IdnodeTip.append(fluid_elements_tip[len(fluid_elements_tip)-1][1])
+fluid_nnodes = fluid_nodes.shape[0]
+fluid_nelem = fluid_elements.shape[0]
+fluid_ndof = len(np.unique(fluid_elements.flatten()))
 
-IdnodeTip=np.array(IdnodeTip)
+fluid_elements_boun = mesh.getElements(tag=2)["LIN2"]
+IdnodeS2 = np.unique(fluid_elements_boun.flatten())
+
+fluid_elements_tip = mesh.getElements(tag=3)["LIN2"]
+IdnodeTip=np.unique(fluid_elements_tip.flatten())
 
 
 FF=np.zeros((fluid_ndof))
 
-print "number of fluid nodes : ",fluid_nnodes
-print "number of fluid elements : ",fluid_nelem
+logger.info("number of fluid nodes : {}".format(fluid_nnodes))
+logger.info("number of fluid elements : {}".format(fluid_nelem))
 
 if (flag_write_gmsh_results==1) and (rank==0):
-    silex_lib_gmsh.WriteResults(results_file+'_fluid_surface',fluid_nodes,fluid_elements,2)
-    silex_lib_gmsh.WriteResults(results_file+'_fluid_boundary',fluid_nodes,fluid_elements_boun,1)
-    silex_lib_gmsh.WriteResults(results_file+'_fluid_tip',fluid_nodes,fluid_elements_tip,1)
-
+    msh2.mshWriter(
+        cwd / (results_file + "_fluid_mesh.msh"),
+        fluid_nodes,
+        {"type": "TRI3", "connectivity": fluid_elements},
+    )
+    msh2.mshWriter(
+        cwd / (results_file + "_fluid_boundary.msh"),
+        fluid_nodes,
+        {"type": "LIN2", "connectivity": fluid_elements_boun},
+    )
+    msh2.mshWriter(
+        cwd / (results_file + "_fluid_tip.msh"),
+        fluid_nodes,
+        {"type": "LIN2", "connectivity": fluid_elements_tip},
+    )
+   
 ##############################################################
 # Compute Standard Fluid Matrices
 ##############################################################
@@ -104,7 +121,7 @@ if (flag_write_gmsh_results==1) and (rank==0):
 tic = time.process_time()
 #print silex_acou_lib_tri3.globalacousticmatrices.__doc__
 
-IIf,JJf,Vffk,Vffm=silex_acou_lib_tri3.globalacousticmatrices(fluid_elements,fluid_nodes,celerity,rho)
+IIf, JJf, Vffk, Vffm = objFEM.getMatrices(fluid_nodes, fluid_elements, [celerity, rho])
 
 KFF=scipy.sparse.csc_matrix( (Vffk,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
 MFF=scipy.sparse.csc_matrix( (Vffm,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
@@ -112,12 +129,12 @@ MFF=scipy.sparse.csc_matrix( (Vffm,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
 SolvedDofF=np.setdiff1d(range(fluid_ndof),IdnodeS2-1)
 #SolvedDofF=range(fluid_ndof)
 
+toc = time.process_time()
+logger.info("time to compute fluid matrices: {}".format(toc - tic))
+
 ##############################################################
 # FRF computation of the FSI problem
 ##############################################################
-enrichment=np.zeros((fluid_ndof))
-LevelSet=np.zeros((fluid_ndof))+1.0
-LevelSetTangent=np.zeros((fluid_ndof))-1.0
 
 Flag_frf_analysis=1
 
@@ -126,7 +143,7 @@ frequencies=[]
 frf=[]
 
 if (Flag_frf_analysis==1):
-    print "time at the beginning of the FRF:",time.ctime()
+    logger.info("time at the beginning of the FRF: {}".format(time.ctime())) #time.ctime()
 
     press_save=[]
     disp_save=[]
@@ -138,11 +155,16 @@ if (Flag_frf_analysis==1):
         omega=2*np.pi*freq
 
         FF[np.ix_(SolvedDofF)]=-(KFF[np.ix_(SolvedDofF,IdnodeS2-1)]-(omega*omega)*MFF[np.ix_(SolvedDofF,IdnodeS2-1)])*(np.zeros((len(IdnodeS2)))+1.0)
-        print "proc number",rank,"frequency=",freq
+        logger.info("proc number {} frequency={}".format(rank,freq))
 
+        tip = time.process_time()
         sol = scipy.sparse.linalg.spsolve(scipy.sparse.csc_matrix(KFF[np.ix_(SolvedDofF,SolvedDofF)]-(omega*omega)*MFF[np.ix_(SolvedDofF,SolvedDofF)])
                                           , np.array(FF[np.ix_(SolvedDofF)], dtype=float))
-        
+        logger.info('time to solve the linear system: {}'.format(time.process_time()-tip))
+        tip = time.process_time()
+        solver = mumpspy.MumpsSolver()
+        sol = solver.solve(KFF[np.ix_(SolvedDofF,SolvedDofF)]-(omega*omega)*MFF[np.ix_(SolvedDofF,SolvedDofF)], FF[np.ix_(SolvedDofF)])
+        logger.info('time to solve the linear system: {}'.format(time.process_time()-tip))
         #sol=mumps.spsolve( scipy.sparse.csc_matrix(KFF[np.ix_(SolvedDofF,SolvedDofF)]-(omega*omega)*MFF[np.ix_(SolvedDofF,SolvedDofF)])
         #                   , np.array(FF[np.ix_(SolvedDofF)], dtype=float)
         #                   )
@@ -150,14 +172,20 @@ if (Flag_frf_analysis==1):
         press = np.zeros(fluid_ndof)
         press[np.ix_(SolvedDofF)]=sol[range(len(SolvedDofF))]
         press_save.append(press)
-        frf.append(silex_acou_lib_tri3.computequadratiquepressure(fluid_elements,fluid_nodes,press))
+        frf.append(objFEM.getQuadraticPressure(
+            fluid_nodes,
+            fluid_elements,
+            press
+        ))
+            
+
         #frf.append(xvibacoufo.computexfemcomplexquadratiquepressure(fluid_elements,fluid_nodes,press+0j,enrichment+0j,LevelSet,LevelSetTangent))
 
 
         if freq==freq_comparaison:
             PressTip=press[IdnodeTip-1]
             AllPressTip=[PressTip,fluid_nodes[IdnodeTip-1],freq]
-            f=open(results_file+'_pressTip.frf','w')
+            f=open(cwd/(results_file+'_pressTip.frf'),'w')
             pickle.dump(AllPressTip, f)
             f.close()
         #thetaRef=[]
@@ -169,11 +197,24 @@ if (Flag_frf_analysis==1):
         #pl.plot(thetaRef,20*np.log10(np.real(abs(press[IdnodeTip-1]))/20e-6),'ko-',label='Reference', linewidth=2)
         #pl.show()
 
-    print "time at the end of the FRF:",time.ctime()
+    logger.info("time at the end of the FRF: {}".format(time.ctime()))
     frfsave=[frequencies,frf]
     comm.send(frfsave, dest=0, tag=11)
     if (flag_write_gmsh_results==1) and (rank==0):
-        silex_lib_gmsh.WriteResults(results_file+str(rank)+'_results_fluid_frf',fluid_nodes,fluid_elements,2,[[press_save,'nodal',1,'pressure']])
+         msh2.mshWriter(
+            cwd / (results_file +str(rank)+"_results_fluid_frf.msh"),
+            fluid_nodes,
+            [{"type": "TRI3", "connectivity": fluid_elements}],
+            fields={
+                "data": press_save,
+                "type": "nodal",
+                "dim": 1,
+                "name": "pressure",
+                "timesteps": frequencies,
+            },
+            append=True,
+            )
+        
 
     # save the FRF problem
     Allfrequencies=np.zeros(nb_freq_step)
@@ -189,9 +230,9 @@ if (Flag_frf_analysis==1):
 
         Allfrequencies, Allfrf = zip(*sorted(zip(Allfrequencies, Allfrf)))
         Allfrfsave=[np.array(list(Allfrequencies)),np.array(list(Allfrf))]
-        f=open(results_file+'_results.frf','w')
-        pickle.dump(Allfrfsave, f)
-        f.close()
+        with open(cwd / (results_file+'_results.frf'),'wb') as f:
+            pickle.dump(Allfrfsave, f)
+        
 
     
     
