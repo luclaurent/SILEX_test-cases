@@ -71,7 +71,7 @@ F = silex_lib_elt.forceonsurface(nodes,elementsS3,press,[0.0,0.0,0.0])
 
 
 toc = time.process_time()
-print "time for the user part:",toc-tic
+logger.info("time for the user part:",toc-tic
 
 #############################################################################
 #      EXPERT PART
@@ -82,8 +82,8 @@ print "time for the user part:",toc-tic
 nnodes = nodes.shape[0]
 ndof   = nnodes*ndim
 nelem  = elements.shape[0]
-print "Number of nodes:",nnodes
-print "Number of elements:",nelem
+logger.info("Number of nodes:",nnodes
+logger.info("Number of elements:",nelem
 
 # define fixed dof
 Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
@@ -101,7 +101,7 @@ tic0 = time.process_time()
 tic = time.process_time()
 Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(nodes,elements,[Young,nu])
 toc = time.process_time()
-print "time to compute the stiffness matrix / FORTRAN:",toc-tic
+logger.info("time to compute the stiffness matrix / FORTRAN:",toc-tic
 
 K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
 
@@ -112,7 +112,7 @@ K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
 tic = time.process_time()
 Q[np.ix_(SolvedDofs)] = scipy.sparse.linalg.spsolve(K[np.ix_(SolvedDofs,SolvedDofs)],F[np.ix_(SolvedDofs)])
 toc = time.process_time()
-print "time to solve the problem:",toc-tic
+logger.info("time to solve the problem:",toc-tic
 
 #############################################################################
 #       compute smooth stress and error in elements
@@ -122,9 +122,9 @@ tic = time.process_time()
 SigmaElem,SigmaNodes,Epsilon,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu],Q)
 
 toc = time.process_time()
-print "time to compute stress and error:",toc-tic
-print "The global error is:",ErrorGlobal
-print "Total time for the computational part:",toc-tic0
+logger.info("time to compute stress and error:",toc-tic
+logger.info("The global error is:",ErrorGlobal
+logger.info("Total time for the computational part:",toc-tic0
 
 #############################################################################
 #         Write results to gmsh format
@@ -168,8 +168,8 @@ silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_writ
 
 
 toc = time.process_time()
-print "time to write results:",toc-tic
-print "total time:",toc-tic0
-print "----- END -----"
+logger.info("time to write results:",toc-tic
+logger.info("total time:",toc-tic0
+logger.info("----- END -----"
 
 

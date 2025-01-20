@@ -222,7 +222,7 @@ for i in range(len(frequencies)):
 frfsave=[frequencies,frf]
 silex_lib_gmsh.WriteResults2(ResultsFileName+'_disp_frf',nodes,elements,eltype,[[disp_save,'nodal',2,'displacement']])
 
-print (" time at the end of the FRF:",time.ctime())
+print (" time at the end of the FRF: {}".format(time.ctime())))
 
 #print ("structure eigen frequencies : ",freq_eigv)
 

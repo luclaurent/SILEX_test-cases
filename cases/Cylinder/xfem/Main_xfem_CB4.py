@@ -49,7 +49,7 @@ mycomm=comm_mumps_one_proc()
 time_init=time.ctime()
 tic00=time.process_time()
 if rank==0:
-    print ("time at the beginning of the computation:",time.ctime())
+    print ("time at the beginning of the computation: {}".format(time.ctime())))
 
 # parallepipedic cavity with plane structure
 mesh_file='geom/cyl'
@@ -499,9 +499,9 @@ if (flag_write_gmsh_results==1) and (rank==0):
     eigen_vector_F_list=[]
     for i in range(nb_mode_A):
         tmp=Psi_Fk[:,i].real
-        tmp[SolvedDofA]=tmp[SolvedDofA]+scipy.sign(LevelSet[SolvedDofA])*Psi_Ak[:,i].real
+        tmp[SolvedDofA]=tmp[SolvedDofA]+np.sign(LevelSet[SolvedDofA])*Psi_Ak[:,i].real
         eigen_vector_F_list.append(tmp)
-        #CorrectedPressure[SolvedDofA]=(CorrectedPressure[SolvedDofA].T+np.array(enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA]).T)).T
+        #CorrectedPressure[SolvedDofA]=(CorrectedPressure[SolvedDofA].T+np.array(enrichment[SolvedDofA]*np.sign(LevelSet[SolvedDofA]).T)).T
 
     silex_lib_gmsh.WriteResults2(results_file+'_PsiFk',fluid_nodes,fluid_elements,4,[[eigen_vector_F_list,'nodal',1,'pressure']])
 
@@ -608,7 +608,7 @@ frf=[]
 
 if (Flag_frf_analysis==1):
     if rank==0:
-        print ("time at the beginning of the FRF:",time.ctime())
+        print ("time at the beginning of the FRF: {}".format(time.ctime())))
 
     press_save=[]
     disp_save=[]
@@ -631,7 +631,7 @@ if (Flag_frf_analysis==1):
         enrichment = np.zeros((fluid_nnodes),dtype=complex)
         enrichment[SolvedDofA]=P_A
         CorrectedPressure=press
-        CorrectedPressure[SolvedDofA]=(CorrectedPressure[SolvedDofA].T+np.array(enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA]).T)).T
+        CorrectedPressure[SolvedDofA]=(CorrectedPressure[SolvedDofA].T+np.array(enrichment[SolvedDofA]*np.sign(LevelSet[SolvedDofA]).T)).T
         frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements,fluid_nodes,CorrectedPressure))
         #frf.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(fluid_elements,fluid_nodes,press.todense(),enrichment,LevelSet,LevelSetTangent))
 
@@ -647,7 +647,7 @@ if (Flag_frf_analysis==1):
             press_save.append(CorrectedPressure.real)
 
     if rank==0:
-        print ("Proc. ",rank," / time at the end of the FRF:",time.ctime())
+        print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime())))
     frfsave=[frequencies,frf]
     comm.send(frfsave, dest=0, tag=11)
 
@@ -699,6 +699,6 @@ if (Flag_frf_analysis==1):
 
         print("Real time at the beginning = ",time_init)
         print("Real time before FRF       = ",time_before_frf)
-        print("Real time at the end       = ",time.ctime())
+        print("Real time at the end       =  {}".format(time.ctime())))
         print("Total time = ",time.process_time()-tic00)
 

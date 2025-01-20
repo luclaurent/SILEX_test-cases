@@ -61,7 +61,7 @@ mycomm=comm_mumps_one_proc()
 ###########################################################
 def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
     if rank==0:
-        print ("time at the beginning of the computation:",time.ctime())
+        print ("time at the beginning of the computation: {}".format(time.ctime())))
 
     ##############################################################
     ##############################################################
@@ -364,7 +364,7 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
     ##Mhat_BA = scipy.sparse.csc_matrix((Psi_IB.T).todense()*Mstar_IA.todense())+MFF[SolvedDofB,:][:,SolvedDofI]*Psi_IA
 
     if rank==0:
-        print ("time at the end of the computation (without the saving part):",time.ctime())
+        print ("time at the end of the computation (without the saving part): {}".format(time.ctime())))
 
 
     ##if rank==0:
@@ -439,7 +439,7 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
     ##Mhat_BA = scipy.sparse.csc_matrix((Psi_IB.T).todense()*Mstar_IA.todense())+MFF[SolvedDofB,:][:,SolvedDofI]*Psi_IA
 
     if rank==0:
-        print ("time at the end of the computation (without the saving part):",time.ctime())
+        print ("time at the end of the computation (without the saving part): {}".format(time.ctime())))
 
 
     f=open(results_file+'_offline_matrices.pck','wb')

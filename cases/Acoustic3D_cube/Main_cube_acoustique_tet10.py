@@ -127,7 +127,7 @@ frequencies=[]
 frf=[]
 
 if (Flag_frf_analysis==1):
-    print ("Proc. ",rank," / time at the beginning of the FRF:",time.ctime())
+    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime())))
 
     press_save=[]
     disp_save=[]
@@ -164,7 +164,7 @@ if (Flag_frf_analysis==1):
     if rank==0:
         silex_lib_gmsh.WriteResults2(results_file+'_results_fluid_frf',fluid_nodes,fluid_elements,11,[[press_save,'nodal',1,'pressure']])
 
-    print ("Time at the end of the FRF:",time.ctime())
+    print ("Time at the end of the FRF: {}".format(time.ctime())))
 
     Allfrfsave=[frequencies,frf]
     f=open(results_file+'_results.frf','wb')

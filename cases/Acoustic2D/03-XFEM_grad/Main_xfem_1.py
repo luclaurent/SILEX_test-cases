@@ -238,7 +238,7 @@ omega=2*np.pi*freq
 FF[SolvedDofF]=-(KFF[SolvedDofF,:][:,IdnodeS2-1]-(omega*omega)*MFF[SolvedDofF,:][:,IdnodeS2-1])*(np.zeros((len(IdnodeS2)))+1.0)
 FA = np.zeros(fluid_ndof)
 F  = FF[SolvedDofF]
-F  = scipy.append(F,FA[SolvedDofA])
+F  = np.concatenate((F,FA[SolvedDofA]))
 F  = np.array(F)
 
 sol = scipy.sparse.linalg.spsolve(K-(omega*omega)*M, F)
@@ -248,7 +248,7 @@ press[SolvedDofF]=sol[list(range(len(SolvedDofF)))]
 enrichment=np.zeros(fluid_nnodes)
 enrichment[SolvedDofA]=sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
 CorrectedPressure=press
-CorrectedPressure[np.ix_(SolvedDofA)]=CorrectedPressure[SolvedDofA]+enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
+CorrectedPressure[np.ix_(SolvedDofA)]=CorrectedPressure[SolvedDofA]+enrichment[SolvedDofA]*np.sign(LevelSet[SolvedDofA])
 #quadratic_pressure=silex_lib_tri3_acou.computequadratiquepressure(fluid_elements,fluid_nodes,CorrectedPressure)
 quadratic_pressure=silex_lib_tri3_acou.computexfemcomplexquadratiquepressure(fluid_elements,fluid_nodes,press+0j,enrichment+0j,LevelSet,LevelSetTangent,flag_edge_enrichment)
 

@@ -51,7 +51,7 @@ mycomm=comm_mumps_one_proc()
 ##############################################################
 
 if rank==0:
-    print ("time at the beginning of the computation:",time.ctime())
+    print ("time at the beginning of the computation: {}".format(time.ctime())))
 
 # parallepipedic cavity with plane structure
 mesh_file='geom/cyl'
@@ -382,7 +382,7 @@ M=scipy.sparse.construct.bmat( [[MFF[SolvedDofF,:][:,SolvedDofF],MAF[SolvedDofF,
 FF = np.zeros(fluid_ndof)
 FA = np.zeros(fluid_ndof)
 F  = FF[SolvedDofF]
-F  = scipy.append(F,FA[SolvedDofA])
+F  = np.concatenate((F,FA[SolvedDofA]))
 Fn = scipy.dot(PSn.T,scipy.sparse.coo_matrix(FS[SolvedDofS]).T)
 F  = scipy.append(F,np.array(Fn.todense()))
 F  = scipy.sparse.coo_matrix(F).T
@@ -401,7 +401,7 @@ frf=[]
 
 if (Flag_frf_analysis==1):
     if rank==0:
-        print ("time at the beginning of the FRF:",time.ctime())
+        print ("time at the beginning of the FRF: {}".format(time.ctime())))
 
     press_save=[]
     disp_save=[]
@@ -421,7 +421,7 @@ if (Flag_frf_analysis==1):
         enrichment=np.zeros((fluid_nnodes),dtype=complex)
         enrichment[SolvedDofA]=sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
         CorrectedPressure=press
-        CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA]+enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
+        CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA]+enrichment[SolvedDofA]*np.sign(LevelSet[SolvedDofA])
         frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements,fluid_nodes,CorrectedPressure))
         #frf.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(fluid_elements,fluid_nodes,press,enrichment,LevelSet,LevelSetTangent))
 
@@ -445,7 +445,7 @@ if (Flag_frf_analysis==1):
         silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_struct_frf',struc_nodes,struc_elements,2,[[disp_save,'nodal',3,'displacement']])
 
     if rank==0:
-        print ("Proc. ",rank," / time at the end of the FRF:",time.ctime())
+        print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime())))
 
     # Save the FRF problem
     Allfrequencies=np.zeros(nb_freq_step)

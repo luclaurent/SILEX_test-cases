@@ -51,8 +51,8 @@ elementsS5,IdnodeS5=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',9,5)
 nnodes = nodes.shape[0]
 ndof   = nnodes*3
 nelem  = elements.shape[0]
-print "Number of nodes:",nnodes
-print "Number of elements:",nelem
+logger.info("Number of nodes:",nnodes
+logger.info("Number of elements:",nelem
 
 # Define material
 Young  = 14300
@@ -72,7 +72,7 @@ SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 Q=np.zeros(ndof)
 
 toc = time.process_time()
-print "time for the reading data part:",toc-tic
+logger.info("time for the reading data part:",toc-tic
 
 tic = time.process_time()
 #      compute external forces from pressure
@@ -80,7 +80,7 @@ press=0.01 # 100 bar --> 10 MPa
 F = silex_lib_tet10.forcefrompressure(nodes,elementsS3,press)
 
 toc = time.process_time()
-print "time to compute the pressure load:",toc-tic
+logger.info("time to compute the pressure load:",toc-tic
 #############################################################################
 #      EXPERT PART
 #############################################################################
@@ -90,8 +90,8 @@ print "time to compute the pressure load:",toc-tic
 nnodes = nodes.shape[0]
 ndof   = nnodes*3
 nelem  = elements.shape[0]
-print "Number of nodes:",nnodes
-print "Number of elements:",nelem
+logger.info("Number of nodes:",nnodes
+logger.info("Number of elements:",nelem
 
 # define fixed dof
 Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
@@ -125,7 +125,7 @@ Ik,Jk,Vk=silex_lib_tet10.globalstiffness(nodes,elements,C)
 K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) )
 
 toc = time.process_time()
-print "time to compute the stiffness matrix:",toc-tic
+logger.info("time to compute the stiffness matrix:",toc-tic
 
 #############################################################################
 #       Solve the problem  994458114.85807300 31852.954295327520 
@@ -140,7 +140,7 @@ qq = scipy.sparse.linalg.spsolve(kk, ff)
 Q[np.ix_(SolvedDofs)]=qq
 
 toc = time.process_time()
-print "time to solve the problem:",toc-tic
+logger.info("time to solve the problem:",toc-tic
 
 ##############################################################################
 ##       compute stress in elements
@@ -156,13 +156,13 @@ import numpy.linalg
 Sigma,errelem,errglob=silex_lib_tet10.computestressanderror(nodes,elements,C,numpy.linalg.inv(C),Q)
 #
 toc = time.process_time()
-print "time to compute stress and error:",toc-tic
-print "---------------------------------"
-print "| GLOBAL ERROR = ",errglob
-print "---------------------------------"
+logger.info("time to compute stress and error:",toc-tic
+logger.info("---------------------------------"
+logger.info("| GLOBAL ERROR = ",errglob
+logger.info("---------------------------------"
 
 toc0 = time.process_time()
-print "time to compute the whole problem:",toc0-tic0
+logger.info("time to compute the whole problem:",toc0-tic0
 
 #
 ##############################################################################
@@ -179,10 +179,10 @@ print "time to compute the whole problem:",toc0-tic0
 #                                              Sigma)
 #
 #toc = time.process_time()
-#print "time to compute global error:",toc-tic
-#print "The global error is:",errglob
+#logger.info("time to compute global error:",toc-tic
+#logger.info("The global error is:",errglob
 #
-#print "Total time for the computational part:",toc-tic0
+#logger.info("Total time for the computational part:",toc-tic0
 
 #############################################################################
 #         Write results to gmsh format
@@ -242,9 +242,9 @@ silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,11,fields_to_write)
 
 
 toc = time.process_time()
-print "time to write results:",toc-tic
-print "total time:",toc-tic0
-print "----- END -----"
+logger.info("time to write results:",toc-tic
+logger.info("total time:",toc-tic0
+logger.info("----- END -----"
 
 
 

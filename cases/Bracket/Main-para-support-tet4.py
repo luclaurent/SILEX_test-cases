@@ -209,7 +209,7 @@ if rank==0:
 #Q[np.ix_(SolvedDofs)] = scipy.sparse.linalg.spsolve(K[np.ix_(SolvedDofs,SolvedDofs)],F[np.ix_(SolvedDofs)])
 #if rank==0:
 #    toc = time.process_time()
-#    print "time to solve the problem:",toc-tic
+#    logger.info("time to solve the problem:",toc-tic
 
 #############################################################################
 #       compute smooth stress and error in elements

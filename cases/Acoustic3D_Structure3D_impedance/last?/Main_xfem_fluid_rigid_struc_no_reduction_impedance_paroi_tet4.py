@@ -51,7 +51,7 @@ mycomm=comm_mumps_one_proc()
 ###########################################################
 
 if rank==0:
-    print ("time at the beginning of the computation:",time.ctime())
+    print ("time at the beginning of the computation: {}".format(time.ctime())))
 
 ##############################################################
 ##############################################################
@@ -459,7 +459,7 @@ frequencies=[]
 frf=[]
 
 if (Flag_frf_analysis==1):
-    print ("Proc. ",rank," / time at the beginning of the FRF:",time.ctime())
+    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime())))
 
     press_save=[]
 
@@ -494,13 +494,13 @@ if (Flag_frf_analysis==1):
         enrichment=np.zeros((fluid_nnodes),dtype=complex)
         enrichment[SolvedDofA]=sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
         CorrectedPressure=press1
-        CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA]+enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
+        CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA]+enrichment[SolvedDofA]*np.sign(LevelSet[SolvedDofA])
         frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes1,CorrectedPressure))
 
         if (flag_write_gmsh_results==1) and (rank==0):
             press_save.append(CorrectedPressure.real)
             
-    print ("Proc. ",rank," / time at the end of the FRF:",time.ctime())
+    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime())))
 
     frfsave=[frequencies,frf]
     if rank!=0:

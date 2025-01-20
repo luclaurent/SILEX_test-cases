@@ -209,7 +209,7 @@ for i in range(len(frequencies)):
 frfsave=[frequencies,frf]
 silex_lib_gmsh.WriteResults2(ResultsFileName+'_static_optim_with_damping_disp_frf',nodes,elements,eltype,[[disp_save,'nodal',2,'displacement']])
 
-print (" time at the end of the FRF:",time.ctime())
+print (" time at the end of the FRF: {}".format(time.ctime())))
 
 # Save the FRF problem
 f=open(ResultsFileName+'_static_optim_damping.frf','wb')

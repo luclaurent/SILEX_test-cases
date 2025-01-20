@@ -210,7 +210,7 @@ SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_el
 
 toc = time.process_time()
 print("time to compute stres and error:",toc-tic)
-#print "The global error is:",ErrorGlobal
+#logger.info("The global error is:",ErrorGlobal
 print("Total time for the computational part:",toc-tic0)
 
 #############################################################################

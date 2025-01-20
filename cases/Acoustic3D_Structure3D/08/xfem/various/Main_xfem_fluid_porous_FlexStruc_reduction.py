@@ -55,7 +55,7 @@ mycomm=comm_mumps_one_proc()
 ###########################################################
 
 if rank==0:
-    print ("time at the beginning of the computation:",time.ctime())
+    print ("time at the beginning of the computation: {}".format(time.ctime())))
 
 ##############################################################
 ##############################################################
@@ -740,7 +740,7 @@ frequencies=[]
 frf=[]
 
 if (Flag_frf_analysis==1):
-    print ("Proc. ",rank," / time at the beginning of the FRF:",time.ctime())
+    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime())))
 
     if rank==0:
         print('nb of total dofs: ',nb_mode_F+len(SolvedDofB)+len(SolvedDofA)+len(SolvedDofP)+nb_mode_S,)
@@ -793,7 +793,7 @@ if (Flag_frf_analysis==1):
         enrichment = np.zeros(fluid_ndof1,dtype=complex)
         enrichment[SolvedDofA]= P_A
         CorrectedPressure=np.array(press)
-        CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA].T+np.array(enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA]).T)
+        CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA].T+np.array(enrichment[SolvedDofA]*np.sign(LevelSet[SolvedDofA]).T)
         frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes1,CorrectedPressure))
         #frf.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(fluid_elements5,fluid_nodes1,press,enrichment,LevelSet,LevelSetTangent))
 
@@ -816,7 +816,7 @@ if (Flag_frf_analysis==1):
         silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',fluid_nodes1,fluid_elements1,4,[[press_save,'nodal',1,'pressure']])
         silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_struct_frf',struc_nodes,struc_elements,2,[[disp_save,'nodal',3,'displacement']])
 
-    print ("Proc. ",rank," / time at the end of the FRF:",time.ctime())
+    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime())))
 
     # Save the FRF problem
     Allfrequencies=np.zeros(nb_freq_step)

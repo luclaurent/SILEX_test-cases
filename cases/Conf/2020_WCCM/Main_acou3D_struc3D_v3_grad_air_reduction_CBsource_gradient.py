@@ -665,7 +665,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             enrichment_reduc = np.zeros(fluid_ndof,dtype=complex)
             enrichment_reduc[SolvedDofA]= P_A.copy()
             CorrectedPressure=np.array(press_reduc.copy())
-            CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA].T+np.array(enrichment_reduc[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA]).T)
+            CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA].T+np.array(enrichment_reduc[SolvedDofA]*np.sign(LevelSet[SolvedDofA]).T)
 
             ## compute and store FRF on the test volume
             ## frf_reduc.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(
@@ -703,7 +703,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
                 Dpress_Dtheta[SolvedDofB,itP] = DP_B_Dtheta
                 Denrichment_Dtheta[SolvedDofA,itP]= DP_A_Dtheta
                 DCorrectedPressure_Dtheta[:,itP]=np.array(Dpress_Dtheta[:,itP].copy())
-                DCorrectedPressure_Dtheta[SolvedDofA,itP]=DCorrectedPressure_Dtheta[SolvedDofA,itP].T+np.array(Denrichment_Dtheta[SolvedDofA,itP]*scipy.sign(LevelSet[SolvedDofA]).T)
+                DCorrectedPressure_Dtheta[SolvedDofA,itP]=DCorrectedPressure_Dtheta[SolvedDofA,itP].T+np.array(Denrichment_Dtheta[SolvedDofA,itP]*np.sign(LevelSet[SolvedDofA]).T)
 ##                #Dsol_Dtheta_RAW = mumps.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='c16')  , tmp )
 ##                # Dsol_Dtheta_RAW = scipy.sparse.linalg.spsolve( scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='c16')  , tmp )
 ##                #####################

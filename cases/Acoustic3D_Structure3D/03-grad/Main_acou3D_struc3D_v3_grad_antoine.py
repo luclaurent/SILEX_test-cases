@@ -475,7 +475,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             ## correction of the pressure field with enrichment
             CorrectedPressure = press1.copy()
             CorrectedPressure[SolvedDofA] = press1[SolvedDofA] + \
-                enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
+                enrichment[SolvedDofA]*np.sign(LevelSet[SolvedDofA])
             ## compute and store FRF on the test volume
             # frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes,CorrectedPressure))
             frf.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(
@@ -515,7 +515,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
                 #compute the corrected gradient pressure field (via enrichment)
                 DCorrectedPressure_Dtheta[:,itP]=np.array(Dpress_Dtheta[:,itP].copy())
                 DCorrectedPressure_Dtheta[SolvedDofA,itP]=DCorrectedPressure_Dtheta[SolvedDofA,itP].T+ \
-                    np.array(Denrichment_Dtheta[SolvedDofA,itP]*scipy.sign(LevelSet[SolvedDofA]).T)
+                    np.array(Denrichment_Dtheta[SolvedDofA,itP]*np.sign(LevelSet[SolvedDofA]).T)
                 #####################
                 #####################
                 #store gradients

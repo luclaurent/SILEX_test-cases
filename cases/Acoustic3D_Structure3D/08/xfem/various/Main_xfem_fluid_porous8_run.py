@@ -89,7 +89,7 @@ def computeFreqPerProc(nbStep,nbProc,freqInit,freqEnd):
 def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
 
     if rank==0:
-        print ("time at the beginning of the computation:",time.ctime())
+        print ("time at the beginning of the computation: {}".format(time.ctime())))
 
     # parallepipedic cavity with plane structure
     mesh_file='geom/cavity8_with_porous_air'
@@ -324,7 +324,7 @@ ce_fl = celerity
     frf=[]
 
     if (Flag_frf_analysis==1):
-        print ("\nProc. ",rank," / time at the beginning of the FRF:",time.ctime())
+        print ("\nProc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime())))
 
         press_save=[]
         disp_save=[]
@@ -380,7 +380,7 @@ ce_fl = celerity
         if rank==0:
             silex_lib_gmsh.WriteResults2(results_file+'_results_fluid_frf',fluid_nodes1,fluid_elements1,4,[[press_save,'nodal',1,'pressure']])
 
-        print ("Proc. ",rank," / time at the end of the FRF:",time.ctime())
+        print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime())))
 
         # save the FRF problem
         Allfrequencies=np.zeros(nbStep)

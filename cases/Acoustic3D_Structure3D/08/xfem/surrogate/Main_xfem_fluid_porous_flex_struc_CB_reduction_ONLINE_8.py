@@ -89,7 +89,7 @@ def findNode(coorNodes,coorSpecif):
 
 def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
     if rank==0:
-        print ("time at the beginning of the computation:",time.ctime())
+        print ("time at the beginning of the computation: {}".format(time.ctime())))
 
     ##############################################################
     ##############################################################
@@ -795,7 +795,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
     frf=[]
 
     if (Flag_frf_analysis==1):
-        print ("Proc. ",rank," / time at the beginning of the FRF:",time.ctime())
+        print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime())))
 
         if rank==0:
             print('nb of total dofs: ',nb_mode_F+len(SolvedDofB)+len(SolvedDofA)+len(SolvedDofP)+nb_mode_S,)
@@ -852,7 +852,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
             enrichment = np.zeros(fluid_ndof1,dtype=complex)
             enrichment[SolvedDofA]= P_A
             CorrectedPressure=np.array(press)
-            CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA].T+np.array(enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA]).T)
+            CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA].T+np.array(enrichment[SolvedDofA]*np.sign(LevelSet[SolvedDofA]).T)
             frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes1,CorrectedPressure))
             #frf.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(fluid_elements5,fluid_nodes1,press,enrichment,LevelSet,LevelSetTangent))
 
@@ -874,7 +874,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
                 print ("Proc. ",rank,"Send data")
                 comm.send(frfsave, dest=0, tag=11)
 
-        print ("Proc. ",rank," / time at the end of the FRF:",time.ctime())
+        print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime())))
 
         if (flag_write_gmsh_results==1) and (rank==0):
             print ("Write results")

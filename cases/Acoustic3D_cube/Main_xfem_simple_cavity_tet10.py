@@ -58,7 +58,7 @@ mycomm=comm_mumps_one_proc()
 ###########################################################
 
 if rank==0:
-    print ("time at the beginning of the computation:",time.ctime())
+    print ("time at the beginning of the computation: {}".format(time.ctime())))
 
 ##############################################################
 ##############################################################
@@ -257,7 +257,7 @@ frf=[]
 frfgradient=[]
 
 if (Flag_frf_analysis==1):
-    print ("Proc. ",rank," / time at the beginning of the FRF:",time.ctime())
+    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime())))
 
     if rank==0:
         print('nb of total dofs: ',len(SolvedDofF)+len(SolvedDofA))
@@ -287,7 +287,7 @@ if (Flag_frf_analysis==1):
         enrichment=np.zeros((fluid_nnodes),dtype=complex)
         enrichment[SolvedDofA]=sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
         CorrectedPressure=np.zeros((fluid_ndof1),dtype=complex)
-        CorrectedPressure[SolvedDofA]=press1[SolvedDofA]+enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
+        CorrectedPressure[SolvedDofA]=press1[SolvedDofA]+enrichment[SolvedDofA]*np.sign(LevelSet[SolvedDofA])
         frf.append(silex_lib_xfem_acou_tet10.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes1,press1))
         #frf.append(scipy.dot(scipy.dot(M,sol),sol))
 
@@ -300,7 +300,7 @@ if (Flag_frf_analysis==1):
 
     frfsave=[np.array(frequencies),np.array(frf)]
 
-    print ("Proc. ",rank," / time at the end of the FRF:",time.ctime())
+    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime())))
 
     if (flag_write_gmsh_results==1) and (rank==0):
         silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',fluid_nodes1,fluid_elements1,4,[[press_save,'nodal',1,'pressure']])

@@ -201,7 +201,7 @@ load[range(nnodes),0]=F[list(range(0,ndof,2))]
 load[range(nnodes),1]=F[list(range(1,ndof,2))]
 
 # get normal forces for compressive elements only, becomes positive
-CompressiveElts=abs(NormalForce)*(scipy.sign(NormalForce)-1)/(-2.0)
+CompressiveElts=abs(NormalForce)*(np.sign(NormalForce)-1)/(-2.0)
 
 # compute ratio between normal force and buckling limit load for compressive elements only
 Ratio=CompressiveElts/Fcr

@@ -572,7 +572,7 @@ def ComputeFRF(parameters):
     frf=[]
 
     if (Flag_frf_analysis==1):
-        print ("Proc. ",rank," / time at the beginning of the FRF:",time.ctime())
+        print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime())))
 
         press_save=[]
         disp_save=[]
@@ -624,7 +624,7 @@ def ComputeFRF(parameters):
         if rank==0:
             silex_lib_gmsh.WriteResults2(results_file+'_results_fluid_frf',fluid_nodes1,fluid_elements1,4,[[press_save,'nodal',1,'pressure']])
 
-        print ("Proc. ",rank," / time at the end of the FRF:",time.ctime())
+        print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime())))
 
         # save the FRF problem
         Allfrequencies=np.zeros(nb_freq_step)

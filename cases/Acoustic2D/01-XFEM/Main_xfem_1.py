@@ -313,7 +313,6 @@ FF[SolvedDofF] = -(
 FA = np.zeros(fluid_ndof)
 F = FF[SolvedDofF]
 F = np.concatenate((F, FA[SolvedDofA]))
-F = np.array(F)
 
 sol = scipy.sparse.linalg.spsolve(K - (omega * omega) * M, F)
 

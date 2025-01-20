@@ -160,13 +160,13 @@ while (ErrorGlobal>ErrorGlobalMaxi):
     local_error=scipy.sqrt(ErrorElem)/scipy.average(scipy.sqrt(ErrorElem))
     print(scipy.average(scipy.sqrt(ErrorElem)))
     print(min(local_error),max(local_error))
-    #local_refine = (scipy.sign(local_error-1.0)+1.0)*0.5
-    #local_not_refine = -(scipy.sign(local_error-1.0)-1.0)*0.5
+    #local_refine = (np.sign(local_error-1.0)+1.0)*0.5
+    #local_not_refine = -(np.sign(local_error-1.0)-1.0)*0.5
 
     #local_ratio = local_error*local_refine + local_not_refine
 
     #NewSize=Elt_max_length/(local_ratio**(2))
-    #NewSize=scipy.sign(Elt_max_length/local_error-1.0)
+    #NewSize=np.sign(Elt_max_length/local_error-1.0)
     #param = 0.5
     #NewSize = 0.1+Elt_max_length*2.0/(1+scipy.exp(-param*(1-local_error)))
     NewSize=np.zeros(nelem)

@@ -109,10 +109,10 @@ ndof   = nnodes*ndim
 nelem  = elementsV1.shape[0]+elementsV2.shape[0]
 nelem1  = elementsV1.shape[0]
 nelem2  = elementsV2.shape[0]
-print "Number of nodes:",nnodes
-print "Number of elements:",nelem
-print "Number of elements in V1:",nelem1
-print "Number of elements in V2:",nelem2
+logger.info("Number of nodes:",nnodes
+logger.info("Number of elements:",nelem
+logger.info("Number of elements in V1:",nelem1
+logger.info("Number of elements in V2:",nelem2
 
 elements=scipy.vstack([elementsV1,elementsV2])
 
@@ -142,7 +142,7 @@ tic = time.process_time()
 Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(nodes,elements,[Young,nu])
 toc = time.process_time()
 
-print "time to compute the stiffness matrix :",toc-tic
+logger.info("time to compute the stiffness matrix :",toc-tic
 
 K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
 
@@ -201,16 +201,16 @@ Q[np.ix_(SolvedDofs3)] = U3
 #Q[np.ix_(SolvedDofs)] = scipy.sparse.linalg.spsolve(K[np.ix_(SolvedDofs,SolvedDofs)],F[np.ix_(SolvedDofs)])
 
 toc = time.process_time()
-print "time to solve the problem:",toc-tic
+logger.info("time to solve the problem:",toc-tic
 
 #############################################################################
 #       compute smooth stress and error in elements
 #############################################################################
 SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu],Q)
 toc = time.process_time()
-print "time to compute stres and error:",toc-tic
-print "The global error is:",ErrorGlobal
-print "Total time for the computational part:",toc-tic0
+logger.info("time to compute stres and error:",toc-tic
+logger.info("The global error is:",ErrorGlobal
+logger.info("Total time for the computational part:",toc-tic0
 
 #############################################################################
 #         Write results to gmsh format
@@ -273,8 +273,8 @@ if flag_write_fields==1:
 silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_write)
 
 toc = time.process_time()
-print "time to write results:",toc-tic
-print "----- END -----"
+logger.info("time to write results:",toc-tic
+logger.info("----- END -----"
 
 
 

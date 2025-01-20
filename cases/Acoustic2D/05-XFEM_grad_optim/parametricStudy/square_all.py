@@ -292,7 +292,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
         frfgradient.append([])
 
     if (Flag_frf_analysis==1):
-        print("time at the beginning of the FRF:",time.ctime())
+        print("time at the beginning of the FRF: {}".format(time.ctime())))
 
         press_save=[]
         dpress_save=list()
@@ -315,7 +315,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
             FF[SolvedDofF]=-(KFF[SolvedDofF,:][:,IdnodeS2-1]-(omega**2)*MFF[SolvedDofF,:][:,IdnodeS2-1])*(scipy.ones((len(IdnodeS2))))
             FA = np.zeros(fluid_ndof)
             F  = FF[SolvedDofF]
-            F  = scipy.append(F,FA[SolvedDofA])
+            F  = np.concatenate((F,FA[SolvedDofA]))
             #F  = scipy.sparse.csc_matrix(F)
 
             ## 
@@ -331,7 +331,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
             #compute the corrected pressure field (via enrichment)
             CorrectedPressure=press
             #print(SolvedDofA)
-            CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA]+enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
+            CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA]+enrichment[SolvedDofA]*np.sign(LevelSet[SolvedDofA])
             #####################
             #####################
             frf.append(silex_lib_tri3_acou.computexfemcomplexquadratiquepressure(fluid_elements5,fluid_nodes,CorrectedPressure+0j,0.0*enrichment+0j,LevelSet,LevelSetTangent,flag_edge_enrichment))
@@ -360,7 +360,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
                 #####################
                 #####################
                 #compute the corrected gradient pressure field (via enrichment)
-                DCorrectedPressure_Dtheta[SolvedDofA,itP]=DCorrectedPressure_Dtheta[SolvedDofA,itP].T+np.array(Denrichment_Dtheta[SolvedDofA,itP]*scipy.sign(LevelSet[SolvedDofA]).T)
+                DCorrectedPressure_Dtheta[SolvedDofA,itP]=DCorrectedPressure_Dtheta[SolvedDofA,itP].T+np.array(Denrichment_Dtheta[SolvedDofA,itP]*np.sign(LevelSet[SolvedDofA]).T)
                 #####################
                 #####################
                 #store gradients
@@ -371,7 +371,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
         
         #####################
         #####################
-        print("time at the end of the FRF:",time.ctime())
+        print("time at the end of the FRF: {}".format(time.ctime())))
         frfsave=[frequencies,frf,frfgradient]
         if rank!=0 :
             comm.send(frfsave, dest=0, tag=11)

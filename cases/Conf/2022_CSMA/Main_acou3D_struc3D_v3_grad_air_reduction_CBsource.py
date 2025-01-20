@@ -620,7 +620,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             enrichment_reduc = np.zeros(fluid_ndof,dtype=complex)
             enrichment_reduc[SolvedDofA]= P_A.copy()
             CorrectedPressure=np.array(press_reduc.copy())
-            CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA].T+np.array(enrichment_reduc[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA]).T)
+            CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA].T+np.array(enrichment_reduc[SolvedDofA]*np.sign(LevelSet[SolvedDofA]).T)
 
             ## compute and store FRF on the test volume
             ## frf_reduc.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(

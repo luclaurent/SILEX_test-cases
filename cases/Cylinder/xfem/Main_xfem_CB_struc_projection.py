@@ -49,7 +49,7 @@ mycomm=comm_mumps_one_proc()
 time_init=time.ctime()
 tic00=time.process_time()
 if rank==0:
-    print ("time at the beginning of the computation:",time.ctime())
+    print ("time at the beginning of the computation: {}".format(time.ctime())))
 
 # parallepipedic cavity with plane structure
 mesh_file='geom/cyl'
@@ -545,7 +545,7 @@ frf=[]
 
 if (Flag_frf_analysis==1):
     if rank==0:
-        print ("time at the beginning of the FRF:",time.ctime())
+        print ("time at the beginning of the FRF: {}".format(time.ctime())))
 
     press_save=[]
     disp_save=[]
@@ -567,7 +567,7 @@ if (Flag_frf_analysis==1):
         enrichment = np.zeros((fluid_nnodes),dtype=complex)
         enrichment[SolvedDofA]=sol[list(range(nb_mode_F,nb_mode_F+len(SolvedDofA)))]
         CorrectedPressure=np.array(press.todense())
-        CorrectedPressure[SolvedDofA]=(CorrectedPressure[SolvedDofA].T+np.array(enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA]).T)).T
+        CorrectedPressure[SolvedDofA]=(CorrectedPressure[SolvedDofA].T+np.array(enrichment[SolvedDofA]*np.sign(LevelSet[SolvedDofA]).T)).T
         frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements,fluid_nodes,CorrectedPressure))
         #frf.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(fluid_elements,fluid_nodes,press.todense(),enrichment,LevelSet,LevelSetTangent))
 
@@ -583,7 +583,7 @@ if (Flag_frf_analysis==1):
             press_save.append(CorrectedPressure.real)
 
     if rank==0:
-        print ("Proc. ",rank," / time at the end of the FRF:",time.ctime())
+        print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime())))
     frfsave=[frequencies,frf]
     comm.send(frfsave, dest=0, tag=11)
 
@@ -610,6 +610,6 @@ if (Flag_frf_analysis==1):
         f.close()
         print("Real time at the beginning = ",time_init)
         print("Real time before FRF       = ",time_before_frf)
-        print("Real time at the end       = ",time.ctime())
+        print("Real time at the end       =  {}".format(time.ctime())))
         print("Total time = ",time.process_time()-tic00)
 

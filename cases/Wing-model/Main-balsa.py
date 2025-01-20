@@ -203,7 +203,7 @@ DirPrinMin2S2  = output2[9]
 
 toc = time.process_time()
 print("time to compute stres and error:",toc-tic)
-#print "The global error is:",ErrorGlobal
+#logger.info("The global error is:",ErrorGlobal
 print("Total time for the computational part:",toc-tic0)
 
 #############################################################################

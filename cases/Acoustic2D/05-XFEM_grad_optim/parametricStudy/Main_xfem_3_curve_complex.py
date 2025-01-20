@@ -332,7 +332,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     frfgradient_X=[]
 
     if (Flag_frf_analysis==1):
-        print("time at the beginning of the FRF:",time.ctime())
+        print("time at the beginning of the FRF: {}".format(time.ctime())))
 
         press_save=[]
         dpress_save_X=[]
@@ -352,7 +352,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
             FF[SolvedDofF]=-(KFF[SolvedDofF,:][:,IdnodeS2-1]-(omega**2)*MFF[SolvedDofF,:][:,IdnodeS2-1])*(scipy.ones((len(IdnodeS2))))
             FA = np.zeros(fluid_ndof)
             F  = FF[SolvedDofF]
-            F  = scipy.append(F,FA[SolvedDofA])
+            F  = np.concatenate((F,FA[SolvedDofA]))
             #F  = scipy.sparse.csc_matrix(F)
 
             #sol = mumps.spsolve(scipy.sparse.coo_matrix(K-(omega**2)*M,dtype='float'), F, comm=mycomm )
@@ -378,7 +378,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
             enrichment=np.zeros(fluid_nnodes,dtype=complex)
             enrichment[SolvedDofA]=sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
             CorrectedPressure=press
-            CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA]+enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA])
+            CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA]+enrichment[SolvedDofA]*np.sign(LevelSet[SolvedDofA])
             #frf.append(silex_acou_lib_tri3.computequadratiquepressure(fluid_elements,fluid_nodes,CorrectedPressure))
             frf.append(silex_lib_tri3_acou.computexfemcomplexquadratiquepressure(fluid_elements5,fluid_nodes,press+0j,0.0*enrichment+0j,LevelSet,LevelSetTangent,flag_edge_enrichment))
             #frf[i]=xvibacoufo.computexfemcomplexquadratiquepressure(fluid_elements,fluid_nodes,CorrectedPressure+0j,0.0*enrichment+0j,LevelSet,LevelSetTangent)
@@ -390,12 +390,12 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
             Denrichment_Dtheta = np.zeros([fluid_ndof,3],dtype=complex)
             Denrichment_Dtheta[SolvedDofA,0]= Dsol_Dtheta_X[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
             #DCorrectedPressure_Dtheta=np.array(Dpress_Dtheta)
-            #DCorrectedPressure_Dtheta[SolvedDofA]=DCorrectedPressure_Dtheta[SolvedDofA].T+np.array(Denrichment_Dtheta[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA]).T)
+            #DCorrectedPressure_Dtheta[SolvedDofA]=DCorrectedPressure_Dtheta[SolvedDofA].T+np.array(Denrichment_Dtheta[SolvedDofA]*np.sign(LevelSet[SolvedDofA]).T)
             frfgradient_X.append(silex_lib_tri3_acou.computexfemcomplexquadratiquepressuregradient(fluid_elements5,fluid_nodes,press+0j,Dpress_Dtheta[:,0]+0j,0.0*enrichment+0j,0.0*Denrichment_Dtheta[:,0]+0j,LevelSet,LevelSetTangent,flag_edge_enrichment))
             dpress_save_X.append(Dpress_Dtheta[:,0].copy())
         
 
-        print("time at the end of the FRF:",time.ctime())
+        print("time at the end of the FRF: {}".format(time.ctime())))
         frfsave=[frequencies,frf,frfgradient_X]
         if rank!=0 :
             comm.send(frfsave, dest=0, tag=11)

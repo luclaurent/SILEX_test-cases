@@ -1,6 +1,7 @@
 from numpy import *
 import string
 import time
+from pathlib import Path
 #from scipy.sparse import *
 #from scipy import *
 #from scipy.sparse import lil_matrix
@@ -12,61 +13,50 @@ import pylab as pl
 import pickle
 
 # Plot an other FRF for comparison 
-#f=open('/home/legay/Codes/XFEM-Acoustique/V2013/test-blending/results/classic_para_results.frf','r')
+#with open('/home/legay/Codes/XFEM-Acoustique/V2013/test-blending/results/classic_para_results.frf','rb')
 #frf_ref=pickle.load(f)
 #f.close()
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/classic-test1_results.frf','r')
-frf_classic_2d=pickle.load(f)
-f.close()
+cwd = Path(__file__).resolve().parent
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/xfem-test1-no-edge_results.frf','r')
-frf_xfem_1_no_edge=pickle.load(f)
-f.close()
+with open(cwd / 'results' / 'classic-test1_results.frf','rb') as f:
+    frf_classic_2d=pickle.load(f)
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/xfem-test1-with-edge_results.frf','r')
-frf_xfem_1_with_edge=pickle.load(f)
-f.close()
+with open(cwd / 'results' / 'xfem-test1-no-edge_results.frf','rb') as f:
+    frf_xfem_1_no_edge=pickle.load(f)
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/xfem-test2-no-edge_results.frf','r')
-frf_xfem_2_no_edge=pickle.load(f)
-f.close()
+with open(cwd / 'results' / 'xfem-test1-with-edge_results.frf','rb') as f:
+    frf_xfem_1_with_edge=pickle.load(f)
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/xfem-test2-with-edge_results.frf','r')
-frf_xfem_2_with_edge=pickle.load(f)
-f.close()
+with open(cwd / 'results' / 'xfem-test2-no-edge_results.frf','rb') as f:
+    frf_xfem_2_no_edge=pickle.load(f)
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/xfem-test3-no-edge_results.frf','r')
-frf_xfem_3_no_edge=pickle.load(f)
-f.close()
+with open(cwd / 'results' / 'xfem-test2-with-edge_results.frf','rb') as f:
+        frf_xfem_2_with_edge=pickle.load(f)
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/xfem-test3-with-edge_results.frf','r')
-frf_xfem_3_with_edge=pickle.load(f)
-f.close()
+with open(cwd / 'results' / 'xfem-test3-no-edge_results.frf','rb') as f:
+    frf_xfem_3_no_edge=pickle.load(f)
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/xfem-test4-no-edge_results.frf','r')
-frf_xfem_4_no_edge=pickle.load(f)
-f.close()
+with open(cwd / 'results' / 'xfem-test3-with-edge_results.frf','rb') as f:
+    frf_xfem_3_with_edge=pickle.load(f)
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/xfem-test4-with-edge_results.frf','r')
-frf_xfem_4_with_edge=pickle.load(f)
-f.close()
+with open(cwd / 'results' / 'xfem-test4-no-edge_results.frf','rb') as f:
+    frf_xfem_4_no_edge=pickle.load(f)
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/xfem-test5-no-edge_results.frf','r')
-frf_xfem_5_no_edge=pickle.load(f)
-f.close()
+with open(cwd / 'results' / 'xfem-test4-with-edge_results.frf','rb') as f:
+    frf_xfem_4_with_edge=pickle.load(f)
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/xfem-test5-with-edge_results.frf','r')
-frf_xfem_5_with_edge=pickle.load(f)
-f.close()
+with open(cwd / 'results' / 'xfem-test5-no-edge_results.frf','rb') as f:
+    frf_xfem_5_no_edge=pickle.load(f)
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/xfem-test6-no-edge_results.frf','r')
-frf_xfem_6_no_edge=pickle.load(f)
-f.close()
+with open(cwd / 'results' / 'xfem-test5-with-edge_results.frf','rb') as f:
+    frf_xfem_5_with_edge=pickle.load(f)
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/xfem-test6-with-edge_results.frf','r')
-frf_xfem_6_with_edge=pickle.load(f)
-f.close()
+with open(cwd / 'results' / 'xfem-test6-no-edge_results.frf','rb') as f:
+    frf_xfem_6_no_edge=pickle.load(f)
+
+with open(cwd / 'results' / 'xfem-test6-with-edge_results.frf','rb') as f:
+    frf_xfem_6_with_edge=pickle.load(f)
 
 prefsquare=20e-6*20e-6
 
@@ -123,14 +113,14 @@ pl.plot(frf_xfem_3_with_edge[0],10*log10(frf_xfem_3_with_edge[1]/prefsquare),'r-
 pl.plot(frf_xfem_3_with_edge[0][range(0,len(frf_xfem_3_with_edge[0]),20)],10*log10(frf_xfem_3_with_edge[1][range(0,len(frf_xfem_3_with_edge[1]),20)]/prefsquare),'or', linewidth=1)
 pl.plot(frf_xfem_3_with_edge[0][range(2)],10*log10(frf_xfem_3_with_edge[1][range(2)]/prefsquare),'or-',label='Mesh 3', linewidth=1)
 
-#pl.plot(frf_xfem_4_no_edge[0],10*log10(frf_xfem_4_no_edge[1]/prefsquare),'g-',label='Xfem 4 no edge', linewidth=1)
-#pl.plot(frf_xfem_4_with_edge[0],10*log10(frf_xfem_4_with_edge[1]/prefsquare),'b-',label='Xfem 4 with edge', linewidth=1)
+# pl.plot(frf_xfem_4_no_edge[0],10*log10(frf_xfem_4_no_edge[1]/prefsquare),'g-',label='Xfem 4 no edge', linewidth=1)
+# pl.plot(frf_xfem_4_with_edge[0],10*log10(frf_xfem_4_with_edge[1]/prefsquare),'b-',label='Xfem 4 with edge', linewidth=1)
 
-#pl.plot(frf_xfem_5_no_edge[0],10*log10(frf_xfem_5_no_edge[1]/prefsquare),'m-',label='Xfem 5 no edge', linewidth=1)
-#pl.plot(frf_xfem_5_with_edge[0],10*log10(frf_xfem_5_with_edge[1]/prefsquare),'c-',label='Xfem 5 with edge', linewidth=1)
+# pl.plot(frf_xfem_5_no_edge[0],10*log10(frf_xfem_5_no_edge[1]/prefsquare),'m-',label='Xfem 5 no edge', linewidth=1)
+# pl.plot(frf_xfem_5_with_edge[0],10*log10(frf_xfem_5_with_edge[1]/prefsquare),'c-',label='Xfem 5 with edge', linewidth=1)
 
-#pl.plot(frf_xfem_6_no_edge[0],10*log10(frf_xfem_6_no_edge[1]/prefsquare),'g-',label='Xfem 6 no edge', linewidth=1)
-#pl.plot(frf_xfem_6_with_edge[0],10*log10(frf_xfem_6_with_edge[1]/prefsquare),'b-',label='Xfem 6 with edge', linewidth=1)
+# pl.plot(frf_xfem_6_no_edge[0],10*log10(frf_xfem_6_no_edge[1]/prefsquare),'g-',label='Xfem 6 no edge', linewidth=1)
+# pl.plot(frf_xfem_6_with_edge[0],10*log10(frf_xfem_6_with_edge[1]/prefsquare),'b-',label='Xfem 6 with edge', linewidth=1)
 
 #pl.plot(frf_xfem_2[0],10*log10(frf_xfem_2[1]/prefsquare),'y-',label='Xfem 2', linewidth=1)
 #pl.plot(frf_xfem_3[0],10*log10(frf_xfem_3[1]/prefsquare),'g-',label='Xfem 3', linewidth=1)

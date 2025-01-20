@@ -57,7 +57,7 @@ mycomm=comm_mumps_one_proc()
 ###########################################################
 
 if rank==0:
-    print ("time at the beginning of the computation:",time.ctime())
+    print ("time at the beginning of the computation: {}".format(time.ctime())))
 
 ##############################################################
 ##############################################################
@@ -427,7 +427,7 @@ Mhat_mB = eigen_vectors_I.T*Mstar_IB
 ##Mhat_BA = scipy.sparse.csc_matrix((Psi_IB.T).todense()*Mstar_IA.todense())+MFF[SolvedDofB,:][:,SolvedDofI]*Psi_IA
 
 if rank==0:
-    print ("time at the end of the computation (without the saving part):",time.ctime())
+    print ("time at the end of the computation (without the saving part): {}".format(time.ctime())))
 
 
 f=open(results_file+'_offline_matrices.pck','wb')
