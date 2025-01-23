@@ -1,63 +1,66 @@
 import string
+from pathlib import Path
 import time
 import os
 import pylab as pl
 import pickle
-import scipy
+import numpy as np
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/classic-test1_pressTip.frf','r')
-AllpressTipRef=pickle.load(f)
-f.close()
+cwd = Path(__file__).resolve().parent
+
+with open(cwd / 'results' / 'classic-test1_pressTip.frf','rb') as f:
+    AllpressTipRef=pickle.load(f)
+
 pressTipRef=AllpressTipRef[0]
 nodes=AllpressTipRef[1]
 freq_ref=AllpressTipRef[2]
 nnodes=len(pressTipRef)
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/xfem-test1-with-edge_pressTip.frf','r')
-AllpressTipXfem1=pickle.load(f)
-f.close()
+with open(cwd / 'results' / 'xfem-test1-with-edge_pressTip.frf','rb') as f:
+    AllpressTipXfem1=pickle.load(f)
+
 pressTipXfem1=AllpressTipXfem1[0]
 thetaXfem1=AllpressTipXfem1[1]
 freq_Xfem1=AllpressTipXfem1[2]
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/xfem-test2-with-edge_pressTip.frf','r')
-AllpressTipXfem2=pickle.load(f)
-f.close()
+with open(cwd / 'results' / 'xfem-test2-with-edge_pressTip.frf','rb') as f:
+    AllpressTipXfem2=pickle.load(f)
+
 pressTipXfem2=AllpressTipXfem2[0]
 thetaXfem2=AllpressTipXfem2[1]
 freq_Xfem2=AllpressTipXfem2[2]
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/xfem-test3-with-edge_pressTip.frf','r')
-AllpressTipXfem3=pickle.load(f)
-f.close()
+with open(cwd / 'results' / 'xfem-test3-with-edge_pressTip.frf','rb') as f:
+    AllpressTipXfem3=pickle.load(f)
+
 pressTipXfem3=AllpressTipXfem3[0]
 thetaXfem3=AllpressTipXfem3[1]
 freq_Xfem3=AllpressTipXfem3[2]
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/xfem-test4-with-edge_pressTip.frf','r')
-AllpressTipXfem4=pickle.load(f)
-f.close()
+with open(cwd / 'results' / 'xfem-test4-with-edge_pressTip.frf','rb') as f:
+    AllpressTipXfem4=pickle.load(f)
+
 pressTipXfem4=AllpressTipXfem4[0]
 thetaXfem4=AllpressTipXfem4[1]
 freq_Xfem4=AllpressTipXfem4[2]
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/xfem-test5-with-edge_pressTip.frf','r')
-AllpressTipXfem5=pickle.load(f)
-f.close()
+with open(cwd / 'results' / 'xfem-test5-with-edge_pressTip.frf','rb') as f:
+    AllpressTipXfem5=pickle.load(f)
+
 pressTipXfem5=AllpressTipXfem5[0]
 thetaXfem5=AllpressTipXfem5[1]
 freq_Xfem5=AllpressTipXfem5[2]
 
-f=open('/home/legay/Codes/XFEM-Acoustique/V2013-2D/test/results/xfem-test6-with-edge_pressTip.frf','r')
-AllpressTipXfem6=pickle.load(f)
-f.close()
+with open(cwd / 'results' / 'xfem-test6-with-edge_pressTip.frf','rb') as f:
+    AllpressTipXfem6=pickle.load(f)
+
 pressTipXfem6=AllpressTipXfem6[0]
 thetaXfem6=AllpressTipXfem6[1]
 freq_Xfem6=AllpressTipXfem6[2]
 
 freq_Xfem=[freq_Xfem1,freq_Xfem2,freq_Xfem3,freq_Xfem4,freq_Xfem5,freq_Xfem6]
 
-print 'Frequence at which it has been computed: reference =',freq_ref,'Hz   ////       Xfem=',freq_Xfem,'Hz'
+print(f'Frequence at which it has been computed: reference ={freq_ref} Hz   ////       Xfem={freq_Xfem}Hz')
 
 XC=0.6
 YC=0.65

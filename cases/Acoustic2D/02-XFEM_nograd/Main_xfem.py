@@ -10,6 +10,7 @@ import scipy.sparse.linalg
 import pylab as pl
 import pickle
 
+
 #import mumps
 
 import sys
@@ -26,9 +27,21 @@ comm = MPI.COMM_WORLD
 
 nproc=comm.Get_size()
 rank = comm.Get_rank()
+log_format =( 
+    "<cyan> R{extra[rank]}</cyan> |"
+    "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+    "<level>{level: <8}</level> | "
+    "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
+    "<level>{message}</level>"
+)
+
+logger.remove()
+logger.configure(extra={"rank": 0})  # Default values
+logger.add(sys.stdout, level='DEBUG', format=log_format, colorize=True, backtrace=True, diagnose=True)
+logger = logger.bind(rank=rank)
 
 # mpirun -np 2 python Main_xfem.py
-
+logger.info('START')
 ##############################################################
 ##############################################################
 #              S T A R T   M A I N   P R O B L E M
@@ -36,12 +49,12 @@ rank = comm.Get_rank()
 ##############################################################
 
 # parallepipedic cavity with plane structure
-mesh_file='results/xfem1';results_file='results/xfem-test1-with-edge'
-mesh_file='results/xfem2';results_file='results/xfem-test2-with-edge'
+mesh_file='results/xfem1';results_file='results/xfem-test1-no-edge'
+# mesh_file='results/xfem2';results_file='results/xfem-test2-with-edge'
 mesh_file='results/xfem3';results_file='results/xfem-test3-with-edge'
-mesh_file='results/xfem4';results_file='results/xfem-test4-with-edge'
-mesh_file='results/xfem5';results_file='results/xfem-test5-with-edge'
-mesh_file='results/xfem6';results_file='results/xfem-test6-with-edge'
+# mesh_file='results/xfem4';results_file='results/xfem-test4-with-edge'
+mesh_file='results/xfem5';results_file='results/xfem-test5-no-edge'
+# mesh_file='results/xfem6';results_file='results/xfem-test6-with-edge'
 
 ##############################################################
 # Material, Boundary conditions
@@ -51,20 +64,18 @@ mesh_file='results/xfem6';results_file='results/xfem-test6-with-edge'
 celerity=340.0
 rho=1.2
 
-freq_ini     = 100.5
+freq_ini     = 210.0
 freq_end     = 300.0
 nb_freq_step_per_proc=50 # 50 pour 8 proc.
 
-nproc=comm.Get_size()
-rank = comm.Get_rank()
 
 nb_freq_step = nb_freq_step_per_proc*nproc
 deltafreq=(freq_end-freq_ini)/(nb_freq_step-1)
 
 flag_write_gmsh_results=1
 
-# flag_edge_enrichment=0
-flag_edge_enrichment=1
+flag_edge_enrichment=0
+# flag_edge_enrichment=1
 
 freq_comparaison = 210.0
 
@@ -347,58 +358,27 @@ if (Flag_frf_analysis==1):
                                                                 fluid_elements,
                                                                 press,
                                                                 enrichment,
-                                                                LevelSet,
-                                                                LevelSetTangent) 
+                                                                Xtip = [0.6, 0.65]) 
 
             AllPressTip=[PressureAtTip,ThetaAtTip,freq]
-            with open(cwd / (results_file+'_pressTip.frf'),'w') as f:
+            with open(cwd / (results_file+'_pressTip.frf'),'wb') as f:
                 pickle.dump(AllPressTip, f)
 
+    frfsave=[frequencies,frf]
+    logger.info("Send data")
+    comm.send(frfsave, dest=0, tag=11)
+    logger.info("Data sent")
 
 
     logger.info("time at the end of the FRF: {}".format(time.ctime()))
-
-    # prepare final data
-    objMesh = MeshField.MeshField(fluid_nodes, fluid_elements, LevelSet, LevelSetTangent)
-    objMesh.addField(press,enrichment)
-    # extract final data
-    data = objMesh.getData(['nodes','mesh','levelset','levelset_tangent','fields'])
-
-
-    frfsave=[frequencies,frf]
-    comm.send(frfsave, dest=0, tag=11)
-    if (flag_write_gmsh_results==1) and (rank==0):
-        msh2.mshWriter(
-        cwd / (results_file + "_results_fluid_frf.msh"),
-        data['nodes'],
-        [{"type": "TRI3", "connectivity": data['TRI3']},
-         {"type": "QUA4", "connectivity": data['QUA4']}],
-        fields={
-            "data": data['fields'],
-            "type": "nodal",
-            "dim": 1,
-            "name": "pressure",
-        },
-        append=True,
-        )
-        msh2.mshWriter(
-        cwd / (results_file + "_results_fluid_frf_raw.msh"),
-        fluid_nodes,
-        [{"type": "TRI3", "connectivity": fluid_elements}],
-        fields={
-            "data": CorrectedPressure,
-            "type": "nodal",
-            "dim": 1,
-            "name": "pressure",
-        },
-        append=True,
-        )
+    
 
     # save the FRF problem
     Allfrequencies=np.zeros(nb_freq_step)
     Allfrf=np.zeros(nb_freq_step)
     k=0
     if rank==0:
+        logger.info("Start receiving data")
         for i in range(nproc):
             data = comm.recv(source=i, tag=11)
             for j in range(len(data[0])):
@@ -410,7 +390,43 @@ if (Flag_frf_analysis==1):
         Allfrfsave=[np.array(list(Allfrequencies)),np.array(list(Allfrf))]
         with open(cwd / (results_file+'_results.frf'),'wb') as f:
             pickle.dump(Allfrfsave, f)
+    
+    logger.info('Save done - rank= {}'.format(rank))
 
+    # if rank == 0:
+    #     # prepare final data
+    #     objMesh = MeshField.MeshField(fluid_nodes, fluid_elements, LevelSet, LevelSetTangent)
+    #     objMesh.addField(press,enrichment)
+    #     # extract final data
+    #     data = objMesh.getData(['nodes','mesh','levelset','levelset_tangent','fields'])
+
+        
+    #     if (flag_write_gmsh_results==1):
+    #         msh2.mshWriter(
+    #         cwd / (results_file + "_results_fluid_frf.msh"),
+    #         data['nodes'],
+    #         [{"type": "TRI3", "connectivity": data['TRI3']},
+    #         {"type": "QUA4", "connectivity": data['QUA4']}],
+    #         fields={
+    #             "data": data['fields'],
+    #             "type": "nodal",
+    #             "dim": 1,
+    #             "name": "pressure",
+    #         },
+    #         append=True,
+    #         )
+    #         msh2.mshWriter(
+    #         cwd / (results_file + "_results_fluid_frf_raw.msh"),
+    #         fluid_nodes,
+    #         [{"type": "TRI3", "connectivity": fluid_elements}],
+    #         fields={
+    #             "data": CorrectedPressure,
+    #             "type": "nodal",
+    #             "dim": 1,
+    #             "name": "pressure",
+    #         },
+    #         append=True,
+    #         )
 
     
 

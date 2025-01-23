@@ -52,12 +52,25 @@ results_file='results/classic-test1'
 celerity=340.0
 rho=1.2
 
-freq_ini     = 100.5
+freq_ini     = 210.0
 freq_end     = 300.0
 nb_freq_step_per_proc=50
 
 nproc=comm.Get_size()
 rank = comm.Get_rank()
+
+log_format =( 
+    "<cyan> R{extra[rank]}</cyan> |"
+    "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+    "<level>{level: <8}</level> | "
+    "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
+    "<level>{message}</level>"
+)
+
+logger.remove()
+logger.configure(extra={"rank": 0})  # Default values
+logger.add(sys.stdout, level='DEBUG', format=log_format, colorize=True, backtrace=True, diagnose=True)
+logger = logger.bind(rank=rank)
 
 nb_freq_step = nb_freq_step_per_proc*nproc
 deltafreq=(freq_end-freq_ini)/(nb_freq_step-1)
@@ -186,9 +199,9 @@ if (Flag_frf_analysis==1):
         if freq==freq_comparaison:
             PressTip=press[IdnodeTip-1]
             AllPressTip=[PressTip,fluid_nodes[IdnodeTip-1],freq]
-            f=open(cwd/(results_file+'_pressTip.frf'),'w')
-            pickle.dump(AllPressTip, f)
-            f.close()
+            with open(cwd/(results_file+'_pressTip.frf'),'wb') as f:
+                pickle.dump(AllPressTip, f)
+            print('oui')
         #thetaRef=[]
         #for i in range(len(IdnodeTip)):
         #    x=fluid_nodes[IdnodeTip[i]-1][0]-0.6
