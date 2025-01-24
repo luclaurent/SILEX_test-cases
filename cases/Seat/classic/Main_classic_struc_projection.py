@@ -99,14 +99,14 @@ fluid_ndof     = fluid_nnodes
 
 
 struc_elements_old,struc_node_id = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',2,2)
-struc_nnodes   = len(scipy.unique(struc_elements_old))
+struc_nnodes   = len(np.unique(struc_elements_old))
 struc_nelem    = struc_elements_old.shape[0]
 struc_ndof     = struc_nnodes*6
 
 struc_boun,struc_boun_id = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',1,1)
 
 # renumbering of structure nodes
-#struc_node_id=scipy.unique(struc_elements_old)
+#struc_node_id=np.unique(struc_elements_old)
 struc_nodes=np.zeros((struc_nnodes,3))
 for i in range(struc_nnodes):
     struc_nodes[i,0]=fluid_nodes[struc_node_id[i]-1,0]
@@ -143,7 +143,7 @@ if rank==0:
 
 #print xvibacoufo.makecompatiblefsimesh.__doc__
 
-#struc_boun_id=scipy.unique(struc_boun)
+#struc_boun_id=np.unique(struc_boun)
 interfaceIdnodes = np.setdiff1d(struc_node_id,struc_boun_id)
 
 fluid_elements_new,fluid_nodes_new,interface_elements=silex_lib_xfem_acou_tet4.makecompatiblefsimesh(fluid_nodes,
@@ -175,7 +175,7 @@ if rank==0:
 # Find the fixed dofs and the free dofs
 
 tmp4=scipy.sparse.find(struc_nodes[:,2]==0.0) # z=0
-FixedStrucNodes=scipy.unique(scipy.hstack([tmp4[1]+1]))
+FixedStrucNodes=np.unique(scipy.hstack([tmp4[1]+1]))
 
 
 FixedStrucDofUx=(FixedStrucNodes-1)*6
@@ -299,7 +299,7 @@ if rank==0:
 ##################################################################
 tic = time.process_time()
 
-PSn = scipy.sparse.construct.bmat( [ [scipy.sparse.coo_matrix(eigen_vectors_S),scipy.sparse.coo_matrix(S).T] ] )
+PSn = scipy.sparse.bmat( [ [scipy.sparse.coo_matrix(eigen_vectors_S),scipy.sparse.coo_matrix(S).T] ] )
 
 freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*np.pi))
 freq_eigv_S.append(0.0)
@@ -363,21 +363,21 @@ M_diag_nn= scipy.sparse.csc_matrix( (VM_diag_nn,(IIDnn,JJDnn)), shape=(nb_mode_S
 KSS_static_S1 = scipy.dot(KSS[SolvedDofS,:][:,SolvedDofS],scipy.sparse.coo_matrix(S).T)
 staticT__KSS_static_11 = np.array(S*KSS_static_S1.todense())[0][0]
 
-Knn = scipy.sparse.construct.bmat( [[K_diag_nn,None],
+Knn = scipy.sparse.bmat( [[K_diag_nn,None],
                                     [None,staticT__KSS_static_11]
                                     ] )
 
-Mnn = scipy.sparse.construct.bmat( [[M_diag_nn,None],
+Mnn = scipy.sparse.bmat( [[M_diag_nn,None],
                                     [None,1.0]
                                     ] )
 
 CnF = scipy.dot(PSn.T,scipy.sparse.coo_matrix(CSF[SolvedDofS,:][:,SolvedDofF]))
 
-K=scipy.sparse.construct.bmat( [[fluid_damping*KFF[SolvedDofF,:][:,SolvedDofF],None],
+K=scipy.sparse.bmat( [[fluid_damping*KFF[SolvedDofF,:][:,SolvedDofF],None],
                                 [-CnF,Knn]
                                 ] )
 
-M=scipy.sparse.construct.bmat( [[MFF[SolvedDofF,:][:,SolvedDofF],CnF.T],
+M=scipy.sparse.bmat( [[MFF[SolvedDofF,:][:,SolvedDofF],CnF.T],
                                 [None,Mnn]
                                 ] )
 

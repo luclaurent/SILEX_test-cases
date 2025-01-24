@@ -151,9 +151,9 @@ if rank==0:
 
 
 # renumbering air
-old = scipy.unique(fluid_elements1)
-new = list(range(1,len(scipy.unique(fluid_elements1))+1))
-new_nodes=fluid_nodes[scipy.unique(fluid_elements1)-1,:]
+old = np.unique(fluid_elements1)
+new = list(range(1,len(np.unique(fluid_elements1))+1))
+new_nodes=fluid_nodes[np.unique(fluid_elements1)-1,:]
 
 dico1 = dict(zip(old,new))
 new_elements=np.zeros((fluid_nelem1,4),dtype=int)
@@ -172,9 +172,9 @@ for e in range(fluid_nelem5):
 fluid_elements5 = new_elements
 
 ### renumbering porous
-##old = scipy.unique(fluid_elements2)
-##new = list(range(1,len(scipy.unique(fluid_elements2))+1))
-##new_nodes=fluid_nodes[scipy.unique(fluid_elements2)-1,:]
+##old = np.unique(fluid_elements2)
+##new = list(range(1,len(np.unique(fluid_elements2))+1))
+##new_nodes=fluid_nodes[np.unique(fluid_elements2)-1,:]
 ##
 ##dico2 = dict(zip(old,new))
 ##new_elements=np.zeros((fluid_nelem2,4),dtype=int)
@@ -191,7 +191,7 @@ fluid_elements5 = new_elements
 
 ### Boundary conditions on air cavity
 ##IdNodesFixed_porous_us_x=IdNodesS4
-####IdNodesFixed_porous_us_y=scipy.unique(scipy.hstack([IdNodesS4,IdNodesS6]))
+####IdNodesFixed_porous_us_y=np.unique(scipy.hstack([IdNodesS4,IdNodesS6]))
 ##IdNodesFixed_porous_us_y=IdNodesS4
 ##IdNodesFixed_porous_us_z=IdNodesS4
 ##IdNodesFixed_porous_uf_x=IdNodesS4
@@ -346,7 +346,7 @@ tic = time.process_time()
 LSEnrichedElements,NbLSEnrichedElements=silex_lib_xfem_acou_tet4.getenrichedelementsfromlevelset(fluid_elements1,LevelSet)
 LSEnrichedElements=LSEnrichedElements[list(range(NbLSEnrichedElements))]
 EnrichedElements,NbEnrichedElements=silex_lib_xfem_acou_tet4.getsurfenrichedelements(struc_nodes,struc_elements,fluid_nodes1,fluid_elements1[LSEnrichedElements])
-EnrichedElements=scipy.unique(EnrichedElements[list(range(NbEnrichedElements))])
+EnrichedElements=np.unique(EnrichedElements[list(range(NbEnrichedElements))])
 EnrichedElements=LSEnrichedElements[EnrichedElements-1]
 toc = time.process_time()
 if rank==0:
@@ -355,10 +355,10 @@ if rank==0:
 tic = time.process_time()
 
 EdgeEnrichedElements,nbenrelts = silex_lib_xfem_acou_tet4.getedgeenrichedelements(struc_nodes,struc_boun,fluid_nodes1,fluid_elements1)
-EdgeEnrichedElements=scipy.unique(EdgeEnrichedElements[list(range(nbenrelts))])-1
+EdgeEnrichedElements=np.unique(EdgeEnrichedElements[list(range(nbenrelts))])-1
 
 EdgeEnrichedElementsInAllMesh,nbEdgeEnrichedElementsInAllMesh=silex_lib_xfem_acou_tet4.getenrichedelementsfromlevelset(fluid_elements1,LevelSetTangent)
-EdgeEnrichedElementsInAllMesh=scipy.unique(EdgeEnrichedElementsInAllMesh[list(range(nbEdgeEnrichedElementsInAllMesh))])
+EdgeEnrichedElementsInAllMesh=np.unique(EdgeEnrichedElementsInAllMesh[list(range(nbEdgeEnrichedElementsInAllMesh))])
 
 toc = time.process_time()
 if rank==0:
@@ -419,8 +419,8 @@ CII=scipy.sparse.csc_matrix( (Vimp,(IIimp,JJimp)), shape=(fluid_ndof1,fluid_ndof
 ##################################################################
 tic = time.process_time()
 
-#Enrichednodes = scipy.unique(fluid_elements1[HeavisideEnrichedElements])
-Enrichednodes = scipy.unique(fluid_elements1[EnrichedElements])
+#Enrichednodes = np.unique(fluid_elements1[HeavisideEnrichedElements])
+Enrichednodes = np.unique(fluid_elements1[EnrichedElements])
 
 NegativeLSelements,PositiveLSelements,NegativeLStgtElements,PositiveLStgtElements,nbNegLS,nbPosLS,nbNegLSt,nbPosLSt=silex_lib_xfem_acou_tet4.getpositivenegativeelts(fluid_elements1,LevelSet,LevelSetTangent)
 
@@ -761,14 +761,14 @@ if (Flag_frf_analysis==1):
 
         Kimp=-(omega**2/(k_imp_paroi-1j*omega*d_imp_paroi))*CII
 
-        K=scipy.sparse.construct.bmat( [ [K_diag_mm,None,       None,                           None],
+        K=scipy.sparse.bmat( [ [K_diag_mm,None,       None,                           None],
                                          [None,     Khat_BB+Kimp[SolvedDofB,:][:,SolvedDofB],    Khat_BA,                           None],
                                          [None,     Khat_BA.T,  Khat_AA,                           None],
                                          [None,     None,       -CnA,Knn]
                                          ]
                                        )
         
-        M=scipy.sparse.construct.bmat( [ [M_diag_mm,    Mhat_mB,    Mhat_mA,                          None],
+        M=scipy.sparse.bmat( [ [M_diag_mm,    Mhat_mB,    Mhat_mA,                          None],
                                          [Mhat_mB.T,    Mhat_BB,    Mhat_BA,                               None],
                                          [Mhat_mA.T,    Mhat_BA.T,  Mhat_AA,                               CnA.T],
                                          [None,         None,       None,                              Mnn]

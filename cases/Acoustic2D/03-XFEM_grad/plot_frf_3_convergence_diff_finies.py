@@ -2,10 +2,14 @@ from numpy import *
 import string
 import time
 import os
-#import matplotlib
-#matplotlib.use('TkAgg')
+
+# import matplotlib
+# matplotlib.use('TkAgg')
 import pylab as pl
 import pickle
+from pathlib import Path
+
+cwd = Path(__file__).resolve().parent
 
 ##f=open('xfem_3_62000_results.frf','rb')
 ##frf_1=pickle.load(f)
@@ -18,45 +22,45 @@ import pickle
 ##f=open('xfem_3_62002_results.frf','rb')
 ##frf_3=pickle.load(f)
 ##f.close()
-ii=0
-val=[0]*7
-valP=[0]*7
-frf=[0]*7
-for itP in [0,1,5,10,50,100,500]:
-    val[ii]=620000+itP
-    valP[ii]=(val[ii]-620000)/1000000
-    filename='xfem_3_'+str(val[ii])+'_results.frf'
-    f=open(filename,'rb')
-    frf[ii]=pickle.load(f)
-    f.close()
-    ii=ii+1
+ii = 0
+val = [0] * 7
+valP = [0] * 7
+frf = [0] * 7
+for itP in [0, 1, 5, 10, 50, 100, 500]:
+    val[ii] = 620000 + itP
+    valP[ii] = (val[ii] - 620000) / 1000000
+    filename = "xfem_3_" + str(val[ii]) + "_results.frf"
+    with open(cwd / "results" / filename, "rb") as f:
+        frf[ii] = pickle.load(f)
+
+    ii = ii + 1
     print(ii)
-    #frf_1=pickle.load(f)
-    #f.close()
+    # frf_1=pickle.load(f)
+    # f.close()
 
-    #f=open('xfem_3_6201_results.frf','rb')
-    #frf_2=pickle.load(f)
-    #f.close()
+    # f=open('xfem_3_6201_results.frf','rb')
+    # frf_2=pickle.load(f)
+    # f.close()
 
-    #f=open('xfem_3_6202_results.frf','rb')
-    #frf_3=pickle.load(f)
-    #f.close()
+    # f=open('xfem_3_6202_results.frf','rb')
+    # frf_3=pickle.load(f)
+    # f.close()
 
-#id_node=7
-#id_freq=20
-#print('freq=',frf_6200[0][id_freq])
-#press_node_6200=frf_6200[3][id_freq][id_node]
-#press_node_6202=frf_6202[3][id_freq][id_node]
-#dpress_node_diff=(press_node_6202-press_node_6200)/(0.6202-0.6200)
-#dpress_node_gradient=frf_6201[4][id_freq][id_node]
+# id_node=7
+# id_freq=20
+# print('freq=',frf_6200[0][id_freq])
+# press_node_6200=frf_6200[3][id_freq][id_node]
+# press_node_6202=frf_6202[3][id_freq][id_node]
+# dpress_node_diff=(press_node_6202-press_node_6200)/(0.6202-0.6200)
+# dpress_node_gradient=frf_6201[4][id_freq][id_node]
 
-prefsquare=20e-6*20e-6
-Dptmp=[0]*6
+prefsquare = 20e-6 * 20e-6
+Dptmp = [0] * 6
 pl.figure(1)
-for it in range(1,6):
+for it in range(1, 6):
     print(it)
-    Dptmp[it]=(frf[it][1]-frf[0][1])/valP[1]
-    pl.plot(frf[0][0],Dptmp[it],'k-', linewidth=1)
+    Dptmp[it] = (frf[it][1] - frf[0][1]) / valP[1]
+    pl.plot(frf[0][0], Dptmp[it], "k-", linewidth=1)
 
 
 # Dp_Dtheta_diff = (frf_3[1]-frf_1[1])/(0.6202-0.6200)
@@ -104,4 +108,3 @@ for it in range(1,6):
 #     #pl.plot(frf_2[0][id_freq],dpress_node_gradient,'og')
 
 pl.show()
-

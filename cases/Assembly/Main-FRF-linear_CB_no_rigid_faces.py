@@ -334,11 +334,11 @@ Mhat_ss = scipy.sparse.csc_matrix(M[Dofs_s,:][:,Dofs_s]-(Knninv_Kns.T)*Mstar_ns-
 eigen_vectors_s=scipy.sparse.csc_matrix(eigen_vectors_s)
 Mhat_ms = scipy.sparse.csc_matrix(eigen_vectors_s.T*Mstar_ns)
 
-Kplus=scipy.sparse.construct.bmat( [ [K,None,None],
+Kplus=scipy.sparse.bmat( [ [K,None,None],
                                      [None,K_diag_mm,None],
                                      [None,None,Khat_ss] ] )
 
-M=scipy.sparse.construct.bmat( [ [M,None,None],
+M=scipy.sparse.bmat( [ [M,None,None],
                                  [None,M_diag_mm,Mhat_ms],
                                  [None,Mhat_ms.T,Mhat_ss] ] )
 

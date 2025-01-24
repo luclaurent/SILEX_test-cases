@@ -373,11 +373,11 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     # Construct the whole system
     #################################################################
 
-    K = scipy.sparse.construct.bmat([
+    K = scipy.sparse.bmat([
         [fluid_damping*KFF[SolvedDofF, :][:, SolvedDofF], fluid_damping*KAF[SolvedDofF, :][:, SolvedDofA]],
         [fluid_damping*KAF[SolvedDofA, :][:, SolvedDofF], fluid_damping*KAA[SolvedDofA, :][:, SolvedDofA]]])
 
-    M = scipy.sparse.construct.bmat([
+    M = scipy.sparse.bmat([
         [MFF[SolvedDofF, :][:, SolvedDofF], MAF[SolvedDofF, :][:, SolvedDofA]],
         [MAF[SolvedDofA, :][:, SolvedDofF], MAA[SolvedDofA, :][:, SolvedDofA]]])
 
@@ -408,10 +408,10 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         dKFA_dtheta = scipy.sparse.csc_matrix( (Vfak_gradient,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
         dMFA_dtheta = scipy.sparse.csc_matrix( (Vfam_gradient,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
         #build full stiffness and mass gradient matrices
-        dK.append(scipy.sparse.construct.bmat( [
+        dK.append(scipy.sparse.bmat( [
                     [None,fluid_damping*dKFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
                     [fluid_damping*dKFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]] ))
-        dM.append(scipy.sparse.construct.bmat( [
+        dM.append(scipy.sparse.bmat( [
                     [None,dMFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
                     [dMFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]] ))
 

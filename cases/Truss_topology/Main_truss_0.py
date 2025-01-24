@@ -79,7 +79,7 @@ nelem  = elements.shape[0]
 print("Number of nodes:",nnodes)
 print("Number of elements:",nelem)
 
-Youngelem  = scipy.ones(nelem)*Young
+Youngelem  = np.ones(nelem)*Young
 
 
 

@@ -252,7 +252,7 @@ R203 = silex_lib_extra.rigidify_surface(IdnodeS203,nodes,SuperNodes[6])
 R204 = silex_lib_extra.rigidify_surface(IdnodeS204,nodes,SuperNodes[7])
 
 
-##R = scipy.sparse.construct.bmat( [ [   R201[list(range(ndof)),:][:,list(range(ndof))]
+##R = scipy.sparse.bmat( [ [   R201[list(range(ndof)),:][:,list(range(ndof))]
 ##                                     , scipy.sparse.csc_matrix( (ndof,6*4) , dtype=float)
 ##                                     , R201[:,list(range(ndof,ndof+6,1))]
 ##                                     , R202[:,list(range(ndof,ndof+6,1))]
@@ -262,9 +262,9 @@ R204 = silex_lib_extra.rigidify_surface(IdnodeS204,nodes,SuperNodes[7])
 ##                                   ]
 ##                                 )
 
-sparse_ones = scipy.sparse.csc_matrix( (list(scipy.ones(ndof)),(list(range(ndof)),list(range(ndof)))), shape=(ndof,ndof) )
+sparse_ones = scipy.sparse.csc_matrix( (list(np.ones(ndof)),(list(range(ndof)),list(range(ndof)))), shape=(ndof,ndof) )
 
-R = scipy.sparse.construct.bmat( [[sparse_ones
+R = scipy.sparse.bmat( [[sparse_ones
                                    +R201[list(range(ndof)),:][:,list(range(ndof))]
                                   +R202[list(range(ndof)),:][:,list(range(ndof))]
                                   +R203[list(range(ndof)),:][:,list(range(ndof))]
@@ -283,7 +283,7 @@ R = scipy.sparse.construct.bmat( [[sparse_ones
 
 K3=R.T*K3*R
 
-KSUPER = scipy.sparse.construct.bmat( [[scipy.sparse.csc_matrix( (ndof,ndof) , dtype=float),None],
+KSUPER = scipy.sparse.bmat( [[scipy.sparse.csc_matrix( (ndof,ndof) , dtype=float),None],
                                        [None,Ksuper]
                                        ] )
 
@@ -291,14 +291,14 @@ KSUPER = scipy.sparse.construct.bmat( [[scipy.sparse.csc_matrix( (ndof,ndof) , d
 #K3[list(range(ndof,ndof+6*8,1)),:][:,list(range(ndof,ndof+6*8,1))]=K3[list(range(ndof,ndof+6*8,1)),:][:,list(range(ndof,ndof+6*8,1))]+Ksuper
 
 
-##M = scipy.sparse.construct.bmat( [[M3,None],
+##M = scipy.sparse.bmat( [[M3,None],
 ##                                  [None,scipy.sparse.csc_matrix( (6*SuperNodes.shape[0],6*SuperNodes.shape[0]) , dtype=float) ]
 ##                                  ] )
 M3=R.T*M3*R
-##M = scipy.sparse.construct.bmat( [[scipy.sparse.csc_matrix( (ndof,ndof) , dtype=float),None],
+##M = scipy.sparse.bmat( [[scipy.sparse.csc_matrix( (ndof,ndof) , dtype=float),None],
 ##                                  [None,scipy.sparse.csc_matrix( (6*SuperNodes.shape[0],6*SuperNodes.shape[0]) , dtype=float) ]
 ##                                  ] )
-##M = scipy.sparse.construct.bmat( [[scipy.sparse.csc_matrix( (ndof,ndof) , dtype=float),None],
+##M = scipy.sparse.bmat( [[scipy.sparse.csc_matrix( (ndof,ndof) , dtype=float),None],
 ##                                  [None,Msuper]
 ##                                  ] )
 ##M = scipy.sparse.csc_matrix(M+M3)
@@ -360,7 +360,7 @@ for i in range(len(frequencies)):
     VMsuper = silex_lib_extra.superbeam3_mass(elementBeam,'../diabolo/supelm.pkl',omega)
     Msuper = scipy.sparse.csc_matrix( (VMsuper,(Isuper,Jsuper)), shape=(6*SuperNodes.shape[0],6*SuperNodes.shape[0]) )
 
-    M = scipy.sparse.construct.bmat( [[scipy.sparse.csc_matrix( (ndof,ndof) , dtype=float),None],
+    M = scipy.sparse.bmat( [[scipy.sparse.csc_matrix( (ndof,ndof) , dtype=float),None],
                                       [None,Msuper]
                                       ] )
 

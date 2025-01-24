@@ -180,7 +180,7 @@ LSEnrichedElements,NbLSEnrichedElements=silex_lib_xfem_acou_tet4.getenrichedelem
 
 LSEnrichedElements=LSEnrichedElements[list(range(NbLSEnrichedElements))]
 EnrichedElements,NbEnrichedElements=silex_lib_xfem_acou_tet4.getsurfenrichedelements(struc_nodes,struc_elements,fluid_nodes1,fluid_elements1[LSEnrichedElements,:][:,list(range(4))])
-EnrichedElements=scipy.unique(EnrichedElements[list(range(NbEnrichedElements))])
+EnrichedElements=np.unique(EnrichedElements[list(range(NbEnrichedElements))])
 EnrichedElements=LSEnrichedElements[EnrichedElements-1]
 toc = time.process_time()
 if rank==0:
@@ -188,9 +188,9 @@ if rank==0:
 
 tic = time.process_time()
 EdgeEnrichedElements,nbenrelts = silex_lib_xfem_acou_tet4.getedgeenrichedelements(struc_nodes,struc_boun,fluid_nodes1,fluid_elements1[:,list(range(4))])
-EdgeEnrichedElements=scipy.unique(EdgeEnrichedElements[list(range(nbenrelts))])-1
+EdgeEnrichedElements=np.unique(EdgeEnrichedElements[list(range(nbenrelts))])-1
 EdgeEnrichedElementsInAllMesh,nbEdgeEnrichedElementsInAllMesh=silex_lib_xfem_acou_tet4.getenrichedelementsfromlevelset(fluid_elements1[:,list(range(4))],LevelSetTangent)
-EdgeEnrichedElementsInAllMesh=scipy.unique(EdgeEnrichedElementsInAllMesh[list(range(nbEdgeEnrichedElementsInAllMesh))])
+EdgeEnrichedElementsInAllMesh=np.unique(EdgeEnrichedElementsInAllMesh[list(range(nbEdgeEnrichedElementsInAllMesh))])
 toc = time.process_time()
 if rank==0:
     print ("time to find edge enriched elements:",toc-tic)
@@ -209,7 +209,7 @@ if (flag_write_gmsh_results==1) and (rank==0):
 ##################################################################
 tic = time.process_time()
 
-Enrichednodes = scipy.unique(fluid_elements1[EnrichedElements])
+Enrichednodes = np.unique(fluid_elements1[EnrichedElements])
 print(silex_lib_xfem_acou_tet10.globalxfemacousticmatrices.__doc__)
 II,JJ,Vaak,Vaam,Vafk,Vafm=silex_lib_xfem_acou_tet10.globalxfemacousticmatrices(fluid_elements1,fluid_nodes1,LevelSetTangent,LevelSet,celerity,rho)
 
@@ -228,11 +228,11 @@ if rank==0:
 # Construct the whole system
 #################################################################
 
-K=scipy.sparse.construct.bmat( [
+K=scipy.sparse.bmat( [
             [KFF[SolvedDofF,:][:,SolvedDofF],KAF[SolvedDofF,:][:,SolvedDofA]],
             [KAF[SolvedDofA,:][:,SolvedDofF],KAA[SolvedDofA,:][:,SolvedDofA]]] )
 
-M=scipy.sparse.construct.bmat( [
+M=scipy.sparse.bmat( [
             [MFF[SolvedDofF,:][:,SolvedDofF],MAF[SolvedDofF,:][:,SolvedDofA]],
             [MAF[SolvedDofA,:][:,SolvedDofF],MAA[SolvedDofA,:][:,SolvedDofA]]] )
 

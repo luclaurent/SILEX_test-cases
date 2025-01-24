@@ -112,7 +112,7 @@ print("Number of nodes:",nnodes)
 print("Number of elements:",nelem)
 
 #      CLEAN MESH
-Id_nodes_used=scipy.unique(elements)
+Id_nodes_used=np.unique(elements)
 Id_nodes_nonused=np.setdiff1d(range(1,nnodes),Id_nodes_used)
 IdNodesFixed_x=scipy.hstack([IdNodesFixed_x,Id_nodes_nonused])
 IdNodesFixed_y=scipy.hstack([IdNodesFixed_y,Id_nodes_nonused])

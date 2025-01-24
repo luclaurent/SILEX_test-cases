@@ -274,12 +274,12 @@ MAF = scipy.sparse.csc_matrix((Vafm, (IIaf, JJaf)), shape=(fluid_ndof, fluid_ndo
 toc = time.process_time()
 logger.info("time to compute Heaviside enrichment: {}".format(toc - tic))
 
-# Enrichednodes = scipy.unique(fluid_elements[scipy.hstack(([HeavisideEnrichedElements,EdgeEnrichedElements]))])
-# Enrichednodes = scipy.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements,EdgeEnrichedElementsInAllMesh]))])
-# Enrichednodes = scipy.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements]))])
-# Enrichednodes = scipy.unique(fluid_elements[scipy.hstack(([NegativeLStgtElements]))])
+# Enrichednodes = np.unique(fluid_elements[scipy.hstack(([HeavisideEnrichedElements,EdgeEnrichedElements]))])
+# Enrichednodes = np.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements,EdgeEnrichedElementsInAllMesh]))])
+# Enrichednodes = np.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements]))])
+# Enrichednodes = np.unique(fluid_elements[scipy.hstack(([NegativeLStgtElements]))])
 Enrichednodes = np.unique(fluid_elements[EnrichedElements])
-# Enrichednodes = scipy.unique(fluid_elements)
+# Enrichednodes = np.unique(fluid_elements)
 SolvedDofA = Enrichednodes - 1
 
 msh2.mshWriter(

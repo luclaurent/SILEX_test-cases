@@ -93,7 +93,7 @@ dofS1 = scipy.hstack([(IdnodS1-1)*3,(IdnodS1-1)*3+1,(IdnodS1-1)*3+2])
 R2 = silex_lib_extra.rigidify_surface(IdnodS2,nodes,[0.0,0.0,0.0])
 dofS2 = scipy.hstack([(IdnodS2-1)*3,(IdnodS2-1)*3+1,(IdnodS2-1)*3+2])
 
-R = scipy.sparse.construct.bmat( [ [ R1 ,  R2[:,list(range(ndof,ndof+6,1))] ] ] )
+R = scipy.sparse.bmat( [ [ R1 ,  R2[:,list(range(ndof,ndof+6,1))] ] ] )
 
 #################################################################################################################
 #                                            BOUNDARY CONDITIONS                                                #

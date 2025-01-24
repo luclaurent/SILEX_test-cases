@@ -132,13 +132,13 @@ class solverTools(object):
         # tmp.append(scipy.where(fluid_elements1[:,2]==i))
         # tmp.append(scipy.where(fluid_elements1[:,3]==i))
         #
-        # tmp = scipy.unique(np.array(tmp))
+        # tmp = np.unique(np.array(tmp))
         # tmp1,elttest0,tmp2=scipy.intersect1d(fluid_elements1[:,0],LSEnrichednodes,return_indices=True)
         # silex_lib_gmsh.WriteResults2(results_file+'_enriched_elements_test0',fluid_nodes,fluid_elements1[tmp],4)
         #[75804, 97252, 97253,34973, 93135, 93137, 93248,83787, 93136,93525]
         # EnrichedElements0, NbEnrichedElements = silex_lib_xfem_acou_tet4.getsurfenrichedelements(
         #     struc_nodes, struc_elements, fluid_nodes, fluid_elements1[tmp])
-        # EnrichedElements0 = scipy.unique(
+        # EnrichedElements0 = np.unique(
         #     EnrichedElements0[list(range(NbEnrichedElements))])
         # EnrichedElements0 = EnrichedElements0-1
         # EnrichedElements = tmp[EnrichedElements0]
@@ -355,12 +355,12 @@ class solverTools(object):
         #
         fd = self.mechaProp['fluid_damping']
         #
-        self.K = scipy.sparse.construct.bmat([
+        self.K = scipy.sparse.bmat([
             [fd*self.KFF[self.SolvedDofF, :][:, self.SolvedDofF],
                 fd*self.KAF[self.SolvedDofF, :][:, self.SolvedDofA]],
             [fd*self.KAF[self.SolvedDofA, :][:, self.SolvedDofF], fd*self.KAA[self.SolvedDofA, :][:, self.SolvedDofA]]])
         #
-        self.M = scipy.sparse.construct.bmat([
+        self.M = scipy.sparse.bmat([
             [self.MFF[self.SolvedDofF, :][:, self.SolvedDofF],
                 self.MAF[self.SolvedDofF, :][:, self.SolvedDofA]],
             [self.MAF[self.SolvedDofA, :][:, self.SolvedDofF], self.MAA[self.SolvedDofA, :][:, self.SolvedDofA]]])
@@ -410,10 +410,10 @@ class solverTools(object):
                 if self.dMAA[it] is not None:
                     M22 = self.dMAA[it][self.SolvedDofA, :][:, self.SolvedDofA]
                 # build full stiffness and mass gradient matrices
-                self.dK.append(scipy.sparse.construct.bmat([
+                self.dK.append(scipy.sparse.bmat([
                     [K11, K12],
                     [K21, K22]]))
-                self.dM.append(scipy.sparse.construct.bmat([
+                self.dM.append(scipy.sparse.bmat([
                     [M11, M12],
                     [M21, M22]]))
             #

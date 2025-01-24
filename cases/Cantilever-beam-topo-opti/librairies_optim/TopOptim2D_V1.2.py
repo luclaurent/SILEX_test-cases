@@ -52,8 +52,8 @@ elements,Idnodes=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',eltype,103)
 elementsS2,IdnodeS2=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',1,101)
 elementsS3,IdnodeS3=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',1,102)
 #elementsS3,IdnodeS3=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',1,10002)
-#IdnodeS23=scipy.unique(scipy.concatenate([IdnodeS2,IdnodeS3,IdnodeS1], axis=0))
-IdnodeS23=scipy.unique(scipy.concatenate([IdnodeS2,IdnodeS3], axis=0))
+#IdnodeS23=np.unique(scipy.concatenate([IdnodeS2,IdnodeS3,IdnodeS1], axis=0))
+IdnodeS23=np.unique(scipy.concatenate([IdnodeS2,IdnodeS3], axis=0))
 
 # Boundary conditions
 IdNodesFixed_x=IdnodeS23
@@ -103,11 +103,11 @@ SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # Displacement vector initialization
 U  = np.zeros(ndof)
-xe = scipy.ones(nelem)*volfrac
+xe = np.ones(nelem)*volfrac
 XE_to_plot_list=[]
 change_to_list=[]
 loop_list=[]
-Ee=scipy.ones(nelem)*E0
+Ee=np.ones(nelem)*E0
 ###################      compute distances between elements     #######################
 #print(silex_lib_optim.getelementsneighbours.__doc__)
 change=1.0
@@ -144,7 +144,7 @@ while change>0.01 and loop<200:
     #tac2=time.process_time()
     #ce=xe**penal*silex_lib_elt.getelementalstrainenergy(nodes,elements,[1,nu,thickness],U)
     dc=(-penal*xe**(penal-1)*(E0-Emin))*StrEner
-    dv = scipy.ones(nelem)
+    dv = np.ones(nelem)
     #tac3=time.process_time()
     #H = silex_lib_elt.getdistancesbetweenelements88(nodes,elements,rmin)
     #Hs=H.sum(1)

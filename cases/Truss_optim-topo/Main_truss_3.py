@@ -112,7 +112,7 @@ print("Number of elements:",nelem)
 
 
 # Choose initial "unit" xe
-#xe=scipy.ones(nelem)
+#xe=np.ones(nelem)
 # or load static optimum xe
 f=open('Results_truss_optim_xe_static.pkl','rb')
 xe=pickle.load(f)

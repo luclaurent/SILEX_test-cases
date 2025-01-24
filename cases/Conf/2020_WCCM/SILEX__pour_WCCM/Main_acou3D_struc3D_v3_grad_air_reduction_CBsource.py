@@ -508,13 +508,13 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     
     Mhat_BA = scipy.sparse.csc_matrix((Psi_IB.T).todense()*Mstar_IA.todense())+MFF[SolvedDofB,:][:,SolvedDofI]*Psi_IA
 
-    Kreduc=scipy.sparse.construct.bmat( [[fluid_damping*K_diag_mm,None,       None],
+    Kreduc=scipy.sparse.bmat( [[fluid_damping*K_diag_mm,None,       None],
                                                        [None,     fluid_damping*Khat_BB,    fluid_damping*Khat_BA],
                                                        [None,     fluid_damping*Khat_BA.T,  fluid_damping*Khat_AA],
                                                        ]
                                                       )
         
-    Mreduc=scipy.sparse.construct.bmat( [[M_diag_mm,    Mhat_mB,    Mhat_mA],
+    Mreduc=scipy.sparse.bmat( [[M_diag_mm,    Mhat_mB,    Mhat_mA],
                                          [Mhat_mB.T,    Mhat_BB,    Mhat_BA],
                                          [Mhat_mA.T,    Mhat_BA.T,  Mhat_AA],
                                          ]
@@ -550,10 +550,10 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         dKFA_dtheta = scipy.sparse.csc_matrix( (Vfak_gradient,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
         dMFA_dtheta = scipy.sparse.csc_matrix( (Vfam_gradient,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
         #build full stiffness and mass gradient matrices
-        dK.append(scipy.sparse.construct.bmat( [
+        dK.append(scipy.sparse.bmat( [
                     [None,fluid_damping*dKFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
                     [fluid_damping*dKFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]] ))
-        dM.append(scipy.sparse.construct.bmat( [
+        dM.append(scipy.sparse.bmat( [
                     [None,dMFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
                     [dMFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]] ))
 

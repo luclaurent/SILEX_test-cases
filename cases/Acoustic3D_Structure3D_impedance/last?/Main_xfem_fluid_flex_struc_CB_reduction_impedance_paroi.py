@@ -760,14 +760,14 @@ if (Flag_frf_analysis==1):
 
         Kimp=-(omega**2/(k_imp_paroi-1j*omega*d_imp_paroi))*CII
 
-        K=scipy.sparse.construct.bmat( [ [K_diag_mm,None,       None,                           None],
+        K=scipy.sparse.bmat( [ [K_diag_mm,None,       None,                           None],
                                          [None,     Khat_BB+Kimp[SolvedDofB,:][:,SolvedDofB],    Khat_BA,                           None],
                                          [None,     Khat_BA.T,  Khat_AA,                           None],
                                          [None,     None,       -CnA,Knn]
                                          ]
                                        )
         
-        M=scipy.sparse.construct.bmat( [ [M_diag_mm,    Mhat_mB,    Mhat_mA,                          None],
+        M=scipy.sparse.bmat( [ [M_diag_mm,    Mhat_mB,    Mhat_mA,                          None],
                                          [Mhat_mB.T,    Mhat_BB,    Mhat_BA,                               None],
                                          [Mhat_mA.T,    Mhat_BA.T,  Mhat_AA,                               CnA.T],
                                          [None,         None,       None,                              Mnn]

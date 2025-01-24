@@ -120,14 +120,14 @@ fluid_ndof     = fluid_nnodes
 
 
 struc_elements_old,struc_node_id = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',2,2)
-struc_nnodes   = len(scipy.unique(struc_elements_old))
+struc_nnodes   = len(np.unique(struc_elements_old))
 struc_nelem    = struc_elements_old.shape[0]
 struc_ndof     = struc_nnodes*6
 
 struc_boun,struc_boun_id = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',1,1)
 
 # renumbering of structure nodes
-#struc_node_id=scipy.unique(struc_elements_old)
+#struc_node_id=np.unique(struc_elements_old)
 struc_nodes=np.zeros((struc_nnodes,3))
 for i in range(struc_nnodes):
     struc_nodes[i,0]=fluid_nodes[struc_node_id[i]-1,0]
@@ -163,7 +163,7 @@ if rank==0:
 
 #print xvibacoufo.makecompatiblefsimesh.__doc__
 
-#struc_boun_id=scipy.unique(struc_boun)
+#struc_boun_id=np.unique(struc_boun)
 interfaceIdnodes = np.setdiff1d(struc_node_id,struc_boun_id)
 
 fluid_elements_new,fluid_nodes_new,interface_elements=silex_lib_xfem_acou_tet4.makecompatiblefsimesh(fluid_nodes,
@@ -195,7 +195,7 @@ if rank==0:
 # Find the fixed dofs and the free dofs
 
 tmp4=scipy.sparse.find(struc_nodes[:,2]==0.0) # z=0
-FixedStrucNodes=scipy.unique(scipy.hstack([tmp4[1]+1]))
+FixedStrucNodes=np.unique(scipy.hstack([tmp4[1]+1]))
 
 
 FixedStrucDofUx=(FixedStrucNodes-1)*6
@@ -289,11 +289,11 @@ bb=silex_lib_pgd.frequency_om0_second_member(nodes_w,elements_w)
 ##################################################################
 
 
-K=scipy.sparse.construct.bmat( [[KFF[SolvedDofF,:][:,SolvedDofF],None],
+K=scipy.sparse.bmat( [[KFF[SolvedDofF,:][:,SolvedDofF],None],
                                 [-CSF[SolvedDofS,:][:,SolvedDofF],KSS[SolvedDofS,:][:,SolvedDofS]]
                                 ] )
 
-M=scipy.sparse.construct.bmat( [[MFF[SolvedDofF,:][:,SolvedDofF],CSF[SolvedDofS,:][:,SolvedDofF].T],
+M=scipy.sparse.bmat( [[MFF[SolvedDofF,:][:,SolvedDofF],CSF[SolvedDofS,:][:,SolvedDofF].T],
                                 [None,MSS[SolvedDofS,:][:,SolvedDofS]]
                                 ] )
 
@@ -386,13 +386,13 @@ while (residu>val_residu):
         #stop
 
 
-        #Big_matrix=scipy.sparse.construct.bmat( [[scipy.dot(G,A*G)*K-scipy.dot(G,B*G)*M  ,  K_sum_fi_Gi_A-M_sum_fi_Gi_B],
+        #Big_matrix=scipy.sparse.bmat( [[scipy.dot(G,A*G)*K-scipy.dot(G,B*G)*M  ,  K_sum_fi_Gi_A-M_sum_fi_Gi_B],
         #        [K_sum_fi_Gi_A.T+M_sum_fi_Gi_B.T,scipy.dot(F[SolvedDofs_x]  ,  K*F[SolvedDofs_x])*A-scipy.dot(F[SolvedDofs_x],M*F[SolvedDofs_x])*B]
         #                                         ] )
         #Second_member = scipy.hstack([  scipy.dot(bb,G)*P  ,  bb*scipy.dot(P,F[SolvedDofs_x])  ])
 
         #print("hello 2")
-        #Big_matrix=scipy.sparse.construct.bmat( [[scipy.dot(G,A*G)*K-scipy.dot(G,B*G)*M  ,  K_sum_fi_Gi_A-M_sum_fi_Gi_B-scipy.tensordot(P,bb,0) ],
+        #Big_matrix=scipy.sparse.bmat( [[scipy.dot(G,A*G)*K-scipy.dot(G,B*G)*M  ,  K_sum_fi_Gi_A-M_sum_fi_Gi_B-scipy.tensordot(P,bb,0) ],
         #        [K_sum_fi_Gi_A.T+M_sum_fi_Gi_B.T-scipy.tensordot(bb,P,0) , scipy.dot(F[SolvedDofs_x],K*F[SolvedDofs_x])*A-scipy.dot(F[SolvedDofs_x],M*F[SolvedDofs_x])*B]
         #                                         ] )
         #print("hello 3")

@@ -166,7 +166,7 @@ LSEnrichedElements,NbLSEnrichedElements=silex_lib_xfem_acou_tet4.getenrichedelem
 LSEnrichedElements=LSEnrichedElements[list(range(NbLSEnrichedElements))]
 silex_lib_gmsh.WriteResults2(results_file+'_LS_enriched_elements',fluid_nodes,fluid_elements1[LSEnrichedElements],4)
 ##EnrichedElements=LSEnrichedElements#[EnrichedElements-1]
-LSEnrichednodes=scipy.unique(fluid_elements1[LSEnrichedElements])
+LSEnrichednodes=np.unique(fluid_elements1[LSEnrichedElements])
 
 tmp=[]
 for i in LSEnrichednodes:
@@ -178,12 +178,12 @@ for i in LSEnrichednodes:
 ##    tmp.append(scipy.where(fluid_elements1[:,2]==i))
 ##    tmp.append(scipy.where(fluid_elements1[:,3]==i))
 
-tmp=scipy.unique(np.array(tmp))
+tmp=np.unique(np.array(tmp))
 ##tmp1,elttest0,tmp2=scipy.intersect1d(fluid_elements1[:,0],LSEnrichednodes,return_indices=True)
 #silex_lib_gmsh.WriteResults2(results_file+'_enriched_elements_test0',fluid_nodes,fluid_elements1[tmp],4)
 #[75804, 97252, 97253,34973, 93135, 93137, 93248,83787, 93136,93525]
 EnrichedElements0,NbEnrichedElements=silex_lib_xfem_acou_tet4.getsurfenrichedelements(struc_nodes,struc_elements,fluid_nodes,fluid_elements1[tmp])
-EnrichedElements0=scipy.unique(EnrichedElements0[list(range(NbEnrichedElements))])
+EnrichedElements0=np.unique(EnrichedElements0[list(range(NbEnrichedElements))])
 EnrichedElements0=EnrichedElements0-1
 EnrichedElements=tmp[EnrichedElements0]
 toc = time.process_time()
@@ -218,7 +218,7 @@ SolvedDofF=list(range(fluid_ndof))
 ##################################################################
 tic = time.process_time()
 
-Enrichednodes = scipy.unique(fluid_elements1[EnrichedElements])
+Enrichednodes = np.unique(fluid_elements1[EnrichedElements])
 
 IIaa,JJaa,IIaf,JJaf,Vaak,Vaam,Vafk,Vafm=silex_lib_xfem_acou_tet4.globalxfemacousticmatrices(fluid_elements1,fluid_nodes,LevelSet,celerity,rho)
 
@@ -237,11 +237,11 @@ if rank==0:
 # Construct the whole system
 #################################################################
 
-K=scipy.sparse.construct.bmat( [
+K=scipy.sparse.bmat( [
             [KFF[SolvedDofF,:][:,SolvedDofF],KAF[SolvedDofF,:][:,SolvedDofA]],
             [KAF[SolvedDofA,:][:,SolvedDofF],KAA[SolvedDofA,:][:,SolvedDofA]]] )
 
-M=scipy.sparse.construct.bmat( [
+M=scipy.sparse.bmat( [
             [MFF[SolvedDofF,:][:,SolvedDofF],MAF[SolvedDofF,:][:,SolvedDofA]],
             [MAF[SolvedDofA,:][:,SolvedDofF],MAA[SolvedDofA,:][:,SolvedDofA]]] )
 
@@ -266,10 +266,10 @@ IIf,JJf,Vfak_gradient,Vfam_gradient=silex_lib_xfem_acou_tet4.globalacousticgradi
 dKFA_dtheta = scipy.sparse.csc_matrix( (Vfak_gradient,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
 dMFA_dtheta = scipy.sparse.csc_matrix( (Vfam_gradient,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
 
-dK=scipy.sparse.construct.bmat( [
+dK=scipy.sparse.bmat( [
             [None,dKFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
             [dKFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]] )
-dM=scipy.sparse.construct.bmat( [
+dM=scipy.sparse.bmat( [
             [None,dMFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
             [dMFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]] )
 

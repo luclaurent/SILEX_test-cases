@@ -132,9 +132,9 @@ if rank==0:
 ##############################################################
 
 # renumbering air
-old = scipy.unique(fluid_elements1)
-new = list(range(1,len(scipy.unique(fluid_elements1))+1))
-new_nodes=fluid_nodes[scipy.unique(fluid_elements1)-1,:]
+old = np.unique(fluid_elements1)
+new = list(range(1,len(np.unique(fluid_elements1))+1))
+new_nodes=fluid_nodes[np.unique(fluid_elements1)-1,:]
 
 dico1 = dict(zip(old,new))
 new_elements=np.zeros((fluid_nelem1,4),dtype=int)
@@ -153,9 +153,9 @@ for e in range(fluid_nelem5):
 fluid_elements5 = new_elements
 
 # renumbering porous
-old = scipy.unique(fluid_elements2)
-new = list(range(1,len(scipy.unique(fluid_elements2))+1))
-new_nodes=fluid_nodes[scipy.unique(fluid_elements2)-1,:]
+old = np.unique(fluid_elements2)
+new = list(range(1,len(np.unique(fluid_elements2))+1))
+new_nodes=fluid_nodes[np.unique(fluid_elements2)-1,:]
 
 dico2 = dict(zip(old,new))
 new_elements=np.zeros((fluid_nelem2,4),dtype=int)
@@ -179,8 +179,8 @@ for i in range(len(IdNodesS4)):
 #stop
 
 IdNodesFixed_porous_us_x=IdNodesS4
-##IdNodesFixed_porous_us_y=scipy.unique(scipy.hstack([IdNodesS4,IdNodesS6]))
-##IdNodesFixed_porous_us_z=scipy.unique(scipy.hstack([IdNodesS4,IdNodesS5]))
+##IdNodesFixed_porous_us_y=np.unique(scipy.hstack([IdNodesS4,IdNodesS6]))
+##IdNodesFixed_porous_us_z=np.unique(scipy.hstack([IdNodesS4,IdNodesS5]))
 IdNodesFixed_porous_us_y=IdNodesS4
 IdNodesFixed_porous_us_z=IdNodesS4
 IdNodesFixed_porous_uf_x=IdNodesS4
@@ -292,13 +292,13 @@ if (Flag_frf_analysis==1):
         KPP=scipy.sparse.csc_matrix( (Vppk,(IIp,JJp)), shape=(fluid_ndof2,fluid_ndof2) )
         MPP=scipy.sparse.csc_matrix( (Vppm,(IIp,JJp)), shape=(fluid_ndof2,fluid_ndof2) )
 
-        K=scipy.sparse.construct.bmat( [ [KFF[SolvedDofF,:][:,SolvedDofF],-CPF[SolvedDofP,:][:,SolvedDofF].T],
+        K=scipy.sparse.bmat( [ [KFF[SolvedDofF,:][:,SolvedDofF],-CPF[SolvedDofP,:][:,SolvedDofF].T],
                                          [None,KPP[SolvedDofP,:][:,SolvedDofP]] ] )
-        M=scipy.sparse.construct.bmat( [ [MFF[SolvedDofF,:][:,SolvedDofF],None],
+        M=scipy.sparse.bmat( [ [MFF[SolvedDofF,:][:,SolvedDofF],None],
                                          [CPF[SolvedDofP,:][:,SolvedDofF],MPP[SolvedDofP,:][:,SolvedDofP]] ] )
-##        K=scipy.sparse.construct.bmat( [ [KFF[SolvedDofF,:][:,SolvedDofF],None],
+##        K=scipy.sparse.bmat( [ [KFF[SolvedDofF,:][:,SolvedDofF],None],
 ##                                         [None,KPP[SolvedDofP,:][:,SolvedDofP]] ] )
-##        M=scipy.sparse.construct.bmat( [ [MFF[SolvedDofF,:][:,SolvedDofF],None],
+##        M=scipy.sparse.bmat( [ [MFF[SolvedDofF,:][:,SolvedDofF],None],
 ##                                         [None,MPP[SolvedDofP,:][:,SolvedDofP]] ] )
 
         F=np.array(omega**2*UF[SolvedDof] , dtype='c16')

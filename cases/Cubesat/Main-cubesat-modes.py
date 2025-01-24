@@ -98,14 +98,14 @@ print("Number of nodes:",nnodes)
 print("Number of elements:",nelem)
 
 #      CLEAN MESH
-Id_nodes_used=scipy.unique(elements)
+Id_nodes_used=np.unique(elements)
 Id_nodes_nonused=np.setdiff1d(range(1,nnodes),Id_nodes_used)
-IdNodesFixed_x=scipy.unique(scipy.hstack([IdNodesFixed_x,Id_nodes_nonused]))
-IdNodesFixed_y=scipy.unique(scipy.hstack([IdNodesFixed_y,Id_nodes_nonused]))
-IdNodesFixed_z=scipy.unique(scipy.hstack([IdNodesFixed_z,Id_nodes_nonused]))
-IdNodesFixed_rotx=scipy.unique(scipy.hstack([IdNodesFixed_rotx,Id_nodes_nonused]))
-IdNodesFixed_roty=scipy.unique(scipy.hstack([IdNodesFixed_roty,Id_nodes_nonused]))
-IdNodesFixed_rotz=scipy.unique(scipy.hstack([IdNodesFixed_rotz,Id_nodes_nonused]))
+IdNodesFixed_x=np.unique(scipy.hstack([IdNodesFixed_x,Id_nodes_nonused]))
+IdNodesFixed_y=np.unique(scipy.hstack([IdNodesFixed_y,Id_nodes_nonused]))
+IdNodesFixed_z=np.unique(scipy.hstack([IdNodesFixed_z,Id_nodes_nonused]))
+IdNodesFixed_rotx=np.unique(scipy.hstack([IdNodesFixed_rotx,Id_nodes_nonused]))
+IdNodesFixed_roty=np.unique(scipy.hstack([IdNodesFixed_roty,Id_nodes_nonused]))
+IdNodesFixed_rotz=np.unique(scipy.hstack([IdNodesFixed_rotz,Id_nodes_nonused]))
 
 # define fixed dof
 Fixed_Dofs = scipy.hstack([

@@ -49,11 +49,11 @@ def NLsystem(X):
     F=X[SolvedDofs_x].copy()
     G=X[SolvedDofs_w].copy()
 
-    #Big_matrix=scipy.sparse.construct.bmat([
+    #Big_matrix=scipy.sparse.bmat([
     #    [scipy.dot(G,A*G)*K*fluid_damping-scipy.dot(G,B*G)*M  ,  K_sum_fi_Gi_A*fluid_damping-M_sum_fi_Gi_B],
     #    [K_sum_fi_Gi_A.T*fluid_damping-M_sum_fi_Gi_B.T        ,  scipy.dot(F,K*F)*A*fluid_damping-scipy.dot(F,M*F)*B]] )
     #Second_member = scipy.hstack([  P*scipy.dot(cc,G)  ,  cc*scipy.dot(P,F)  ])
-    Big_matrix=scipy.sparse.construct.bmat([
+    Big_matrix=scipy.sparse.bmat([
         [scipy.dot(G,A*G)*K*fluid_damping-scipy.dot(G,B*G)*M  ,  K_sum_fi_Gi_A*fluid_damping-M_sum_fi_Gi_B+scipy.tensordot(P,cc,0)],
         [K_sum_fi_Gi_A.T*fluid_damping-M_sum_fi_Gi_B.T+scipy.tensordot(cc,P,0)        ,  scipy.dot(F,K*F)*A*fluid_damping-scipy.dot(F,M*F)*B]] )
     #Second_member = scipy.hstack([  P*scipy.dot(cc,G)  ,  cc*scipy.dot(P,F)  ])
@@ -230,7 +230,7 @@ for i in range(nb_fcts_PGD):
 ##        #F_new[SolvedDofs_x] = scipy.sparse.linalg.spsolve( Big_matrix_x , second_member_x )
 ##        F=F_new.copy()
 
-##        Big_matrix=scipy.sparse.construct.bmat( [[scipy.dot(G,A*G)*K*fluid_damping-scipy.dot(G,B*G)*M  ,  K_sum_fi_Gi_A*fluid_damping-M_sum_fi_Gi_B],
+##        Big_matrix=scipy.sparse.bmat( [[scipy.dot(G,A*G)*K*fluid_damping-scipy.dot(G,B*G)*M  ,  K_sum_fi_Gi_A*fluid_damping-M_sum_fi_Gi_B],
 ##                [K_sum_fi_Gi_A.T*fluid_damping-M_sum_fi_Gi_B.T,scipy.dot(F,K*F)*A*fluid_damping-scipy.dot(F,M*F)*B]
 ##                                                 ] )
 ##        Second_member = scipy.hstack([  scipy.dot(cc,G)*P  ,  cc*scipy.dot(P,F)  ])

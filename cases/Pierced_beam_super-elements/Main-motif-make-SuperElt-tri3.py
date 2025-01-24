@@ -239,7 +239,7 @@ elements_super_3holes[2,:]=elt3
 
 nbelem_super_3holes=3
 
-nnodes_super_3holes=len( scipy.unique(np.array(elements_super_3holes)) )
+nnodes_super_3holes=len( np.unique(np.array(elements_super_3holes)) )
 ndof_super_3holes=nnodes_super_3holes*2
 
 # define fixed dof

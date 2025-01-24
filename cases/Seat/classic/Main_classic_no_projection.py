@@ -94,14 +94,14 @@ fluid_ndof     = fluid_nnodes
 
 
 struc_elements_old,struc_node_id = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',2,2)
-struc_nnodes   = len(scipy.unique(struc_elements_old))
+struc_nnodes   = len(np.unique(struc_elements_old))
 struc_nelem    = struc_elements_old.shape[0]
 struc_ndof     = struc_nnodes*6
 
 struc_boun,struc_boun_id = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',1,1)
 
 # renumbering of structure nodes
-#struc_node_id=scipy.unique(struc_elements_old)
+#struc_node_id=np.unique(struc_elements_old)
 struc_nodes=np.zeros((struc_nnodes,3))
 for i in range(struc_nnodes):
     struc_nodes[i,0]=fluid_nodes[struc_node_id[i]-1,0]
@@ -137,7 +137,7 @@ if rank==0:
 
 #print xvibacoufo.makecompatiblefsimesh.__doc__
 
-#struc_boun_id=scipy.unique(struc_boun)
+#struc_boun_id=np.unique(struc_boun)
 interfaceIdnodes = np.setdiff1d(struc_node_id,struc_boun_id)
 
 fluid_elements_new,fluid_nodes_new,interface_elements=silex_lib_xfem_acou_tet4.makecompatiblefsimesh(fluid_nodes,
@@ -169,7 +169,7 @@ if rank==0:
 # Find the fixed dofs and the free dofs
 
 tmp4=scipy.sparse.find(struc_nodes[:,2]==0.0) # z=0
-FixedStrucNodes=scipy.unique(scipy.hstack([tmp4[1]+1]))
+FixedStrucNodes=np.unique(scipy.hstack([tmp4[1]+1]))
 
 
 FixedStrucDofUx=(FixedStrucNodes-1)*6
@@ -294,11 +294,11 @@ if rank==0:
 ##################################################################
 
 
-K=scipy.sparse.construct.bmat( [[KFF[SolvedDofF,:][:,SolvedDofF],None],
+K=scipy.sparse.bmat( [[KFF[SolvedDofF,:][:,SolvedDofF],None],
                                 [-CSF[SolvedDofS,:][:,SolvedDofF],KSS[SolvedDofS,:][:,SolvedDofS]]
                                 ] )
 
-M=scipy.sparse.construct.bmat( [[MFF[SolvedDofF,:][:,SolvedDofF],CSF[SolvedDofS,:][:,SolvedDofF].T],
+M=scipy.sparse.bmat( [[MFF[SolvedDofF,:][:,SolvedDofF],CSF[SolvedDofS,:][:,SolvedDofF].T],
                                 [None,MSS[SolvedDofS,:][:,SolvedDofS]]
                                 ] )
 

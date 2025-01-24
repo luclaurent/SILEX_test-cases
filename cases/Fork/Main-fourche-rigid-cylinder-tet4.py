@@ -111,9 +111,9 @@ dofS2 = scipy.hstack([(IdnodeS2-1)*3,(IdnodeS2-1)*3+1,(IdnodeS2-1)*3+2])
 R3 = silex_lib_extra.rigidify_surface(IdnodeS3,nodes,[52.0,39.0,-36.0])
 dofS3 = scipy.hstack([(IdnodeS3-1)*3,(IdnodeS3-1)*3+1,(IdnodeS3-1)*3+2])
 
-sparse_ones = scipy.sparse.csc_matrix( (list(scipy.ones(ndof)),(list(range(ndof)),list(range(ndof)))), shape=(ndof,ndof) )
+sparse_ones = scipy.sparse.csc_matrix( (list(np.ones(ndof)),(list(range(ndof)),list(range(ndof)))), shape=(ndof,ndof) )
 
-R = scipy.sparse.construct.bmat( [ [ sparse_ones
+R = scipy.sparse.bmat( [ [ sparse_ones
                                      ,R2[:,list(range(ndof,ndof+6,1))]
                                      ,R3[:,list(range(ndof,ndof+6,1))]
                                      ]

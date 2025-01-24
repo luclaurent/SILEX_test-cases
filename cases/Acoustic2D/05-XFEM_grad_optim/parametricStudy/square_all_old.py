@@ -177,7 +177,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
 
     #EnrichedElements,NbEnrichedElements=silex_lib_tri3_acou.getenrichedelements(struc_nodes,struc_elements,fluid_nodes,fluid_elements)
     EnrichedElements,NbEnrichedElements=silex_lib_tri3_acou.getenrichedelementsfromlevelset(fluid_elements,LevelSet)
-    EnrichedElements=scipy.unique(EnrichedElements[list(range(NbEnrichedElements))])-1
+    EnrichedElements=np.unique(EnrichedElements[list(range(NbEnrichedElements))])-1
 
     toc = time.process_time()
     print("time to find surface enriched elements:",toc-tic)
@@ -188,7 +188,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
     tic = time.process_time()
 
     EdgeEnrichedElements,nbenrelts = silex_lib_tri3_acou.getedgeenrichedelements(struc_nodes,struc_boun,fluid_nodes,fluid_elements)
-    EdgeEnrichedElements=scipy.unique(EdgeEnrichedElements[list(range(nbenrelts))])-1
+    EdgeEnrichedElements=np.unique(EdgeEnrichedElements[list(range(nbenrelts))])-1
 
     toc = time.process_time()
     print("time to find edge enriched elements:",toc-tic)
@@ -226,7 +226,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
     toc = time.process_time()
     print("time to compute Heaviside enrichment:",toc-tic)
 
-    Enrichednodes = scipy.unique(fluid_elements[EnrichedElements])
+    Enrichednodes = np.unique(fluid_elements[EnrichedElements])
 
     SolvedDofA=Enrichednodes-1
 
@@ -236,13 +236,13 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
     # Construct the whole system
     ##################################################################
 
-    K=scipy.sparse.construct.bmat( [[fluid_damping*KFF[SolvedDofF,:][:,SolvedDofF],fluid_damping*KAF[SolvedDofF,:][:,SolvedDofA]],
+    K=scipy.sparse.bmat( [[fluid_damping*KFF[SolvedDofF,:][:,SolvedDofF],fluid_damping*KAF[SolvedDofF,:][:,SolvedDofA]],
                                     [fluid_damping*KAF[SolvedDofA,:][:,SolvedDofF],fluid_damping*KAA[SolvedDofA,:][:,SolvedDofA]]
                                     ] )
 
 
 
-    M=scipy.sparse.construct.bmat( [[MFF[SolvedDofF,:][:,SolvedDofF],MAF[SolvedDofF,:][:,SolvedDofA]],
+    M=scipy.sparse.bmat( [[MFF[SolvedDofF,:][:,SolvedDofF],MAF[SolvedDofF,:][:,SolvedDofA]],
                                     [MAF[SolvedDofA,:][:,SolvedDofF],MAA[SolvedDofA,:][:,SolvedDofA]]
                                     ] )
 
@@ -265,12 +265,12 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
         pickle.dump([dKFA_dtheta[SolvedDofF,:][:,SolvedDofA],dMFA_dtheta[SolvedDofF,:][:,SolvedDofA],KAF[SolvedDofF,:][:,SolvedDofA],MAF[SolvedDofF,:][:,SolvedDofA]], f)
         f.close()
         #build full stiffness and mass gradient matrices
-        dK.append(scipy.sparse.construct.bmat( [[None,fluid_damping*dKFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
+        dK.append(scipy.sparse.bmat( [[None,fluid_damping*dKFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
                                      [fluid_damping*dKFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]
                                     ] )
                                     )
 
-        dM.append(scipy.sparse.construct.bmat( [[None,dMFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
+        dM.append(scipy.sparse.bmat( [[None,dMFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
                                      [dMFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]
                                     ] )
                                     )
@@ -311,7 +311,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
             omega=2*np.pi*freq
             print("proc number",rank,"frequency=",freq)
 
-            FF[SolvedDofF]=-(KFF[SolvedDofF,:][:,IdnodeS2-1]-(omega**2)*MFF[SolvedDofF,:][:,IdnodeS2-1])*(scipy.ones((len(IdnodeS2))))
+            FF[SolvedDofF]=-(KFF[SolvedDofF,:][:,IdnodeS2-1]-(omega**2)*MFF[SolvedDofF,:][:,IdnodeS2-1])*(np.ones((len(IdnodeS2))))
             FA = np.zeros(fluid_ndof)
             F  = FF[SolvedDofF]
             F  = np.concatenate((F,FA[SolvedDofA]))
@@ -323,7 +323,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
             sol = scipy.sparse.linalg.spsolve(scipy.sparse.csc_matrix(pbFreq,dtype=complex), F)
             #store the pressure field
             press = np.zeros(fluid_ndof,dtype=complex)
-            press[IdnodeS2-1] = scipy.ones(len(IdnodeS2))
+            press[IdnodeS2-1] = np.ones(len(IdnodeS2))
             press[SolvedDofF]=sol[list(range(len(SolvedDofF)))]
             enrichment=np.zeros(fluid_nnodes,dtype=complex)
             enrichment[SolvedDofA]=sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]

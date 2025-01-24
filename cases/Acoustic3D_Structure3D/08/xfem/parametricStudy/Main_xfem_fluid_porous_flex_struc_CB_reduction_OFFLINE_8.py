@@ -167,9 +167,9 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
 
 
     # renumbering air
-    old = scipy.unique(fluid_elements1)
-    new = list(range(1,len(scipy.unique(fluid_elements1))+1))
-    new_nodes=fluid_nodes[scipy.unique(fluid_elements1)-1,:]
+    old = np.unique(fluid_elements1)
+    new = list(range(1,len(np.unique(fluid_elements1))+1))
+    new_nodes=fluid_nodes[np.unique(fluid_elements1)-1,:]
 
     dico1 = dict(zip(old,new))
     new_elements=np.zeros((fluid_nelem1,4),dtype=int)
@@ -188,9 +188,9 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
     fluid_elements5 = new_elements
 
     # renumbering porous
-    old = scipy.unique(fluid_elements2)
-    new = list(range(1,len(scipy.unique(fluid_elements2))+1))
-    new_nodes=fluid_nodes[scipy.unique(fluid_elements2)-1,:]
+    old = np.unique(fluid_elements2)
+    new = list(range(1,len(np.unique(fluid_elements2))+1))
+    new_nodes=fluid_nodes[np.unique(fluid_elements2)-1,:]
 
     dico2 = dict(zip(old,new))
     new_elements=np.zeros((fluid_nelem2,4),dtype=int)
@@ -207,7 +207,7 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
 
     # Boundary conditions on air cavity
     IdNodesFixed_porous_us_x=IdNodesS4
-    ##IdNodesFixed_porous_us_y=scipy.unique(scipy.hstack([IdNodesS4,IdNodesS6]))
+    ##IdNodesFixed_porous_us_y=np.unique(scipy.hstack([IdNodesS4,IdNodesS6]))
     IdNodesFixed_porous_us_y=IdNodesS4
     IdNodesFixed_porous_us_z=IdNodesS4
     IdNodesFixed_porous_uf_x=IdNodesS4
@@ -280,7 +280,7 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
     #CBP=CPF[SolvedDofP,:][:,SolvedDofB].T
     #SolvedDof = scipy.hstack([SolvedDofF,SolvedDofP+fluid_ndof1])
 
-    CBP=scipy.sparse.construct.bmat( [ [CPF[SolvedDofP,:][:,IdNodesS3_for_1-1],CPF[SolvedDofP,:][:,0]*0.0]]).T
+    CBP=scipy.sparse.bmat( [ [CPF[SolvedDofP,:][:,IdNodesS3_for_1-1],CPF[SolvedDofP,:][:,0]*0.0]]).T
 
 
 

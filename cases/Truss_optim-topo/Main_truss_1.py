@@ -97,7 +97,7 @@ dC = np.zeros(nelem)
 ##############################################################################
 Lelem,sumL = silex_lib_elt.getlength(nodes,elements)
 
-xe =scipy.ones(nelem)*Lfrac
+xe =np.ones(nelem)*Lfrac
 
 
 # define fixed dof
@@ -227,10 +227,10 @@ for e in range(nelem):
 new_elements=np.array(new_elements)
 nb_new_elements=new_elements.shape[0]
 
-node_to_be_eliminated=np.setdiff1d(range(1,nnodes+1,1),scipy.unique(new_elements))
+node_to_be_eliminated=np.setdiff1d(range(1,nnodes+1,1),np.unique(new_elements))
 
-dico=dict(zip(scipy.unique(new_elements),list(range(1,1+len(scipy.unique(new_elements)),1))))
-new_nodes=nodes[scipy.unique(new_elements)-1,:]
+dico=dict(zip(np.unique(new_elements),list(range(1,1+len(np.unique(new_elements)),1))))
+new_nodes=nodes[np.unique(new_elements)-1,:]
 for e in range(nb_new_elements):
     for i in range(2):
         new_elements[e,i]=dico[new_elements[e][i]]

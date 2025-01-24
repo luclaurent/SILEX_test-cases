@@ -64,9 +64,9 @@ elementsBas=np.array([[1,2],[2,3]])
 elementsGauche=np.array([[1,4],[4,7]])
 elementsHaut=np.array([[7,8],[8,9]])
 
-IdNodesBas=scipy.unique(elementsBas)
-IdNodesGauche=scipy.unique(elementsGauche)
-IdNodesHaut=scipy.unique(elementsHaut)
+IdNodesBas=np.unique(elementsBas)
+IdNodesGauche=np.unique(elementsGauche)
+IdNodesHaut=np.unique(elementsHaut)
 
 # read surfaces where to impose boundary conditions
 #elementsS1,IdnodeS1=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',1,1)

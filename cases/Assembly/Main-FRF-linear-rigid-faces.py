@@ -297,9 +297,9 @@ R203 = silex_lib_extra.rigidify_surface(IdnodeS203,nodes,SuperNodes[6])
 
 R204 = silex_lib_extra.rigidify_surface(IdnodeS204,nodes,SuperNodes[7])
 
-sparse_ones = scipy.sparse.csc_matrix( (list(scipy.ones(ndof)),(list(range(ndof)),list(range(ndof)))), shape=(ndof,ndof) )
+sparse_ones = scipy.sparse.csc_matrix( (list(np.ones(ndof)),(list(range(ndof)),list(range(ndof)))), shape=(ndof,ndof) )
 
-R = scipy.sparse.construct.bmat( [[sparse_ones
+R = scipy.sparse.bmat( [[sparse_ones
                                   +R101[list(range(ndof)),:][:,list(range(ndof))]
                                   +R102[list(range(ndof)),:][:,list(range(ndof))]
                                   +R103[list(range(ndof)),:][:,list(range(ndof))]

@@ -140,9 +140,9 @@ if rank==0:
     print ("Number of nodes at interface:",fluid_nnodes3)
 
 # renumbering air
-old = scipy.unique(fluid_elements1)
-new = list(range(1,len(scipy.unique(fluid_elements1))+1))
-new_nodes=fluid_nodes[scipy.unique(fluid_elements1)-1,:]
+old = np.unique(fluid_elements1)
+new = list(range(1,len(np.unique(fluid_elements1))+1))
+new_nodes=fluid_nodes[np.unique(fluid_elements1)-1,:]
 
 dico1 = dict(zip(old,new))
 new_elements=np.zeros((fluid_nelem1,4),dtype=int)
@@ -161,9 +161,9 @@ for e in range(fluid_nelem5):
 fluid_elements5 = new_elements
 
 # renumbering porous
-old = scipy.unique(fluid_elements2)
-new = list(range(1,len(scipy.unique(fluid_elements2))+1))
-new_nodes=fluid_nodes[scipy.unique(fluid_elements2)-1,:]
+old = np.unique(fluid_elements2)
+new = list(range(1,len(np.unique(fluid_elements2))+1))
+new_nodes=fluid_nodes[np.unique(fluid_elements2)-1,:]
 
 dico2 = dict(zip(old,new))
 new_elements=np.zeros((fluid_nelem2,4),dtype=int)
@@ -180,7 +180,7 @@ for i in range(len(IdNodesS4)):
 
 # Boundary conditions on air cavity
 IdNodesFixed_porous_us_x=IdNodesS4
-##IdNodesFixed_porous_us_y=scipy.unique(scipy.hstack([IdNodesS4,IdNodesS6]))
+##IdNodesFixed_porous_us_y=np.unique(scipy.hstack([IdNodesS4,IdNodesS6]))
 IdNodesFixed_porous_us_y=IdNodesS4
 IdNodesFixed_porous_us_z=IdNodesS4
 IdNodesFixed_porous_uf_x=IdNodesS4
@@ -270,7 +270,7 @@ tic = time.process_time()
 LSEnrichedElements,NbLSEnrichedElements=silex_lib_xfem_acou_tet4.getenrichedelementsfromlevelset(fluid_elements1,LevelSet)
 LSEnrichedElements=LSEnrichedElements[list(range(NbLSEnrichedElements))]
 EnrichedElements,NbEnrichedElements=silex_lib_xfem_acou_tet4.getsurfenrichedelements(struc_nodes,struc_elements,fluid_nodes1,fluid_elements1[LSEnrichedElements])
-EnrichedElements=scipy.unique(EnrichedElements[list(range(NbEnrichedElements))])
+EnrichedElements=np.unique(EnrichedElements[list(range(NbEnrichedElements))])
 EnrichedElements=LSEnrichedElements[EnrichedElements-1]
 toc = time.process_time()
 if rank==0:
@@ -279,10 +279,10 @@ if rank==0:
 tic = time.process_time()
 
 EdgeEnrichedElements,nbenrelts = silex_lib_xfem_acou_tet4.getedgeenrichedelements(struc_nodes,struc_boun,fluid_nodes1,fluid_elements1)
-EdgeEnrichedElements=scipy.unique(EdgeEnrichedElements[list(range(nbenrelts))])-1
+EdgeEnrichedElements=np.unique(EdgeEnrichedElements[list(range(nbenrelts))])-1
 
 EdgeEnrichedElementsInAllMesh,nbEdgeEnrichedElementsInAllMesh=silex_lib_xfem_acou_tet4.getenrichedelementsfromlevelset(fluid_elements1,LevelSetTangent)
-EdgeEnrichedElementsInAllMesh=scipy.unique(EdgeEnrichedElementsInAllMesh[list(range(nbEdgeEnrichedElementsInAllMesh))])
+EdgeEnrichedElementsInAllMesh=np.unique(EdgeEnrichedElementsInAllMesh[list(range(nbEdgeEnrichedElementsInAllMesh))])
 
 toc = time.process_time()
 if rank==0:
@@ -336,8 +336,8 @@ CPF=scipy.sparse.csc_matrix( (Vpf,(IIpf,JJpf)), shape=(fluid_ndof2,fluid_ndof1) 
 ##################################################################
 tic = time.process_time()
 
-#Enrichednodes = scipy.unique(fluid_elements1[HeavisideEnrichedElements])
-Enrichednodes = scipy.unique(fluid_elements1[EnrichedElements])
+#Enrichednodes = np.unique(fluid_elements1[HeavisideEnrichedElements])
+Enrichednodes = np.unique(fluid_elements1[EnrichedElements])
 
 NegativeLSelements,PositiveLSelements,NegativeLStgtElements,PositiveLStgtElements,nbNegLS,nbPosLS,nbNegLSt,nbPosLSt=silex_lib_xfem_acou_tet4.getpositivenegativeelts(fluid_elements1,LevelSet,LevelSetTangent)
 
@@ -558,19 +558,19 @@ if (Flag_frf_analysis==1):
         KPP=scipy.sparse.csc_matrix( (Vppk,(IIp,JJp)), shape=(fluid_ndof2,fluid_ndof2) )
         MPP=scipy.sparse.csc_matrix( (Vppm,(IIp,JJp)), shape=(fluid_ndof2,fluid_ndof2) )
 
-        K=scipy.sparse.construct.bmat( [ [K_diag_mm,None,-CmP],
+        K=scipy.sparse.bmat( [ [K_diag_mm,None,-CmP],
                                          [None,Khat_AA,-CAP],
                                          [None,None,KPP[SolvedDofP,:][:,SolvedDofP]] ] )
 
-        M=scipy.sparse.construct.bmat( [ [M_diag_mm,Mhat_mA,None],
+        M=scipy.sparse.bmat( [ [M_diag_mm,Mhat_mA,None],
                                          [Mhat_mA.T,Mhat_AA,None],
                                          [CmP.T,CAP.T,MPP[SolvedDofP,:][:,SolvedDofP]] ] )
 
-##        K=scipy.sparse.construct.bmat( [ [K_diag_mm,None,-CmP],
+##        K=scipy.sparse.bmat( [ [K_diag_mm,None,-CmP],
 ##                                         [None,Khat_AA,None],
 ##                                         [None,None,KPP[SolvedDofP,:][:,SolvedDofP]] ] )
 ##
-##        M=scipy.sparse.construct.bmat( [ [M_diag_mm,Mhat_mA,None],
+##        M=scipy.sparse.bmat( [ [M_diag_mm,Mhat_mA,None],
 ##                                         [Mhat_mA.T,Mhat_AA,None],
 ##                                         [CmP.T,None,MPP[SolvedDofP,:][:,SolvedDofP]] ] )
 

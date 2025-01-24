@@ -203,10 +203,10 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
     # Construct the whole system
     #################################################################
 
-    K = scipy.sparse.construct.bmat([
+    K = scipy.sparse.bmat([
         [fluid_damping*KFF[SolvedDofF, :][:, SolvedDofF]]])
 
-    M = scipy.sparse.construct.bmat([
+    M = scipy.sparse.bmat([
         [MFF[SolvedDofF, :][:, SolvedDofF]]])
 
     ##################################################################

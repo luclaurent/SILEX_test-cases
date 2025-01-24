@@ -366,11 +366,11 @@ if dataPb['flag_write_gmsh_results']==1:
 SolvedDofF=list(range(fluid_ndof))
 SolvedDofA=Enrichednodes-1
 
-H=scipy.sparse.construct.bmat( [ [HFF[SolvedDofF,:][:,SolvedDofF],HFA[SolvedDofF,:][:,SolvedDofA]],
+H=scipy.sparse.bmat( [ [HFF[SolvedDofF,:][:,SolvedDofF],HFA[SolvedDofF,:][:,SolvedDofA]],
                                  [HFA[SolvedDofA,:][:,SolvedDofF],HAA[SolvedDofA,:][:,SolvedDofA]]
                                  ] )
         
-S=scipy.sparse.construct.bmat( [ [SFF[SolvedDofF,:][:,SolvedDofF],None],
+S=scipy.sparse.bmat( [ [SFF[SolvedDofF,:][:,SolvedDofF],None],
                                  [None,HAA[SolvedDofA,:][:,SolvedDofA]*0.0]
                                  ] )
 C = np.array([*CF[SolvedDofF], *CA[SolvedDofA]])

@@ -173,7 +173,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     # level set gradient with respect to parameters
     LevelSet_gradient_X=-(fluid_nodes[:,0]-x_pos_struc)/(LevelSet+radius_hcircle)
     LevelSet_gradient_Y=-(fluid_nodes[:,1]-y_pos_struc)/(LevelSet+radius_hcircle)
-    LevelSet_gradient_R=-scipy.ones(fluid_nnodes)
+    LevelSet_gradient_R=-np.ones(fluid_nnodes)
 
     if (flag_write_gmsh_results==1) and (rank==0):
         silex_lib_gmsh.WriteResults(results_file+'_tangent_level_set',fluid_nodes,fluid_elements,2,[[LevelSetTangent,'nodal',1,'Tangent level set']])
@@ -195,7 +195,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     silex_lib_gmsh.WriteResults(results_file+'_struc_mesh',struc_nodes,struc_elements,1)
 
     EnrichedElements,NbEnrichedElements=silex_lib_tri3_acou.getenrichedelements(struc_nodes,struc_elements,fluid_nodes,fluid_elements)
-    EnrichedElements=scipy.unique(EnrichedElements[list(range(NbEnrichedElements))])-1
+    EnrichedElements=np.unique(EnrichedElements[list(range(NbEnrichedElements))])-1
 
     toc = time.process_time()
     print("time to find surface enriched elements:",toc-tic)
@@ -206,7 +206,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     tic = time.process_time()
 
     EdgeEnrichedElements,nbenrelts = silex_lib_tri3_acou.getedgeenrichedelements(struc_nodes,struc_boun,fluid_nodes,fluid_elements)
-    EdgeEnrichedElements=scipy.unique(EdgeEnrichedElements[list(range(nbenrelts))])-1
+    EdgeEnrichedElements=np.unique(EdgeEnrichedElements[list(range(nbenrelts))])-1
 
     toc = time.process_time()
     print("time to find edge enriched elements:",toc-tic)
@@ -237,8 +237,8 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
 
     #HeavisideEnrichedElements=np.setdiff1d(EnrichedElements,EdgeEnrichedElements)
 
-    #Enrichednodes = scipy.unique(fluid_elements[HeavisideEnrichedElements])
-    #Enrichednodes = scipy.unique(fluid_elements[EnrichedElements])
+    #Enrichednodes = np.unique(fluid_elements[HeavisideEnrichedElements])
+    #Enrichednodes = np.unique(fluid_elements[EnrichedElements])
 
     #print xvibacoufo.getpositivenegativeelts.__doc__
 
@@ -250,7 +250,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     PositiveLStgtElements=PositiveLStgtElements[list(range(nbPosLSt))]
 
     EdgeEnrichedElementsInAllMesh,nbEdgeEnrichedElementsInAllMesh=silex_lib_tri3_acou.getenrichedelementsfromlevelset(fluid_elements,LevelSetTangent)
-    EdgeEnrichedElementsInAllMesh=scipy.unique(EdgeEnrichedElementsInAllMesh[list(range(nbEdgeEnrichedElementsInAllMesh))])
+    EdgeEnrichedElementsInAllMesh=np.unique(EdgeEnrichedElementsInAllMesh[list(range(nbEdgeEnrichedElementsInAllMesh))])
 
     IdElementTip=silex_lib_tri3_acou.getelementcontainingpoint(fluid_elements,fluid_nodes,[0.6,0.65])
 
@@ -273,12 +273,12 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     toc = time.process_time()
     print("time to compute Heaviside enrichment:",toc-tic)
 
-    #Enrichednodes = scipy.unique(fluid_elements[scipy.hstack(([HeavisideEnrichedElements,EdgeEnrichedElements]))])
-    #Enrichednodes = scipy.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements,EdgeEnrichedElementsInAllMesh]))])
-    #Enrichednodes = scipy.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements]))])
-    #Enrichednodes = scipy.unique(fluid_elements[scipy.hstack(([NegativeLStgtElements]))])
-    Enrichednodes = scipy.unique(fluid_elements[EnrichedElements])
-    #Enrichednodes = scipy.unique(fluid_elements)
+    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([HeavisideEnrichedElements,EdgeEnrichedElements]))])
+    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements,EdgeEnrichedElementsInAllMesh]))])
+    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements]))])
+    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([NegativeLStgtElements]))])
+    Enrichednodes = np.unique(fluid_elements[EnrichedElements])
+    #Enrichednodes = np.unique(fluid_elements)
     SolvedDofA=Enrichednodes-1
 
     silex_lib_gmsh.WriteResults(results_file+'_EnrichedElements',fluid_nodes,fluid_elements[scipy.hstack(([EnrichedElements]))],2)
@@ -287,13 +287,13 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     # Construct the whole system
     ##################################################################
 
-    K=scipy.sparse.construct.bmat( [[fluid_damping*KFF[SolvedDofF,:][:,SolvedDofF],fluid_damping*KAF[SolvedDofF,:][:,SolvedDofA]],
+    K=scipy.sparse.bmat( [[fluid_damping*KFF[SolvedDofF,:][:,SolvedDofF],fluid_damping*KAF[SolvedDofF,:][:,SolvedDofA]],
                                     [fluid_damping*KAF[SolvedDofA,:][:,SolvedDofF],fluid_damping*KAA[SolvedDofA,:][:,SolvedDofA]]
                                     ] )
 
 
 
-    M=scipy.sparse.construct.bmat( [[MFF[SolvedDofF,:][:,SolvedDofF],MAF[SolvedDofF,:][:,SolvedDofA]],
+    M=scipy.sparse.bmat( [[MFF[SolvedDofF,:][:,SolvedDofF],MAF[SolvedDofF,:][:,SolvedDofA]],
                                     [MAF[SolvedDofA,:][:,SolvedDofF],MAA[SolvedDofA,:][:,SolvedDofA]]
                                     ] )
 
@@ -325,27 +325,27 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     pickle.dump([dKFA_dtheta_X[SolvedDofF,:][:,SolvedDofA],dMFA_dtheta_X[SolvedDofF,:][:,SolvedDofA],KAF[SolvedDofF,:][:,SolvedDofA],MAF[SolvedDofF,:][:,SolvedDofA]], f)
     f.close()
 
-    dK_X=scipy.sparse.construct.bmat( [[None,fluid_damping*dKFA_dtheta_X[SolvedDofF,:][:,SolvedDofA]],
+    dK_X=scipy.sparse.bmat( [[None,fluid_damping*dKFA_dtheta_X[SolvedDofF,:][:,SolvedDofA]],
                                      [fluid_damping*dKFA_dtheta_X[SolvedDofA,:][:,SolvedDofF],None]
                                     ] )
 
-    dM_X=scipy.sparse.construct.bmat( [[None,dMFA_dtheta_X[SolvedDofF,:][:,SolvedDofA]],
+    dM_X=scipy.sparse.bmat( [[None,dMFA_dtheta_X[SolvedDofF,:][:,SolvedDofA]],
                                      [dMFA_dtheta_X[SolvedDofA,:][:,SolvedDofF],None]
                                     ] )
     
-    dK_Y=scipy.sparse.construct.bmat( [[None,fluid_damping*dKFA_dtheta_Y[SolvedDofF,:][:,SolvedDofA]],
+    dK_Y=scipy.sparse.bmat( [[None,fluid_damping*dKFA_dtheta_Y[SolvedDofF,:][:,SolvedDofA]],
                                      [fluid_damping*dKFA_dtheta_Y[SolvedDofA,:][:,SolvedDofF],None]
                                     ] )
 
-    dM_Y=scipy.sparse.construct.bmat( [[None,dMFA_dtheta_Y[SolvedDofF,:][:,SolvedDofA]],
+    dM_Y=scipy.sparse.bmat( [[None,dMFA_dtheta_Y[SolvedDofF,:][:,SolvedDofA]],
                                      [dMFA_dtheta_Y[SolvedDofA,:][:,SolvedDofF],None]
                                     ] )       
 
-    dK_R=scipy.sparse.construct.bmat( [[None,fluid_damping*dKFA_dtheta_R[SolvedDofF,:][:,SolvedDofA]],
+    dK_R=scipy.sparse.bmat( [[None,fluid_damping*dKFA_dtheta_R[SolvedDofF,:][:,SolvedDofA]],
                                      [fluid_damping*dKFA_dtheta_R[SolvedDofA,:][:,SolvedDofF],None]
                                     ] )
 
-    dM_R=scipy.sparse.construct.bmat( [[None,dMFA_dtheta_R[SolvedDofF,:][:,SolvedDofA]],
+    dM_R=scipy.sparse.bmat( [[None,dMFA_dtheta_R[SolvedDofF,:][:,SolvedDofA]],
                                      [dMFA_dtheta_R[SolvedDofA,:][:,SolvedDofF],None]
                                     ] )          
 
@@ -382,7 +382,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
             omega=2*np.pi*freq
             print("proc number",rank,"frequency=",freq)
 
-            FF[SolvedDofF]=-(KFF[SolvedDofF,:][:,IdnodeS2-1]-(omega**2)*MFF[SolvedDofF,:][:,IdnodeS2-1])*(scipy.ones((len(IdnodeS2))))
+            FF[SolvedDofF]=-(KFF[SolvedDofF,:][:,IdnodeS2-1]-(omega**2)*MFF[SolvedDofF,:][:,IdnodeS2-1])*(np.ones((len(IdnodeS2))))
             FA = np.zeros(fluid_ndof)
             F  = FF[SolvedDofF]
             F  = np.concatenate((F,FA[SolvedDofA]))
@@ -410,7 +410,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
             Dsol_Dtheta_R = scipy.sparse.linalg.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='cfloat')  , tmp_R )
 
             press = np.zeros(fluid_ndof,dtype=complex)
-            press[IdnodeS2-1] = scipy.ones(len(IdnodeS2))
+            press[IdnodeS2-1] = np.ones(len(IdnodeS2))
             press[SolvedDofF]=sol[list(range(len(SolvedDofF)))]
             enrichment=np.zeros(fluid_nnodes,dtype=complex)
             enrichment[SolvedDofA]=sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]

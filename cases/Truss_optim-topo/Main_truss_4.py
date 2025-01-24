@@ -98,7 +98,7 @@ dC = np.zeros(nelem)
 ##############################################################################
 Lelem,sumL = silex_lib_elt.getlength(nodes,elements)
 
-xe = scipy.ones(nelem)*Lfrac
+xe = np.ones(nelem)*Lfrac
 
 
 # define fixed dof

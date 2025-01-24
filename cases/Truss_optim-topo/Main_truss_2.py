@@ -127,7 +127,7 @@ print("Number of elements:",nelem)
 
 
 # Choose initial "unit" xe
-#xe=scipy.ones(nelem)
+#xe=np.ones(nelem)
 
 penal      = 3.0
 YoungMin   = 2e9

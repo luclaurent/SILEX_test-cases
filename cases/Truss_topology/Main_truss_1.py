@@ -80,7 +80,7 @@ print("Number of nodes:",nnodes)
 print("Number of elements:",nelem)
 
 Lfrac = 0.21
-xe =scipy.ones(nelem)*Lfrac
+xe =np.ones(nelem)*Lfrac
 penal = 3.0
 YoungMin = 2e9
 

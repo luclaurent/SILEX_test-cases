@@ -184,7 +184,7 @@ LSEnrichedElements=LSEnrichedElements[list(range(NbLSEnrichedElements))]
 
 
 EnrichedElements,NbEnrichedElements=silex_lib_xfem_acou_tet4.getsurfenrichedelements(struc_nodes,struc_elements,fluid_nodes,fluid_elements[LSEnrichedElements])
-EnrichedElements=scipy.unique(EnrichedElements[list(range(NbEnrichedElements))])
+EnrichedElements=np.unique(EnrichedElements[list(range(NbEnrichedElements))])
 EnrichedElements=LSEnrichedElements[EnrichedElements-1]
 toc = time.process_time()
 if rank==0:
@@ -227,7 +227,7 @@ if rank==0:
 ##################################################################
 tic = time.process_time()
 
-Enrichednodes = scipy.unique(fluid_elements[EnrichedElements])
+Enrichednodes = np.unique(fluid_elements[EnrichedElements])
 
 IIaa,JJaa,IIaf,JJaf,Vaak,Vaam,Vafk,Vafm=silex_lib_xfem_acou_tet4.globalxfemacousticmatrices(fluid_elements,fluid_nodes,LevelSet,celerity,rho)
 
@@ -313,7 +313,7 @@ if rank==0:
 ##################################################################
 tic = time.process_time()
 
-PSn = scipy.sparse.construct.bmat( [ [scipy.sparse.coo_matrix(eigen_vectors_S),scipy.sparse.coo_matrix(S).T] ] )
+PSn = scipy.sparse.bmat( [ [scipy.sparse.coo_matrix(eigen_vectors_S),scipy.sparse.coo_matrix(S).T] ] )
 
 freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*np.pi))
 freq_eigv_S.append(0.0)
@@ -507,15 +507,15 @@ M_diag_nn= scipy.sparse.csc_matrix( (VM_diag_nn,(IIDnn,JJDnn)), shape=(nb_mode_S
 KSS_static_S1 = scipy.dot(KSS[SolvedDofS,:][:,SolvedDofS],scipy.sparse.coo_matrix(S).T)
 staticT__KSS_static_11 = np.array(S*KSS_static_S1.todense())[0][0]
 
-Knn = scipy.sparse.construct.bmat( [[K_diag_nn,None],[None,staticT__KSS_static_11]] )
+Knn = scipy.sparse.bmat( [[K_diag_nn,None],[None,staticT__KSS_static_11]] )
 
-Mnn = scipy.sparse.construct.bmat( [[M_diag_nn,None],[None,1.0]] )
+Mnn = scipy.sparse.bmat( [[M_diag_nn,None],[None,1.0]] )
 
 CnA = PSn.T*CSA[SolvedDofS,:][:,SolvedDofA]
 
 
-K=scipy.sparse.construct.bmat( [ [fluid_damping*K_diag_mm,None,None],[None,fluid_damping*Khat_AA,None],[None,-CnA,Knn] ] )
-M=scipy.sparse.construct.bmat( [ [M_diag_mm,Mhat_mA,None],[Mhat_mA.T,Mhat_AA,CnA.T],[None,None,Mnn] ] )
+K=scipy.sparse.bmat( [ [fluid_damping*K_diag_mm,None,None],[None,fluid_damping*Khat_AA,None],[None,-CnA,Knn] ] )
+M=scipy.sparse.bmat( [ [M_diag_mm,Mhat_mA,None],[Mhat_mA.T,Mhat_AA,CnA.T],[None,None,Mnn] ] )
 
 
 F  = np.zeros((nb_mode_F+len(SolvedDofA)))

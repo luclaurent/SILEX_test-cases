@@ -508,13 +508,13 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     
     Mhat_BA = scipy.sparse.csc_matrix((Psi_IB.T).todense()*Mstar_IA.todense())+MFF[SolvedDofB,:][:,SolvedDofI]*Psi_IA
 
-    Kreduc=scipy.sparse.construct.bmat( [[fluid_damping*K_diag_mm,None,       None],
+    Kreduc=scipy.sparse.bmat( [[fluid_damping*K_diag_mm,None,       None],
                                                        [None,     fluid_damping*Khat_BB,    fluid_damping*Khat_BA],
                                                        [None,     fluid_damping*Khat_BA.T,  fluid_damping*Khat_AA],
                                                        ]
                                                       )
         
-    Mreduc=scipy.sparse.construct.bmat( [[M_diag_mm,    Mhat_mB,    Mhat_mA],
+    Mreduc=scipy.sparse.bmat( [[M_diag_mm,    Mhat_mB,    Mhat_mA],
                                          [Mhat_mB.T,    Mhat_BB,    Mhat_BA],
                                          [Mhat_mA.T,    Mhat_BA.T,  Mhat_AA],
                                          ]
@@ -581,19 +581,19 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         DMhat_BA_Dtheta = scipy.sparse.csc_matrix((Psi_IB.T).todense()*DMstar_IA_Dtheta.todense())+MFF[SolvedDofB,:][:,SolvedDofI]*DPsi_IA_Dtheta
 
 #build full stiffness and mass gradient matrices
-##        dK.append(scipy.sparse.construct.bmat( [
+##        dK.append(scipy.sparse.bmat( [
 ##                    [None,fluid_damping*dKFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
 ##                    [fluid_damping*dKFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]] ))
-##        dM.append(scipy.sparse.construct.bmat( [s
+##        dM.append(scipy.sparse.bmat( [s
 ##                    [None,dMFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
 ##                    [dMFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]] ))
-        DK_Dtheta=scipy.sparse.construct.bmat( [ [K_diag_mm*0.0,    None,               None],
+        DK_Dtheta=scipy.sparse.bmat( [ [K_diag_mm*0.0,    None,               None],
                                                  [None,             None,               DKhat_BA_Dtheta],
                                                  [None,             DKhat_BA_Dtheta.T,  DKhat_AA_Dtheta]
                                          ]
                                        )
 
-        DM_Dtheta=scipy.sparse.construct.bmat( [ [None,             None,               DMhat_mA_Dtheta],
+        DM_Dtheta=scipy.sparse.bmat( [ [None,             None,               DMhat_mA_Dtheta],
                                                  [None,             None,               DMhat_BA_Dtheta],
                                                  [DMhat_mA_Dtheta.T,DMhat_BA_Dtheta.T,  DMhat_AA_Dtheta]
                                          ]

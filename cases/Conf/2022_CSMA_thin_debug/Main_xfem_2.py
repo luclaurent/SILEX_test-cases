@@ -122,7 +122,7 @@ for x_pos_struc_ini in [8200,8201,8202]:
     LevelSetTangent=fluid_nodes[:,1]-h_struc
 
     # level set gradient with respect to parameters
-    LevelSet_gradient=-scipy.ones(fluid_nnodes)
+    LevelSet_gradient=-np.ones(fluid_nnodes)
     LevelSetTangent_gradient=np.zeros(fluid_nnodes)
 
     if (flag_write_gmsh_results==1) and (rank==0):
@@ -145,7 +145,7 @@ for x_pos_struc_ini in [8200,8201,8202]:
     silex_lib_gmsh.WriteResults(results_file+'_struc_mesh',struc_nodes,struc_elements,1)
 
     EnrichedElements,NbEnrichedElements=silex_lib_tri3_acou.getenrichedelements(struc_nodes,struc_elements,fluid_nodes,fluid_elements)
-    EnrichedElements=scipy.unique(EnrichedElements[list(range(NbEnrichedElements))])-1
+    EnrichedElements=np.unique(EnrichedElements[list(range(NbEnrichedElements))])-1
 
     toc = time.process_time()
     print("time to find surface enriched elements:",toc-tic)
@@ -154,7 +154,7 @@ for x_pos_struc_ini in [8200,8201,8202]:
     tic = time.process_time()
 
     EdgeEnrichedElements,nbenrelts = silex_lib_tri3_acou.getedgeenrichedelements(struc_nodes,struc_boun,fluid_nodes,fluid_elements)
-    EdgeEnrichedElements=scipy.unique(EdgeEnrichedElements[list(range(nbenrelts))])-1
+    EdgeEnrichedElements=np.unique(EdgeEnrichedElements[list(range(nbenrelts))])-1
 
     #EnrichedElements=np.setdiff1d(EnrichedElements,EdgeEnrichedElements)
 
@@ -189,8 +189,8 @@ for x_pos_struc_ini in [8200,8201,8202]:
 
     HeavisideEnrichedElements=np.setdiff1d(EnrichedElements,EdgeEnrichedElements)
 
-    #Enrichednodes = scipy.unique(fluid_elements[HeavisideEnrichedElements])
-    #Enrichednodes = scipy.unique(fluid_elements[EnrichedElements])
+    #Enrichednodes = np.unique(fluid_elements[HeavisideEnrichedElements])
+    #Enrichednodes = np.unique(fluid_elements[EnrichedElements])
 
     #print xvibacoufo.getpositivenegativeelts.__doc__
 
@@ -202,7 +202,7 @@ for x_pos_struc_ini in [8200,8201,8202]:
     PositiveLStgtElements=PositiveLStgtElements[list(range(nbPosLSt))]
 
     EdgeEnrichedElementsInAllMesh,nbEdgeEnrichedElementsInAllMesh=silex_lib_tri3_acou.getenrichedelementsfromlevelset(fluid_elements,LevelSetTangent)
-    EdgeEnrichedElementsInAllMesh=scipy.unique(EdgeEnrichedElementsInAllMesh[list(range(nbEdgeEnrichedElementsInAllMesh))])
+    EdgeEnrichedElementsInAllMesh=np.unique(EdgeEnrichedElementsInAllMesh[list(range(nbEdgeEnrichedElementsInAllMesh))])
     
     IdElementTip=silex_lib_tri3_acou.getelementcontainingpoint(fluid_elements,fluid_nodes,[0.6,0.65])
 
@@ -225,12 +225,12 @@ for x_pos_struc_ini in [8200,8201,8202]:
     toc = time.process_time()
     print("time to compute Heaviside enrichment:",toc-tic)
 
-    #Enrichednodes = scipy.unique(fluid_elements[scipy.hstack(([HeavisideEnrichedElements,EdgeEnrichedElements]))])
-    #Enrichednodes = scipy.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements,EdgeEnrichedElementsInAllMesh]))])
-    #Enrichednodes = scipy.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements]))])
-    #Enrichednodes = scipy.unique(fluid_elements[scipy.hstack(([NegativeLStgtElements]))])
-    Enrichednodes = scipy.unique(fluid_elements[EnrichedElements])
-    #Enrichednodes = scipy.unique(fluid_elements)
+    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([HeavisideEnrichedElements,EdgeEnrichedElements]))])
+    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements,EdgeEnrichedElementsInAllMesh]))])
+    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements]))])
+    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([NegativeLStgtElements]))])
+    Enrichednodes = np.unique(fluid_elements[EnrichedElements])
+    #Enrichednodes = np.unique(fluid_elements)
 
     silex_lib_gmsh.WriteResults(results_file+'_EnrichedElements',fluid_nodes,fluid_elements[scipy.hstack(([EnrichedElements]))],2)
     #silex_lib_gmsh.WriteResults(results_file+'PositiveLStgtElements',fluid_nodes,fluid_elements[scipy.hstack(([PositiveLStgtElements]))],2)
@@ -238,8 +238,8 @@ for x_pos_struc_ini in [8200,8201,8202]:
 
     #EdgeEnrichedEltsTest=scipy.hstack(([PositiveLStgtElements,EdgeEnrichedElementsInAllMesh]))
     #silex_lib_gmsh.WriteResults(results_file+'EdgeEnrichedEltsTest',fluid_nodes,fluid_elements[scipy.hstack(([EdgeEnrichedEltsTest]))],2)
-    #EdgeEnrichednodesTest = scipy.unique(fluid_elements[EdgeEnrichedEltsTest])
-    #Enrichednodes = scipy.unique(scipy.hstack(([Enrichednodes,EdgeEnrichednodesTest])))
+    #EdgeEnrichednodesTest = np.unique(fluid_elements[EdgeEnrichedEltsTest])
+    #Enrichednodes = np.unique(scipy.hstack(([Enrichednodes,EdgeEnrichednodesTest])))
 
     SolvedDofA=Enrichednodes-1
 
@@ -248,13 +248,13 @@ for x_pos_struc_ini in [8200,8201,8202]:
     # Construct the whole system
     ##################################################################
 
-    K=scipy.sparse.construct.bmat( [[KFF[SolvedDofF,:][:,SolvedDofF],KAF[SolvedDofF,:][:,SolvedDofA]],
+    K=scipy.sparse.bmat( [[KFF[SolvedDofF,:][:,SolvedDofF],KAF[SolvedDofF,:][:,SolvedDofA]],
                                     [KAF[SolvedDofA,:][:,SolvedDofF],KAA[SolvedDofA,:][:,SolvedDofA]]
                                     ] )
 
 
 
-    M=scipy.sparse.construct.bmat( [[MFF[SolvedDofF,:][:,SolvedDofF],MAF[SolvedDofF,:][:,SolvedDofA]],
+    M=scipy.sparse.bmat( [[MFF[SolvedDofF,:][:,SolvedDofF],MAF[SolvedDofF,:][:,SolvedDofA]],
                                     [MAF[SolvedDofA,:][:,SolvedDofF],MAA[SolvedDofA,:][:,SolvedDofA]]
                                     ] )
 
@@ -285,19 +285,19 @@ for x_pos_struc_ini in [8200,8201,8202]:
     pickle.dump([dKFA_dtheta[SolvedDofF,:][:,SolvedDofA],dMFA_dtheta[SolvedDofF,:][:,SolvedDofA],KAF[SolvedDofF,:][:,SolvedDofA],MAF[SolvedDofF,:][:,SolvedDofA]], f)
     f.close()
 
-##    dK=scipy.sparse.construct.bmat( [[None,dKFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
+##    dK=scipy.sparse.bmat( [[None,dKFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
 ##                                     [dKFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]
 ##                                    ] )
 ##
-##    dM=scipy.sparse.construct.bmat( [[None,dMFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
+##    dM=scipy.sparse.bmat( [[None,dMFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
 ##                                     [dMFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]
 ##                                    ] )
     
-    dK=scipy.sparse.construct.bmat( [[None,dKFA_dtheta[SolvedDofF,:][:,SolvedDofA]+dKAF_edge_dtheta[SolvedDofF,:][:,SolvedDofA]],
+    dK=scipy.sparse.bmat( [[None,dKFA_dtheta[SolvedDofF,:][:,SolvedDofA]+dKAF_edge_dtheta[SolvedDofF,:][:,SolvedDofA]],
                                      [dKFA_dtheta[SolvedDofA,:][:,SolvedDofF]+dKAF_edge_dtheta[SolvedDofA,:][:,SolvedDofF],dKAA_edge_dtheta[SolvedDofA,:][:,SolvedDofA]]
                                     ] )
 
-    dM=scipy.sparse.construct.bmat( [[None,dMFA_dtheta[SolvedDofF,:][:,SolvedDofA]+dMAF_edge_dtheta[SolvedDofF,:][:,SolvedDofA]],
+    dM=scipy.sparse.bmat( [[None,dMFA_dtheta[SolvedDofF,:][:,SolvedDofA]+dMAF_edge_dtheta[SolvedDofF,:][:,SolvedDofA]],
                                      [dMFA_dtheta[SolvedDofA,:][:,SolvedDofF]+dMAF_edge_dtheta[SolvedDofA,:][:,SolvedDofF],dMAA_edge_dtheta[SolvedDofA,:][:,SolvedDofA]]
                                     ] )
 
@@ -325,7 +325,7 @@ for x_pos_struc_ini in [8200,8201,8202]:
             omega=2*np.pi*freq
             print("proc number",rank,"frequency=",freq)
 
-            FF[SolvedDofF]=-(KFF[SolvedDofF,:][:,IdnodeS2-1]-(omega**2)*MFF[SolvedDofF,:][:,IdnodeS2-1])*(scipy.ones((len(IdnodeS2))))
+            FF[SolvedDofF]=-(KFF[SolvedDofF,:][:,IdnodeS2-1]-(omega**2)*MFF[SolvedDofF,:][:,IdnodeS2-1])*(np.ones((len(IdnodeS2))))
             FA = np.zeros(fluid_ndof)
             F  = FF[SolvedDofF]
             F  = np.concatenate((F,FA[SolvedDofA]))
@@ -349,7 +349,7 @@ for x_pos_struc_ini in [8200,8201,8202]:
             Dsol_Dtheta = scipy.sparse.linalg.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='float')  , tmp )
 
             press = np.zeros(fluid_ndof)
-            press[IdnodeS2-1] = scipy.ones(len(IdnodeS2))
+            press[IdnodeS2-1] = np.ones(len(IdnodeS2))
             press[SolvedDofF]=sol[list(range(len(SolvedDofF)))]
             enrichment=np.zeros(fluid_nnodes)
             enrichment[SolvedDofA]=sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
