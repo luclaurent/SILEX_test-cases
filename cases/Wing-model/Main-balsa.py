@@ -61,7 +61,7 @@ silex_lib_gmsh.WriteResults(ResultsFileName+'_surf3',nodes,elementsS3,2)
 silex_lib_gmsh.WriteResults(ResultsFileName+'_surf4',nodes,elementsS4,2)
 silex_lib_gmsh.WriteResults(ResultsFileName+'_surf5',nodes,elementsS5,2)
 
-elements=scipy.vstack([elementsS1,elementsS2,elementsS3,elementsS4,elementsS5])
+elements=np.vstack([elementsS1,elementsS2,elementsS3,elementsS4,elementsS5])
 
 silex_lib_gmsh.WriteResults(ResultsFileName+'_complet',nodes,elements,2)
 
@@ -116,15 +116,15 @@ print("Number of elements:",nelem)
 #      CLEAN MESH
 Id_nodes_used=np.unique(elements)
 Id_nodes_nonused=np.setdiff1d(range(1,nnodes),Id_nodes_used)
-IdNodesFixed_x=scipy.hstack([IdNodesFixed_x,Id_nodes_nonused])
-IdNodesFixed_y=scipy.hstack([IdNodesFixed_y,Id_nodes_nonused])
-IdNodesFixed_z=scipy.hstack([IdNodesFixed_z,Id_nodes_nonused])
-IdNodesFixed_rotx=scipy.hstack([IdNodesFixed_rotx,Id_nodes_nonused])
-IdNodesFixed_roty=scipy.hstack([IdNodesFixed_roty,Id_nodes_nonused])
-IdNodesFixed_rotz=scipy.hstack([IdNodesFixed_rotz,Id_nodes_nonused])
+IdNodesFixed_x=np.hstack([IdNodesFixed_x,Id_nodes_nonused])
+IdNodesFixed_y=np.hstack([IdNodesFixed_y,Id_nodes_nonused])
+IdNodesFixed_z=np.hstack([IdNodesFixed_z,Id_nodes_nonused])
+IdNodesFixed_rotx=np.hstack([IdNodesFixed_rotx,Id_nodes_nonused])
+IdNodesFixed_roty=np.hstack([IdNodesFixed_roty,Id_nodes_nonused])
+IdNodesFixed_rotz=np.hstack([IdNodesFixed_rotz,Id_nodes_nonused])
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([
+Fixed_Dofs = np.hstack([
     (np.array(IdNodesFixed_x)-1)*6,
     (np.array(IdNodesFixed_y)-1)*6+1,
     (np.array(IdNodesFixed_z)-1)*6+2,
@@ -176,7 +176,7 @@ print("time to solve the problem:",toc-tic)
 #############################################################################
 tic = time.process_time()
 
-output1=silex_lib_elt.compute_stress_strain_error(nodes,scipy.vstack([elementsS1,elementsS3,elementsS4,elementsS5]),[Young,nu,thickness1,140.0],Q)
+output1=silex_lib_elt.compute_stress_strain_error(nodes,np.vstack([elementsS1,elementsS3,elementsS4,elementsS5]),[Young,nu,thickness1,140.0],Q)
 output2=silex_lib_elt.compute_stress_strain_error(nodes,elementsS2,[Young,nu,thickness2,140.0],Q)
 
 SigmaElemS1    = output1[0]
@@ -225,11 +225,11 @@ load[range(nnodes),2]=F[list(range(2,ndof,6))]
 
 SigmaNodesS1[IdnodeS2-1,0]=SigmaNodesS2[IdnodeS2-1,0]
 SigmaNodesS1[IdnodeS2-1,1]=SigmaNodesS2[IdnodeS2-1,1]
-DirPrinPlu1S1=scipy.vstack([DirPrinPlu1S1,DirPrinPlu1S2])
-DirPrinPlu2S1=scipy.vstack([DirPrinPlu2S1,DirPrinPlu2S2])
-DirPrinMin1S1=scipy.vstack([DirPrinMin1S1,DirPrinMin1S2])
-DirPrinMin2S1=scipy.vstack([DirPrinMin2S1,DirPrinMin2S2])
-SigmaElemS1=scipy.vstack([SigmaElemS1,SigmaElemS2])
+DirPrinPlu1S1=np.vstack([DirPrinPlu1S1,DirPrinPlu1S2])
+DirPrinPlu2S1=np.vstack([DirPrinPlu2S1,DirPrinPlu2S2])
+DirPrinMin1S1=np.vstack([DirPrinMin1S1,DirPrinMin1S2])
+DirPrinMin2S1=np.vstack([DirPrinMin2S1,DirPrinMin2S2])
+SigmaElemS1=np.vstack([SigmaElemS1,SigmaElemS2])
 
 if flag_write_fields==0:
     fields_to_writeS1=[[disp,'nodal',ndim,'displacement'],
@@ -261,7 +261,7 @@ if flag_write_fields==0:
                       ]
     
 
-silex_lib_gmsh.WriteResults(ResultsFileName+'_epaisseur_2',nodes,scipy.vstack([elementsS1,elementsS3,elementsS4,elementsS5,elementsS2]),2,fields_to_writeS1)
+silex_lib_gmsh.WriteResults(ResultsFileName+'_epaisseur_2',nodes,np.vstack([elementsS1,elementsS3,elementsS4,elementsS5,elementsS2]),2,fields_to_writeS1)
 silex_lib_gmsh.WriteResults(ResultsFileName+'_epaisseur_4',nodes,elementsS2,2,fields_to_writeS2)
 
 print('Point A : deplacement MAXI = ',disp[581-1,:]*4300/3000)

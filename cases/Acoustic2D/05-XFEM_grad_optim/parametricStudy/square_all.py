@@ -46,8 +46,8 @@ def computeFreqPerProc(nbStep,nbProc,freqInit,freqEnd):
     if nbFreqProcRemain==0:
         varCase=0
     listFreq=np.zeros((nbFreqProc+varCase,nbProc))
-    listAllFreq=scipy.linspace(freqInit,freqEnd,nbStep)
-    #print(scipy.linspace(freqInit,freqEnd,nbStep))
+    listAllFreq=np.linspace(freqInit,freqEnd,nbStep)
+    #print(np.linspace(freqInit,freqEnd,nbStep))
     #build array of frequencies
     itF=0
     for itP in range(nbProc):
@@ -231,7 +231,11 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
 
     SolvedDofA=Enrichednodes-1
 
-    silex_lib_gmsh.WriteResults(results_file+'_EnrichedElements',fluid_nodes,fluid_elements[scipy.hstack(([EnrichedElements]))],2)
+    msh2.mshWriter(
+        cwd / (results_file + "_EnrichedElements.msh"),
+        fluid_nodes,
+        {"type": "TRI3", "connectivity": fluid_elements[EnrichedElements.flatten()]},
+    )
 
     #################################################################
     # Construct the whole system
@@ -292,7 +296,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
         frfgradient.append([])
 
     if (Flag_frf_analysis==1):
-        print("time at the beginning of the FRF: {}".format(time.ctime())))
+        print("time at the beginning of the FRF: {}".format(time.ctime()))
 
         press_save=[]
         dpress_save=list()
@@ -371,7 +375,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
         
         #####################
         #####################
-        print("time at the end of the FRF: {}".format(time.ctime())))
+        print("time at the end of the FRF: {}".format(time.ctime()))
         frfsave=[frequencies,frf,frfgradient]
         if rank!=0 :
             comm.send(frfsave, dest=0, tag=11)

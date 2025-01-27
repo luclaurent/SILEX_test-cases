@@ -74,7 +74,7 @@ elementS2,IdnodeS2=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,2)
 ##silex_lib_gmsh.WriteResults(ResultsFileName+'_vol11',nodes,elementV11,5)
 ##silex_lib_gmsh.WriteResults(ResultsFileName+'_vol12',nodes,elementV12,5)
 
-elements=scipy.vstack([elementV10,elementV11,elementV12])
+elements=np.vstack([elementV10,elementV11,elementV12])
 
 ##silex_lib_gmsh.WriteResults(ResultsFileName+'_complet',nodes,elements,5)
 
@@ -154,14 +154,14 @@ param3 = [mu3,Lambda3,0.0,0.0,0.0,0.0,0.0,0.0]  # Material parameter in a vector
 ##IdNodesFixed_y=IdnodeS3
 ##IdNodesFixed_z=IdnodeS3
 
-IdNodesFixed_x=scipy.hstack([IdnodeS3,IdnodeS1])
-IdNodesFixed_y=scipy.hstack([IdnodeS3,IdnodeS1])
-IdNodesFixed_z=scipy.hstack([IdnodeS3,IdnodeS1])
+IdNodesFixed_x=np.hstack([IdnodeS3,IdnodeS1])
+IdNodesFixed_y=np.hstack([IdnodeS3,IdnodeS1])
+IdNodesFixed_z=np.hstack([IdnodeS3,IdnodeS1])
 
 
-##IdNodesFixed_x=scipy.hstack([IdnodeS3,IdnodeS1])
-##IdNodesFixed_y=scipy.hstack([IdnodeS3,IdnodeS1])
-##IdNodesFixed_z=scipy.hstack([IdnodeS3,IdnodeS1])
+##IdNodesFixed_x=np.hstack([IdnodeS3,IdnodeS1])
+##IdNodesFixed_y=np.hstack([IdnodeS3,IdnodeS1])
+##IdNodesFixed_z=np.hstack([IdnodeS3,IdnodeS1])
 
 # get number of nodes, dof and elements from the mesh
 nnodes = nodes.shape[0]
@@ -174,7 +174,7 @@ ndof   = nnodes*3
 ###direction = np.array([1,1,0]) # force in direction +x +y
 
 # load calculation
-#F = silex_lib_elt.forceonsurface(nodes,scipy.vstack([elementS1,elementS3]),load,direction)
+#F = silex_lib_elt.forceonsurface(nodes,np.vstack([elementS1,elementS3]),load,direction)
 F = np.zeros(ndof,dtype=mytype)
 
 ##F=np.zeros(ndof,dtype=mytype)
@@ -183,7 +183,7 @@ F = np.zeros(ndof,dtype=mytype)
 ##F[(63-1)*3+2]=1.0
 
 # frequency range
-frequencies=scipy.linspace(0,500,500)
+frequencies=np.linspace(0,500,500)
 
 toc = time.process_time()
 print("time for the user part:",toc-tic)
@@ -208,7 +208,7 @@ print("")
 
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([
+Fixed_Dofs = np.hstack([
     (np.array(IdNodesFixed_x)-1)*3,
     (np.array(IdNodesFixed_y)-1)*3+1,
     (np.array(IdNodesFixed_z)-1)*3+2])
@@ -219,7 +219,7 @@ SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 # initialize displacement vector
 Q=np.zeros(ndof,dtype=mytype)
 
-Imposed_disp_dof=scipy.hstack([
+Imposed_disp_dof=np.hstack([
     (np.array(IdNodesFixed_x)-1)*3,
     (np.array(IdNodesFixed_z)-1)*3+2])
 
@@ -274,7 +274,7 @@ print("time to compute the stiffness and mass matrix :",toc-tic)
 if 1==0:
     eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(K[SolvedDofs,:][:,SolvedDofs],10,M[SolvedDofs,:][:,SolvedDofs],sigma=0,which='LM')
 
-    freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*np.pi))
+    freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
     eigen_vector_S_list=[]
     for i in range(eigen_values_S.shape[0]):
@@ -320,7 +320,7 @@ for i in range(len(frequencies)):
 
     Q[SolvedDofs] = mumps.spsolve( kk , np.array(F[SolvedDofs],dtype=mytype)-(K[SolvedDofs,:][:,Fixed_Dofs]-(omega*omega)*M[SolvedDofs,:][:,Fixed_Dofs])*Q[Fixed_Dofs], comm=mycomm).T
     
-    #frf.append(scipy.sqrt(Q[(187-1)*3]**2+Q[(187-1)*3+1]**2+Q[(187-1)*3+2]**2))
+    #frf.append(np.sqrt(Q[(187-1)*3]**2+Q[(187-1)*3+1]**2+Q[(187-1)*3+2]**2))
     frf.append(scipy.linalg.norm(np.array([Q[(187-1)*3],Q[(187-1)*3+1],Q[(187-1)*3+2]])))
     
     #print('node 187: Displacement = ',[Q[(187-1)*3],Q[(187-1)*3+1],Q[(187-1)*3+2]])

@@ -40,7 +40,7 @@ nodes=silex_lib_gmsh.ReadGmshNodes(MeshFileName+'.msh',ndim)
 elementsV1,IdnodesV1=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',eltype,1)
 elementsV2,IdnodesV2=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',eltype,2)
 
-elements=scipy.vstack([elementsV1,elementsV2])
+elements=np.vstack([elementsV1,elementsV2])
 
 # read surfaces where to impose boundary conditions
 # haut
@@ -91,7 +91,7 @@ print("Number of nodes:",nnodes)
 print("Number of elements:",nelem)
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
 SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
@@ -126,7 +126,7 @@ tic = time.process_time()
 
 eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(K[SolvedDofs,:][:,SolvedDofs],50,M[SolvedDofs,:][:,SolvedDofs],sigma=0,which='LM')
 
-freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*np.pi))
+freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
 eigen_vector_S_list=[]
 for i in range(eigen_values_S.shape[0]):

@@ -72,9 +72,9 @@ Young  = 200000.0
 nu     = 0.3
 
 # Boundary conditions
-IdNodesFixed_x=scipy.hstack([IdnodeS3,IdnodeS4])
+IdNodesFixed_x=np.hstack([IdnodeS3,IdnodeS4])
 IdNodesFixed_y=[]
-IdNodesFixed_z=scipy.hstack([IdnodeS6])
+IdNodesFixed_z=np.hstack([IdnodeS6])
 R3=silex_lib_extra_python.turn_dof3D(IdnodeS3,nodes,[(159.78+156.36)/2.0,3.02])
 R4=silex_lib_extra_python.turn_dof3D(IdnodeS4,nodes,[(336.90+333.48)/2.0,3.02])
 
@@ -103,8 +103,8 @@ print ("Number of nodes:",nnodes)
 print ("Number of elements:",nelem)
 
 # define fixed dof
-#Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_z-1)*3+2])
+#Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
 SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
@@ -209,8 +209,8 @@ if flag_write_fields==3:
 
 # write the mesh and the results in a gmsh-format file
 silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_write)
-#elementsshift = scipy.vstack([[elementsS6[:,1]],[elementsS6[:,0]],[elementsS6[:,2]]]).T
-#elementsx3d = scipy.vstack([elementsS6, elementsshift])
+#elementsshift = np.vstack([[elementsS6[:,1]],[elementsS6[:,0]],[elementsS6[:,2]]]).T
+#elementsx3d = np.vstack([elementsS6, elementsshift])
 silex_lib_gmsh.WriteResults(ResultsFileName+'Surf_Model',nodes,elementsS5,2,fields_to_write)
 
 toc = time.process_time()

@@ -57,7 +57,7 @@ mycomm=comm_mumps_one_proc()
 ###########################################################
 
 if rank==0:
-    print ("time at the beginning of the computation: {}".format(time.ctime())))
+    print ("time at the beginning of the computation: {}".format(time.ctime()))
 
 ##############################################################
 ##############################################################
@@ -176,7 +176,7 @@ FixedStrucDofRz=(FixedStrucNodes-1)*6+5
 #FixedStrucDofRy=[]
 #FixedStrucDofRz=[]
 
-FixedStrucDof=scipy.hstack([FixedStrucDofUx,FixedStrucDofUy,FixedStrucDofUz,FixedStrucDofRx,FixedStrucDofRy,FixedStrucDofRz])
+FixedStrucDof=np.hstack([FixedStrucDofUx,FixedStrucDofUy,FixedStrucDofUz,FixedStrucDofRx,FixedStrucDofRy,FixedStrucDofRz])
 
 SolvedDofS=np.setdiff1d(range(struc_ndof),FixedStrucDof)
 

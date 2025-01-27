@@ -18,7 +18,7 @@ def turn_dof(Idnode,nodes,center):
         y=nodes[nodenumber-1,1]
         lx=x-xc
         ly=y-yc
-        le=scipy.sqrt(lx**2+ly**2)
+        le=np.sqrt(lx**2+ly**2)
         costheta=lx/le
         sintheta=ly/le
 

@@ -92,7 +92,7 @@ print("Number of nodes:",nnodes)
 print("Number of elements:",nelem)
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([
+Fixed_Dofs = np.hstack([
     (np.array(IdNodesFixed_x)-1)*6,
     (np.array(IdNodesFixed_y)-1)*6+1,
     (np.array(IdNodesFixed_z)-1)*6+2,

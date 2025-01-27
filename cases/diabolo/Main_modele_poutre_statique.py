@@ -88,10 +88,10 @@ ndof     = 12
 #################################################################################
 
 R1 = silex_lib_extra.rigidify_surface(IdnodS1,nodes,[0.0,0.104,0.0])
-dofS1 = scipy.hstack([(IdnodS1-1)*3,(IdnodS1-1)*3+1,(IdnodS1-1)*3+2])
+dofS1 = np.hstack([(IdnodS1-1)*3,(IdnodS1-1)*3+1,(IdnodS1-1)*3+2])
 
 R2 = silex_lib_extra.rigidify_surface(IdnodS2,nodes,[0.0,0.0,0.0])
-dofS2 = scipy.hstack([(IdnodS2-1)*3,(IdnodS2-1)*3+1,(IdnodS2-1)*3+2])
+dofS2 = np.hstack([(IdnodS2-1)*3,(IdnodS2-1)*3+1,(IdnodS2-1)*3+2])
 
 R = scipy.sparse.bmat( [ [ R1 ,  R2[:,list(range(ndof,ndof+6,1))] ] ] )
 
@@ -131,12 +131,12 @@ Qprime     = np.zeros(ndof+6+6)
 #################################################################################################################
 
 # define fixed dof
-#Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
+#Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
 #SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
-#SolvedDofsPrime = scipy.hstack([SolvedDofs,list(range(ndof,ndof+6))])
+#SolvedDofsPrime = np.hstack([SolvedDofs,list(range(ndof,ndof+6))])
 
 #SolvedDofsPrime = np.setdiff1d(SolvedDofsPrime,dofS1)
 

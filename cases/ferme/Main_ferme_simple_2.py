@@ -103,7 +103,7 @@ for e in range(nelem):
     lx        = xb-xa # difference le long de "x" des coordonnees des noeuds
     ly        = yb-ya # difference le long de "y" des coordonnees des noeuds
 
-    lelem     = scipy.sqrt(lx**2+ly**2) # pythagore pour calculer la longueur de l'element
+    lelem     = np.sqrt(lx**2+ly**2) # pythagore pour calculer la longueur de l'element
     cos_theta = lx/lelem # calcul du cosinus de l'angle de l'element avec l'axe "x"
     sin_theta = ly/lelem # calcul du sinus de l'angle de l'element avec l'axe "x"
 

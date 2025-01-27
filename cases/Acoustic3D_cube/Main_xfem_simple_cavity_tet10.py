@@ -58,7 +58,7 @@ mycomm=comm_mumps_one_proc()
 ###########################################################
 
 if rank==0:
-    print ("time at the beginning of the computation: {}".format(time.ctime())))
+    print ("time at the beginning of the computation: {}".format(time.ctime()))
 
 ##############################################################
 ##############################################################
@@ -245,7 +245,7 @@ M=scipy.sparse.bmat( [
 UF = np.zeros(2*fluid_ndof1,dtype=float)
 UF[1-1]=3.1250E-05
 
-SolvedDof = scipy.hstack([SolvedDofF,SolvedDofA+fluid_ndof1])
+SolvedDof = np.hstack([SolvedDofF,SolvedDofA+fluid_ndof1])
 
 ##############################################################
 # FRF computation
@@ -257,7 +257,7 @@ frf=[]
 frfgradient=[]
 
 if (Flag_frf_analysis==1):
-    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime())))
+    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime()))
 
     if rank==0:
         print('nb of total dofs: ',len(SolvedDofF)+len(SolvedDofA))
@@ -266,7 +266,7 @@ if (Flag_frf_analysis==1):
     disp_save=[]
     
     #for i in range(nb_freq_step):
-    for freq in scipy.linspace(freq_ini,freq_end,nb_freq_step):
+    for freq in np.linspace(freq_ini,freq_end,nb_freq_step):
 
         #freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
         frequencies.append(freq)
@@ -300,7 +300,7 @@ if (Flag_frf_analysis==1):
 
     frfsave=[np.array(frequencies),np.array(frf)]
 
-    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime())))
+    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime()))
 
     if (flag_write_gmsh_results==1) and (rank==0):
         silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',fluid_nodes1,fluid_elements1,4,[[press_save,'nodal',1,'pressure']])

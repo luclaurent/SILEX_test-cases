@@ -51,7 +51,7 @@ mycomm=comm_mumps_one_proc()
 ###########################################################
 
 if rank==0:
-    print ("time at the beginning of the computation: {}".format(time.ctime())))
+    print ("time at the beginning of the computation: {}".format(time.ctime()))
 
 ##############################################################
 ##############################################################
@@ -459,7 +459,7 @@ frequencies=[]
 frf=[]
 
 if (Flag_frf_analysis==1):
-    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime())))
+    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime()))
 
     press_save=[]
 
@@ -500,7 +500,7 @@ if (Flag_frf_analysis==1):
         if (flag_write_gmsh_results==1) and (rank==0):
             press_save.append(CorrectedPressure.real)
             
-    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime())))
+    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime()))
 
     frfsave=[frequencies,frf]
     if rank!=0:

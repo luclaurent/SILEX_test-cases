@@ -83,7 +83,7 @@ frf_rigid_faces_no_pre_stress_no_damping=pickle.load(f)
 f.close()
 
 
-RefDisp=scipy.sqrt(2e-4**2)
+RefDisp=np.sqrt(2e-4**2)
 
 pylab.figure(1)
 pylab.plot(frf_no_pre_stress_no_damping[0],np.log10(frf_no_pre_stress_no_damping[1]),'k-',label='no damping, no pre-stress', linewidth=2)

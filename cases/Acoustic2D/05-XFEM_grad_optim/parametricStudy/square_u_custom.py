@@ -44,8 +44,8 @@ def computeFreqPerProc(nbStep,nbProc,freqInit,freqEnd):
     if nbFreqProcRemain==0:
         varCase=0
     listFreq=np.zeros((nbFreqProc+varCase,nbProc))
-    listAllFreq=scipy.linspace(freqInit,freqEnd,nbStep)
-    #print(scipy.linspace(freqInit,freqEnd,nbStep))
+    listAllFreq=np.linspace(freqInit,freqEnd,nbStep)
+    #print(np.linspace(freqInit,freqEnd,nbStep))
     #build array of frequencies
     itF=0
     for itP in range(nbProc):
@@ -160,8 +160,8 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     xc4=x_pos_struc+radius_hcircle*np.cos(angleU)
     yc4=y_pos_struc+radius_hcircle*np.sin(angleU)
     #parameter for circles
-    thetaHC=scipy.linspace(-angleU-np.pi/2,-angleU+np.pi/2,nbNodesHC)
-    thetaSC=scipy.linspace(-angleU-np.pi/2,-angleU+np.pi/2,nbNodesSC)
+    thetaHC=np.linspace(-angleU-np.pi/2,-angleU+np.pi/2,nbNodesHC)
+    thetaSC=np.linspace(-angleU-np.pi/2,-angleU+np.pi/2,nbNodesSC)
     #inner large circle
     xNodesIHC=x_pos_struc-(radius_hcircle-thicknessU/2.)*np.sin(thetaHC)
     yNodesIHC=y_pos_struc-(radius_hcircle-thicknessU/2.)*np.cos(thetaHC)
@@ -175,15 +175,15 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     xNodesC4=xc4+thicknessU/2*np.sin(thetaSC[::-1])
     yNodesC4=yc4+thicknessU/2*np.cos(thetaSC[::-1])
 
-    struc_nodes=scipy.vstack([scipy.hstack([xNodesIHC,xNodesC2[1:],xNodesOHC[1:],xNodesC4[1:]]),scipy.hstack([yNodesIHC,yNodesC2[1:],yNodesOHC[1:],yNodesC4[1:]])]).transpose()
+    struc_nodes=np.vstack([np.hstack([xNodesIHC,xNodesC2[1:],xNodesOHC[1:],xNodesC4[1:]]),np.hstack([yNodesIHC,yNodesC2[1:],yNodesOHC[1:],yNodesC4[1:]])]).transpose()
     print(struc_nodes)
 
     nbNodesAllStruct=2*nbNodesHC+2*nbNodesSC-4
-    lCA=scipy.linspace(1,nbNodesAllStruct-1,nbNodesAllStruct-1)
-    lCB=scipy.linspace(2,nbNodesAllStruct,nbNodesAllStruct-1)
+    lCA=np.linspace(1,nbNodesAllStruct-1,nbNodesAllStruct-1)
+    lCB=np.linspace(2,nbNodesAllStruct,nbNodesAllStruct-1)
 
-    struc_elements=scipy.vstack([lCA,lCB]).transpose()
-    struc_elements=scipy.vstack([struc_elements,[1,nbNodesAllStruct]])
+    struc_elements=np.vstack([lCA,lCB]).transpose()
+    struc_elements=np.vstack([struc_elements,[1,nbNodesAllStruct]])
     print(struc_elements)
 
 
@@ -203,8 +203,8 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
         else:
             zoneA=xNcurr-x_pos_struc<0
 
-        zoneAA=scipy.sqrt((xNcurr-x_pos_struc)**2+(yNcurr-y_pos_struc)**2)-radius_hcircle>=0
-        zoneAB=scipy.sqrt((xNcurr-x_pos_struc)**2+(yNcurr-y_pos_struc)**2)-radius_hcircle<0
+        zoneAA=np.sqrt((xNcurr-x_pos_struc)**2+(yNcurr-y_pos_struc)**2)-radius_hcircle>=0
+        zoneAB=np.sqrt((xNcurr-x_pos_struc)**2+(yNcurr-y_pos_struc)**2)-radius_hcircle<0
         if angleU != np.pi and angleU != 0. and angleU != 2*np.pi:
             zoneB=yNcurr-np.tan(angleU+np.pi/2)*(xNcurr-x_pos_struc)-y_pos_struc>0
             zoneC=yNcurr-np.tan(angleU+np.pi/2)*(xNcurr-x_pos_struc)-y_pos_struc<0
@@ -215,7 +215,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
         if zoneA:
             if zoneAA:
                 radiusOC=radius_hcircle+thicknessU/2.
-                LevelSet[itN]=scipy.sqrt((xNcurr-x_pos_struc)**2+(yNcurr-y_pos_struc)**2)-radiusOC
+                LevelSet[itN]=np.sqrt((xNcurr-x_pos_struc)**2+(yNcurr-y_pos_struc)**2)-radiusOC
                 LevelSet_gradient_X[itN]=-(xNcurr-x_pos_struc)/(LevelSet[itN]+radiusOC)
                 LevelSet_gradient_Y[itN]=-(yNcurr-y_pos_struc)/(LevelSet[itN]+radiusOC)
                 LevelSet_gradient_R[itN]=-1 
@@ -223,7 +223,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
                 IndicZone[itN]=1
             elif zoneAB: 
                 radiusIC=radius_hcircle-thicknessU/2.
-                LevelSet[itN]=-(scipy.sqrt((xNcurr-x_pos_struc)**2+(yNcurr-y_pos_struc)**2)-radiusIC)
+                LevelSet[itN]=-(np.sqrt((xNcurr-x_pos_struc)**2+(yNcurr-y_pos_struc)**2)-radiusIC)
                 LevelSet_gradient_X[itN]=(xNcurr-x_pos_struc)/(-LevelSet[itN]+radiusIC)
                 LevelSet_gradient_Y[itN]=(yNcurr-y_pos_struc)/(-LevelSet[itN]+radiusIC)
                 LevelSet_gradient_R[itN]=1 
@@ -231,7 +231,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
                 IndicZone[itN]=2
         elif zoneC:
             radiusC2=thicknessU/2.
-            LevelSet[itN]=scipy.sqrt((xNcurr-xc2)**2+(yNcurr-yc2)**2)-radiusC2
+            LevelSet[itN]=np.sqrt((xNcurr-xc2)**2+(yNcurr-yc2)**2)-radiusC2
             LevelSet_gradient_X[itN]=-(xNcurr-xc2)/(LevelSet[itN]+radiusC2)
             LevelSet_gradient_Y[itN]=-(yNcurr-yc2)/(LevelSet[itN]+radiusC2)
             LevelSet_gradient_R[itN]=0
@@ -239,7 +239,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
             IndicZone[itN]=3
         elif zoneB:
             radiusC4=thicknessU/2.
-            LevelSet[itN]=scipy.sqrt((xNcurr-xc4)**2+(yNcurr-yc4)**2)-radiusC4
+            LevelSet[itN]=np.sqrt((xNcurr-xc4)**2+(yNcurr-yc4)**2)-radiusC4
             LevelSet_gradient_X[itN]=-(xNcurr-xc4)/(LevelSet[itN]+radiusC4)
             LevelSet_gradient_Y[itN]=-(yNcurr-yc4)/(LevelSet[itN]+radiusC4)
             LevelSet_gradient_R[itN]=0
@@ -320,7 +320,11 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
 
     SolvedDofA=Enrichednodes-1
 
-    silex_lib_gmsh.WriteResults(results_file+'_EnrichedElements',fluid_nodes,fluid_elements[scipy.hstack(([EnrichedElements]))],2)
+    msh2.mshWriter(
+        cwd / (results_file + "_EnrichedElements.msh"),
+        fluid_nodes,
+        {"type": "TRI3", "connectivity": fluid_elements[EnrichedElements.flatten()]},
+    )
 
     #################################################################
     # Construct the whole system
@@ -414,7 +418,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     frfgradient_T=[]
 
     if (Flag_frf_analysis==1):
-        print("time at the beginning of the FRF: {}".format(time.ctime())))
+        print("time at the beginning of the FRF: {}".format(time.ctime()))
 
         press_save=[]
         dpress_save_X=[]
@@ -508,7 +512,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
         
         #####################
         #####################
-        print("time at the end of the FRF: {}".format(time.ctime())))
+        print("time at the end of the FRF: {}".format(time.ctime()))
         frfsave=[frequencies,frf,frfgradient_X,frfgradient_Y,frfgradient_R,frfgradient_T]
         if rank!=0 :
             comm.send(frfsave, dest=0, tag=11)

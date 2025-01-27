@@ -83,7 +83,7 @@ val_critere=0.1
 #nb_fcts_PGD = 19
 
 nb_node_w  = nb_freq_step
-nodes_w    = scipy.linspace(freq_ini*2.0*np.pi, freq_end*2.0*np.pi , num=nb_freq_step)
+nodes_w    = np.linspace(freq_ini*2.0*np.pi, freq_end*2.0*np.pi , num=nb_freq_step)
 Idnodes_w  = list(range(1,nb_node_w+1,1))
 omega_ndof = nb_node_w
 nb_elem_w  = nb_node_w-1
@@ -128,7 +128,7 @@ SolvedDofF=list(range(fluid_ndof))
 tic = time.process_time()
 eigen_values_F,eigen_vectors_F= scipy.sparse.linalg.eigsh(KFF[SolvedDofF,:][:,SolvedDofF],nb_mode_F,MFF[SolvedDofF,:][:,SolvedDofF],sigma=0,which='LM')
 
-freq_eigv_F=list(scipy.sqrt(eigen_values_F)/(2*np.pi))
+freq_eigv_F=list(np.sqrt(eigen_values_F)/(2*np.pi))
 eigen_vector_F_list=[]
 for i in range(nb_mode_F):
     tmp=eigen_vectors_F[:,i].real
@@ -232,7 +232,7 @@ while (residu>val_residu):
 ##    G=np.array(  scipy.random.random(ndof_w) , dtype=mytype  )
 ##    F=np.array(  scipy.random.random(ndof_x)+scipy.random.random(ndof_x)*1j , dtype='c16'  )
 ##    G=np.array(  scipy.random.random(ndof_w)+scipy.random.random(ndof_w)*1j , dtype='c16'  )
-    #X=scipy.hstack([F,G])
+    #X=np.hstack([F,G])
 ##    if i==0:
 ##        F=np.zeros(ndof_x)+1.0
 ##        G=np.zeros(ndof_w)+1.0

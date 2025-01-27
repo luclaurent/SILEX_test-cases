@@ -73,8 +73,8 @@ nu        = 0.3
 thickness = 200.0
 
 # define fixed dof
-IdNodesFixed_x=scipy.hstack([IdnodeS3,IdnodeS4])
-#IdNodesFixed_y=scipy.hstack([IdnodeS3,IdnodeS4])
+IdNodesFixed_x=np.hstack([IdnodeS3,IdnodeS4])
+#IdNodesFixed_y=np.hstack([IdnodeS3,IdnodeS4])
 IdNodesFixed_y=[]
 
 # force vector
@@ -103,8 +103,8 @@ print("Number of nodes:",nnodes)
 print("Number of elements:",nelem)
 
 # define fixed dof
-#Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*2])
+#Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*2])
 
 # define free dof
 SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)

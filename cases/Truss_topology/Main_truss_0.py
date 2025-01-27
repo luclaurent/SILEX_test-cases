@@ -84,7 +84,7 @@ Youngelem  = np.ones(nelem)*Young
 
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
 
 # define free dof
 SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)

@@ -104,7 +104,7 @@ IdNodesFixed_z=IdnodeS1
 press = 0.01 #MPa
 #F = silex_lib_elt.forceonsurface(nodes,elementsS3,press,[0.0,0.0,0.0])
 
-frequencies=scipy.linspace(1,2000,500)
+frequencies=np.linspace(1,2000,500)
 
 nbmodes=20
 
@@ -124,7 +124,7 @@ print("Number of nodes:",nnodes)
 print("Number of elements:",nelem)
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
 SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
@@ -160,7 +160,7 @@ M=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
 
 eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(K[SolvedDofs,:][:,SolvedDofs],nbmodes,M[SolvedDofs,:][:,SolvedDofs],sigma=0,which='LM')
 
-freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*np.pi))
+freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
 eigen_vector_S_list=[]
 for i in range(eigen_values_S.shape[0]):
@@ -202,7 +202,7 @@ for i in range(len(frequencies)):
     #sol = mumps.spsolve( scipy.sparse.csc_matrix(K-(omega*omega)*M,dtype='d') , np.array(F.todense() , dtype='d'), comm=comm_mumps_one_proc()).T
     Q[SolvedDofs] = mumps.spsolve( scipy.sparse.csc_matrix(K[SolvedDofs,:][:,SolvedDofs]-(omega*omega)*M[SolvedDofs,:][:,SolvedDofs],dtype='d') , np.array(F[SolvedDofs],dtype='d'), comm=mycomm).T
 
-    frf.append(scipy.sqrt(Q[(1-1)*3]**2+Q[(1-1)*3+1]**2+Q[(1-1)*3+2]**2))
+    frf.append(np.sqrt(Q[(1-1)*3]**2+Q[(1-1)*3+1]**2+Q[(1-1)*3+2]**2))
         
     disp=np.zeros((nnodes,3))
     disp[range(nnodes),0]=Q[list(range(0,ndof,3))]
@@ -213,7 +213,7 @@ for i in range(len(frequencies)):
 frfsave=[frequencies,frf]
 silex_lib_gmsh.WriteResults2(ResultsFileName+'_disp_frf',nodes,elements,eltype,[[disp_save,'nodal',3,'displacement']])
 
-print (" time at the end of the FRF: {}".format(time.ctime())))
+print (" time at the end of the FRF: {}".format(time.ctime()))
 
 # Save the FRF problem
 f=open(ResultsFileName+'_no_damping.frf','wb')

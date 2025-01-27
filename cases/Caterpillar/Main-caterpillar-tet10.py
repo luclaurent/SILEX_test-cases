@@ -63,8 +63,8 @@ Young  = 200000.0
 nu     = 0.3
 
 # Boundary conditions
-IdNodesFixed_x=scipy.hstack([IdnodeS4])
-IdNodesFixed_y=scipy.hstack([IdnodeS3])
+IdNodesFixed_x=np.hstack([IdnodeS4])
+IdNodesFixed_y=np.hstack([IdnodeS3])
 IdNodesFixed_z=IdnodeS2
 
 R=maroutine.turn_dof(IdnodeS4,nodes,[0.0,0.0])
@@ -94,7 +94,7 @@ print("Number of nodes:",nnodes)
 print("Number of elements:",nelem)
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
 SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)

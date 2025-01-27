@@ -257,7 +257,7 @@ def ComputeFRF(parameters):
     fluid_nodes    = silex_lib_gmsh.ReadGmshNodes(mesh_file+'.msh',3)
     fluid_elements1,tmp = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',4,1)
     fluid_elements2,tmp = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',4,2)
-    fluid_elements=scipy.vstack([fluid_elements1,fluid_elements2])
+    fluid_elements=np.vstack([fluid_elements1,fluid_elements2])
     #fluid_elements_S2,IdNodesS2 = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',2,2)
 
     fluid_nnodes   = fluid_nodes.shape[0]
@@ -312,13 +312,13 @@ def ComputeFRF(parameters):
     frf=[]
 
     if (Flag_frf_analysis==1):
-        print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime())))
+        print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime()))
 
         press_save=[]
         disp_save=[]
 
         for i in range(nb_freq_step_per_proc):
-        #for freq in scipy.linspace(freq_ini,freq_end,nb_freq_step):
+        #for freq in np.linspace(freq_ini,freq_end,nb_freq_step):
 
             freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
             frequencies.append(freq)
@@ -350,7 +350,7 @@ def ComputeFRF(parameters):
         if rank==0:
             silex_lib_gmsh.WriteResults2(results_file+'_results_fluid_frf',fluid_nodes,fluid_elements,4,[[press_save,'nodal',1,'pressure']])
 
-        print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime())))
+        print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime()))
 
         # save the FRF problem
         Allfrequencies=np.zeros(nb_freq_step)

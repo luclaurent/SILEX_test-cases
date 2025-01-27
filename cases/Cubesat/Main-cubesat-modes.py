@@ -59,7 +59,7 @@ silex_lib_gmsh.WriteResults(ResultsFileName+'_surf4',nodes,elementsS4,2)
 elementsS20,IdnodeS20=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',eltype,20)
 silex_lib_gmsh.WriteResults(ResultsFileName+'_pour_la_visu',nodes,elementsS20,2)
 
-#elements=scipy.vstack([elementsS10,elementsS1,elementsS2,elementsS3,elementsS4])
+#elements=np.vstack([elementsS10,elementsS1,elementsS2,elementsS3,elementsS4])
 elements=elementsS10
 
 silex_lib_gmsh.WriteResults(ResultsFileName+'_complet',nodes,elements,2)
@@ -72,12 +72,12 @@ rho       = 2800.0 # kg/m3
 thickness = 2e-3
 
 # Boundary conditions
-IdNodesFixed_x=scipy.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
-IdNodesFixed_y=scipy.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
-IdNodesFixed_z=scipy.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
-IdNodesFixed_rotx=scipy.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
-IdNodesFixed_roty=scipy.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
-IdNodesFixed_rotz=scipy.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
+IdNodesFixed_x=np.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
+IdNodesFixed_y=np.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
+IdNodesFixed_z=np.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
+IdNodesFixed_rotx=np.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
+IdNodesFixed_roty=np.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
+IdNodesFixed_rotz=np.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
 
 
 toc = time.process_time()
@@ -100,15 +100,15 @@ print("Number of elements:",nelem)
 #      CLEAN MESH
 Id_nodes_used=np.unique(elements)
 Id_nodes_nonused=np.setdiff1d(range(1,nnodes),Id_nodes_used)
-IdNodesFixed_x=np.unique(scipy.hstack([IdNodesFixed_x,Id_nodes_nonused]))
-IdNodesFixed_y=np.unique(scipy.hstack([IdNodesFixed_y,Id_nodes_nonused]))
-IdNodesFixed_z=np.unique(scipy.hstack([IdNodesFixed_z,Id_nodes_nonused]))
-IdNodesFixed_rotx=np.unique(scipy.hstack([IdNodesFixed_rotx,Id_nodes_nonused]))
-IdNodesFixed_roty=np.unique(scipy.hstack([IdNodesFixed_roty,Id_nodes_nonused]))
-IdNodesFixed_rotz=np.unique(scipy.hstack([IdNodesFixed_rotz,Id_nodes_nonused]))
+IdNodesFixed_x=np.unique(np.hstack([IdNodesFixed_x,Id_nodes_nonused]))
+IdNodesFixed_y=np.unique(np.hstack([IdNodesFixed_y,Id_nodes_nonused]))
+IdNodesFixed_z=np.unique(np.hstack([IdNodesFixed_z,Id_nodes_nonused]))
+IdNodesFixed_rotx=np.unique(np.hstack([IdNodesFixed_rotx,Id_nodes_nonused]))
+IdNodesFixed_roty=np.unique(np.hstack([IdNodesFixed_roty,Id_nodes_nonused]))
+IdNodesFixed_rotz=np.unique(np.hstack([IdNodesFixed_rotz,Id_nodes_nonused]))
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([
+Fixed_Dofs = np.hstack([
     (np.array(IdNodesFixed_x)-1)*6,
     (np.array(IdNodesFixed_y)-1)*6+1,
     (np.array(IdNodesFixed_z)-1)*6+2,
@@ -145,7 +145,7 @@ M=scipy.sparse.csc_matrix( (Vm,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
 
 eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(K[SolvedDofs,:][:,SolvedDofs],10,M[SolvedDofs,:][:,SolvedDofs],sigma=0,which='LM')
 #eigen_values_S,eigen_vectors_S= scipy.linalg.eig(K[SolvedDofs,:][:,SolvedDofs],M[SolvedDofs,:][:,SolvedDofs])
-freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*np.pi))
+freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
 eigen_vector_S_list=[]
 for i in range(eigen_values_S.shape[0]):

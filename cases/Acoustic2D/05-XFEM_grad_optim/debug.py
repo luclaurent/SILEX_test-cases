@@ -223,15 +223,19 @@ for x_pos_struc_ini in [5050]:#[6199,6200,6201]:
     toc = time.process_time()
     print("time to compute Heaviside enrichment:",toc-tic)
 
-    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([HeavisideEnrichedElements,EdgeEnrichedElements]))])
-    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements,EdgeEnrichedElementsInAllMesh]))])
-    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements]))])
-    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([NegativeLStgtElements]))])
+    #Enrichednodes = np.unique(fluid_elements[np.hstack(([HeavisideEnrichedElements,EdgeEnrichedElements]))])
+    #Enrichednodes = np.unique(fluid_elements[np.hstack(([EnrichedElements,PositiveLStgtElements,EdgeEnrichedElementsInAllMesh]))])
+    #Enrichednodes = np.unique(fluid_elements[np.hstack(([EnrichedElements,PositiveLStgtElements]))])
+    #Enrichednodes = np.unique(fluid_elements[np.hstack(([NegativeLStgtElements]))])
     Enrichednodes = np.unique(fluid_elements[EnrichedElements])
     #Enrichednodes = np.unique(fluid_elements)
     SolvedDofA=Enrichednodes-1
 
-    silex_lib_gmsh.WriteResults(results_file+'_EnrichedElements',fluid_nodes,fluid_elements[scipy.hstack(([EnrichedElements]))],2)
+    msh2.mshWriter(
+        cwd / (results_file + "_EnrichedElements.msh"),
+        fluid_nodes,
+        {"type": "TRI3", "connectivity": fluid_elements[EnrichedElements.flatten()]},
+    )
 
     #################################################################
     # Construct the whole system
@@ -282,7 +286,7 @@ for x_pos_struc_ini in [5050]:#[6199,6200,6201]:
     frfgradient=[]
 
     if (Flag_frf_analysis==1):
-        print("time at the beginning of the FRF: {}".format(time.ctime())))
+        print("time at the beginning of the FRF: {}".format(time.ctime()))
 
         press_save=[]
         dpress_save=[]
@@ -302,7 +306,7 @@ for x_pos_struc_ini in [5050]:#[6199,6200,6201]:
             #F  = scipy.sparse.csc_matrix(F)
 
             #sol = mumps.spsolve(scipy.sparse.coo_matrix(K-(omega**2)*M,dtype='float'), F, comm=mycomm )
-            sol = scipy.sparse.linalg.spsolve(scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='cfloat'), F)
+            sol = scipy.sparse.linalg.spsolve(scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='complex'), F)
             
             #eigen_values_small,eigen_vectors= scipy.sparse.linalg.eigsh(K-(omega**2)*M,1,sigma=0,which='SM')
             #eigen_values_large,eigen_vectors= scipy.sparse.linalg.eigsh(K-(omega**2)*M,1,sigma=0,which='LM')
@@ -316,7 +320,7 @@ for x_pos_struc_ini in [5050]:#[6199,6200,6201]:
             tmp=-(dK-(omega**2)*dM)*sol
             #stop
             #Dsol_Dtheta = mumps.spsolve(  scipy.sparse.coo_matrix(K-(omega**2)*M,dtype='float')  , tmp , comm=mycomm )
-            Dsol_Dtheta = scipy.sparse.linalg.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='cfloat')  , tmp )
+            Dsol_Dtheta = scipy.sparse.linalg.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='complex')  , tmp )
             #stop
             press = np.zeros(fluid_ndof,dtype=complex)
             press[IdnodeS2-1] = np.ones(len(IdnodeS2))
@@ -343,7 +347,7 @@ for x_pos_struc_ini in [5050]:#[6199,6200,6201]:
             print(" end freq")
         
 
-        print("time at the end of the FRF: {}".format(time.ctime())))
+        print("time at the end of the FRF: {}".format(time.ctime()))
         frfsave=[frequencies,frf,frfgradient]
         if rank!=0:
             comm.send(frfsave, dest=0, tag=11)

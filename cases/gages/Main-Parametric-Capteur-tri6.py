@@ -42,8 +42,8 @@ flag_write_fields=1
  
 
 cas=[]
-A=scipy.linspace(-1.0,1.0,20)
-B=scipy.linspace(-2.0,2.0,20)
+A=np.linspace(-1.0,1.0,20)
+B=np.linspace(-2.0,2.0,20)
 E=[]
 
 for a in A:
@@ -96,7 +96,7 @@ for a in A:
         logger.info("Number of elements:",nelem
 
         # define fixed dof
-        Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
+        Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
 
         # define free dof
         SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)

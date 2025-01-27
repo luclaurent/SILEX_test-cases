@@ -66,7 +66,7 @@ elements,Idnodes=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',eltype,1)
 nbmodes=30
 
 # FRF: frequency range
-frequencies=scipy.linspace(1,1000,1000)
+frequencies=np.linspace(1,1000,1000)
 
 # Define material
 Young  = 2e11
@@ -128,7 +128,7 @@ rhoelem    = rhoMin+xe**penal*(rho-rhoMin)
 
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
 
 # define free dof
 SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
@@ -163,7 +163,7 @@ C=alpha*M+beta*K
 
 eigen_values,eigen_vectors= scipy.sparse.linalg.eigsh(K[SolvedDofs,:][:,SolvedDofs],nbmodes,M[SolvedDofs,:][:,SolvedDofs],sigma=0,which='LM')
 
-freq_eigv=list(scipy.sqrt(eigen_values)/(2*np.pi))
+freq_eigv=list(np.sqrt(eigen_values)/(2*np.pi))
 
 eigen_vector_list=[]
 for i in range(eigen_values.shape[0]):
@@ -197,8 +197,8 @@ for i in range(len(frequencies)):
     #sol = mumps.spsolve( scipy.sparse.csc_matrix(K-(omega*omega)*M,dtype='d') , np.array(F.todense() , dtype='d'), comm=comm_mumps_one_proc()).T
     Q[SolvedDofs] = mumps.spsolve( scipy.sparse.csc_matrix(K[SolvedDofs,:][:,SolvedDofs]+omega*1j*C[SolvedDofs,:][:,SolvedDofs]-(omega**2)*M[SolvedDofs,:][:,SolvedDofs],dtype='c16') , np.array(F[SolvedDofs],dtype='c16'), comm=mycomm).T
     
-    #frf.append(scipy.sqrt(Q[(24-1)*2]**2+Q[(24-1)*2+1]**2))
-    frf.append(    scipy.sqrt(     (Q[(24-1)*2].real)**2+     (Q[(24-1)*2].imag)**2   )    )
+    #frf.append(np.sqrt(Q[(24-1)*2]**2+Q[(24-1)*2+1]**2))
+    frf.append(    np.sqrt(     (Q[(24-1)*2].real)**2+     (Q[(24-1)*2].imag)**2   )    )
 
     # displacement written on 2 columns:
     disp=np.zeros((nnodes,2))
@@ -209,7 +209,7 @@ for i in range(len(frequencies)):
 frfsave=[frequencies,frf]
 silex_lib_gmsh.WriteResults2(ResultsFileName+'_static_optim_with_damping_disp_frf',nodes,elements,eltype,[[disp_save,'nodal',2,'displacement']])
 
-print (" time at the end of the FRF: {}".format(time.ctime())))
+print (" time at the end of the FRF: {}".format(time.ctime()))
 
 # Save the FRF problem
 f=open(ResultsFileName+'_static_optim_damping.frf','wb')

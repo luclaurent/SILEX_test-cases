@@ -63,7 +63,7 @@ else:
     mytype='c16'
 
 # SPACE mesh
-nodes_x=scipy.linspace(0.0, L , num=nb_node_x)
+nodes_x=np.linspace(0.0, L , num=nb_node_x)
 Idnodes_x=list(range(1,nb_node_x+1,1))
 
 elements_x=[]
@@ -71,7 +71,7 @@ for e in range(nb_elem_x):
     elements_x.append([Idnodes_x[e],Idnodes_x[e+1]])
     
 # PARAMETER mesh: Omega
-nodes_w=scipy.linspace(w1, w2 , num=nb_node_w)
+nodes_w=np.linspace(w1, w2 , num=nb_node_w)
 
 # SPACE : Boundary conditions
 IdNodesFixed_x=np.array([1],dtype=int)
@@ -89,7 +89,7 @@ P[nb_node_x-1]=load
 ndof_x=nb_node_x
 
 # define fixed dof
-Fixed_Dofs_x = scipy.hstack([(IdNodesFixed_x-1)*1])
+Fixed_Dofs_x = np.hstack([(IdNodesFixed_x-1)*1])
 
 # define free dof
 SolvedDofs_x = np.setdiff1d(range(ndof_x),Fixed_Dofs_x)
@@ -126,7 +126,7 @@ for omega in nodes_w:
 
 u_ex=[]
 for i in range(10):
-    print("Freq. analytique",((2*(i+1)-1)*np.pi*scipy.sqrt(young/rho))/(2.0*L*2.0*np.pi))
+    print("Freq. analytique",((2*(i+1)-1)*np.pi*np.sqrt(young/rho))/(2.0*L*2.0*np.pi))
     u_ex.append(np.sin((2*(i+1)-1)*np.pi*nodes_x/(2.0*L)))
 
 

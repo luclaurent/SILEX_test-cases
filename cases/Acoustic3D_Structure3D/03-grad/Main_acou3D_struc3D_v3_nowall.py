@@ -65,8 +65,8 @@ def computeFreqPerProc(nbStep, nbProc, freqInit, freqEnd):
     if nbFreqProcRemain == 0:
         varCase = 0
     listFreq = np.zeros((nbFreqProc+varCase, nbProc))
-    listAllFreq = scipy.linspace(freqInit, freqEnd, nbStep)
-    # print(scipy.linspace(freqInit,freqEnd,nbStep))
+    listAllFreq = np.linspace(freqInit, freqEnd, nbStep)
+    # print(np.linspace(freqInit,freqEnd,nbStep))
     # build array of frequencies
     itF = 0
     for itP in range(nbProc):
@@ -218,7 +218,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
     UF = np.zeros(2*fluid_ndof, dtype=float)
     UF[9-1] = 3.1250E-05
 
-    SolvedDof = scipy.hstack([SolvedDofF])
+    SolvedDof = np.hstack([SolvedDofF])
 
     ##############################################################
     # FRF computation

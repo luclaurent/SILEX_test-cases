@@ -100,7 +100,7 @@ SolvedDofF=list(range(fluid_ndof))
 tic = time.process_time()
 eigen_values_F,eigen_vectors_F= scipy.sparse.linalg.eigsh(KFF[SolvedDofF,:][:,SolvedDofF],nb_mode_F,MFF[SolvedDofF,:][:,SolvedDofF],sigma=0,which='LM')
 
-freq_eigv_F=list(scipy.sqrt(eigen_values_F)/(2*np.pi))
+freq_eigv_F=list(np.sqrt(eigen_values_F)/(2*np.pi))
 eigen_vector_F_list=[]
 for i in range(nb_mode_F):
     tmp=eigen_vectors_F[:,i].real
@@ -155,13 +155,13 @@ frequencies=[]
 frf=[]
 
 if (Flag_frf_analysis==1):
-    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime())))
+    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime()))
 
     press_save=[]
     disp_save=[]
 
     for i in range(nb_freq_step_per_proc):
-    #for freq in scipy.linspace(freq_ini,freq_end,nb_freq_step):
+    #for freq in np.linspace(freq_ini,freq_end,nb_freq_step):
 
         freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
         frequencies.append(freq)
@@ -193,7 +193,7 @@ if (Flag_frf_analysis==1):
     if rank==0:
         silex_lib_gmsh.WriteResults2(results_file+'_results_fluid_frf',fluid_nodes,fluid_elements,4,[[press_save,'nodal',1,'pressure']])
 
-    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime())))
+    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime()))
 
     # save the FRF problem
     Allfrequencies=np.zeros(nb_freq_step)

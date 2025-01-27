@@ -30,7 +30,7 @@ def Fast_compute(data,F,nodes,elements,material):
         SigmaNodes_23=SigmaNodes_23+F[i]*Sigmabasis[i][:,3]
         SigmaNodes_13=SigmaNodes_13+F[i]*Sigmabasis[i][:,4]
         SigmaNodes_12=SigmaNodes_12+F[i]*Sigmabasis[i][:,5]
-    VM=scipy.sqrt(1.5*(SigmaNodes_11**2+SigmaNodes_22**2+SigmaNodes_33**2)+2.0*(SigmaNodes_23**2+SigmaNodes_13**2+SigmaNodes_12**2)-0.5*(SigmaNodes_11+SigmaNodes_22+SigmaNodes_33)**2)
+    VM=np.sqrt(1.5*(SigmaNodes_11**2+SigmaNodes_22**2+SigmaNodes_33**2)+2.0*(SigmaNodes_23**2+SigmaNodes_13**2+SigmaNodes_12**2)-0.5*(SigmaNodes_11+SigmaNodes_22+SigmaNodes_33)**2)
 
 ##    SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,material,Q)
 ##    return Q,SigmaNodes,max(SigmaNodes[np.ix_(range(nnodes),[6])])[0]

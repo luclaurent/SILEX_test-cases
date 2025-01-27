@@ -79,7 +79,7 @@ print("type de resolution: ",mytype)
 #nb_fcts_PGD = 19
 
 nb_node_w  = nb_freq_step
-nodes_w    = scipy.linspace(freq_ini*2.0*np.pi, freq_end*2.0*np.pi , num=nb_freq_step)
+nodes_w    = np.linspace(freq_ini*2.0*np.pi, freq_end*2.0*np.pi , num=nb_freq_step)
 Idnodes_w  = list(range(1,nb_node_w+1,1))
 omega_ndof = nb_node_w
 nb_elem_w  = nb_node_w-1
@@ -197,7 +197,7 @@ while (residu>1e-2):
 ##    G=np.array(  scipy.random.random(ndof_w) , dtype=mytype  )
 ##    F=np.array(  scipy.random.random(ndof_x)+scipy.random.random(ndof_x)*1j , dtype='c16'  )
 ##    G=np.array(  scipy.random.random(ndof_w)+scipy.random.random(ndof_w)*1j , dtype='c16'  )
-    #X=scipy.hstack([F,G])
+    #X=np.hstack([F,G])
 ##    if i==0:
 ##        F=np.zeros(ndof_x)+1.0
 ##        G=np.zeros(ndof_w)+1.0

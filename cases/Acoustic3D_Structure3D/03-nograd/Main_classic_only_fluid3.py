@@ -47,7 +47,7 @@ import mumps
 
 import ComputeCavity3
 ANGLES=[0, np.pi/8, 2*np.pi/8, 3*np.pi/8, 4*np.pi/8, 5*np.pi/8, 6*np.pi/8, 7*np.pi/8, 8*np.pi/8]
-#ANGLES=scipy.linspace(0.0, np.pi, num=20)
+#ANGLES=np.linspace(0.0, np.pi, num=20)
 frf=[]
 for angle in ANGLES:
     frf.append(ComputeCavity3.ComputeFRF([angle,1.5,2.0,3.0]))

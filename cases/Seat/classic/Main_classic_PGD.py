@@ -89,7 +89,7 @@ val_critere=0.1
 ##############################################################
 
 nb_node_w  = nb_freq_step
-nodes_w    = scipy.linspace(freq_ini*2.0*np.pi, freq_end*2.0*np.pi , num=nb_freq_step)
+nodes_w    = np.linspace(freq_ini*2.0*np.pi, freq_end*2.0*np.pi , num=nb_freq_step)
 Idnodes_w  = list(range(1,nb_node_w+1,1))
 omega_ndof = nb_node_w
 nb_elem_w  = nb_node_w-1
@@ -195,7 +195,7 @@ if rank==0:
 # Find the fixed dofs and the free dofs
 
 tmp4=scipy.sparse.find(struc_nodes[:,2]==0.0) # z=0
-FixedStrucNodes=np.unique(scipy.hstack([tmp4[1]+1]))
+FixedStrucNodes=np.unique(np.hstack([tmp4[1]+1]))
 
 
 FixedStrucDofUx=(FixedStrucNodes-1)*6
@@ -212,7 +212,7 @@ FixedStrucDofRz=(FixedStrucNodes-1)*6+5
 ##FixedStrucDofRy=list(range(1,struc_nnodes+1,1))*6+4
 ##FixedStrucDofRz=list(range(1,struc_nnodes+1,1))*6+5
 
-FixedStrucDof=scipy.hstack([FixedStrucDofUx,FixedStrucDofUy,FixedStrucDofUz,FixedStrucDofRx,FixedStrucDofRy,FixedStrucDofRz])
+FixedStrucDof=np.hstack([FixedStrucDofUx,FixedStrucDofUy,FixedStrucDofUz,FixedStrucDofRx,FixedStrucDofRy,FixedStrucDofRz])
 SolvedDofS=np.setdiff1d(list(range(struc_ndof)),FixedStrucDof)
 #SolvedDofS=struc_ndof
 
@@ -314,9 +314,9 @@ P=scipy.append(P,FS[SolvedDofS])
 
 ndof_x=fluid_ndof+struc_ndof
 ndof_w=omega_ndof
-SolvedDofs_x=scipy.hstack([SolvedDofF,fluid_ndof+SolvedDofS])
+SolvedDofs_x=np.hstack([SolvedDofF,fluid_ndof+SolvedDofS])
 SolvedDofs_w=np.array(list(range(ndof_w)))
-##SolvedDofs_X=scipy.hstack([SolvedDofF,fluid_ndof+SolvedDofS,SolvedDofs_w+fluid_ndof+struc_ndof])
+##SolvedDofs_X=np.hstack([SolvedDofF,fluid_ndof+SolvedDofS,SolvedDofs_w+fluid_ndof+struc_ndof])
 F_i=[]
 G_i=[]
 alpha_i = np.array(  np.zeros(5) , dtype=mytype  )
@@ -350,7 +350,7 @@ while (residu>val_residu):
     #G=scipy.random.random(ndof_w)
     F=np.array(  np.zeros(ndof_x)+1.0 , dtype=mytype  )
     G=np.array(  np.zeros(ndof_w)+1.0 , dtype=mytype  )
-    #X=scipy.hstack([F,G])
+    #X=np.hstack([F,G])
 ##    if i==0:
 ##        F=np.zeros(ndof_x)+1.0
 ##        G=np.zeros(ndof_w)+1.0
@@ -389,14 +389,14 @@ while (residu>val_residu):
         #Big_matrix=scipy.sparse.bmat( [[scipy.dot(G,A*G)*K-scipy.dot(G,B*G)*M  ,  K_sum_fi_Gi_A-M_sum_fi_Gi_B],
         #        [K_sum_fi_Gi_A.T+M_sum_fi_Gi_B.T,scipy.dot(F[SolvedDofs_x]  ,  K*F[SolvedDofs_x])*A-scipy.dot(F[SolvedDofs_x],M*F[SolvedDofs_x])*B]
         #                                         ] )
-        #Second_member = scipy.hstack([  scipy.dot(bb,G)*P  ,  bb*scipy.dot(P,F[SolvedDofs_x])  ])
+        #Second_member = np.hstack([  scipy.dot(bb,G)*P  ,  bb*scipy.dot(P,F[SolvedDofs_x])  ])
 
         #print("hello 2")
         #Big_matrix=scipy.sparse.bmat( [[scipy.dot(G,A*G)*K-scipy.dot(G,B*G)*M  ,  K_sum_fi_Gi_A-M_sum_fi_Gi_B-scipy.tensordot(P,bb,0) ],
         #        [K_sum_fi_Gi_A.T+M_sum_fi_Gi_B.T-scipy.tensordot(bb,P,0) , scipy.dot(F[SolvedDofs_x],K*F[SolvedDofs_x])*A-scipy.dot(F[SolvedDofs_x],M*F[SolvedDofs_x])*B]
         #                                         ] )
         #print("hello 3")
-        #Second_member = scipy.hstack([  1e-10*scipy.dot(bb,G)*P  ,  1e-10*bb*scipy.dot(P,F[SolvedDofs_x])  ])
+        #Second_member = np.hstack([  1e-10*scipy.dot(bb,G)*P  ,  1e-10*bb*scipy.dot(P,F[SolvedDofs_x])  ])
         #print("hello 4")
         
         #X[SolvedDofs_X] = mumps.spsolve( Big_matrix , Second_member , comm=mycomm).T

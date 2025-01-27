@@ -54,7 +54,7 @@ mycomm=comm_mumps_one_proc()
 ###########################################################
 
 if rank==0:
-    print ("time at the beginning of the computation: {}".format(time.ctime())))
+    print ("time at the beginning of the computation: {}".format(time.ctime()))
 
 ##############################################################
 ##############################################################
@@ -143,9 +143,9 @@ lx3 = 2.0 # Xc
 ly3 = 2.0 # Yc
 R = 1.0 # sphere radius
 
-LevelSet=scipy.sqrt((fluid_nodes[:,0]-lx3)**2+(fluid_nodes[:,1]-lx3)**2+(fluid_nodes[:,2]-0.0)**2)-R
+LevelSet=np.sqrt((fluid_nodes[:,0]-lx3)**2+(fluid_nodes[:,1]-lx3)**2+(fluid_nodes[:,2]-0.0)**2)-R
 #Compute LS gradient according to Xc
-LevelSet_gradient=(lx3-fluid_nodes[:,0])/(scipy.sqrt((fluid_nodes[:,0]-lx3)**2+(fluid_nodes[:,1]-lx3)**2+(fluid_nodes[:,2]-0.0)**2))
+LevelSet_gradient=(lx3-fluid_nodes[:,0])/(np.sqrt((fluid_nodes[:,0]-lx3)**2+(fluid_nodes[:,1]-lx3)**2+(fluid_nodes[:,2]-0.0)**2))
 
 
 toc = time.process_time()
@@ -254,7 +254,7 @@ M=scipy.sparse.bmat( [
 UF = np.zeros(2*fluid_ndof,dtype=float)
 UF[9-1]=3.1250E-05
 
-SolvedDof = scipy.hstack([SolvedDofF,SolvedDofA+fluid_ndof])
+SolvedDof = np.hstack([SolvedDofF,SolvedDofA+fluid_ndof])
 
 #################################################################
 # Compute gradients with respect to parameters
@@ -283,7 +283,7 @@ frf=[]
 frfgradient=[]
 
 if (Flag_frf_analysis==1):
-    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime())))
+    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime()))
 
     if rank==0:
         print('nb of total dofs: ',len(SolvedDofF)+len(SolvedDofA))
@@ -342,7 +342,7 @@ if (Flag_frf_analysis==1):
 
     #comm.send(frfsave, dest=0, tag=11)
 
-    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime())))
+    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime()))
 
     if (flag_write_gmsh_results==1) and (rank==0):
         silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',fluid_nodes,fluid_elements1,4,[[press_save,'nodal',1,'pressure'],[dpress_save,'nodal',1,'pressure gradient']])

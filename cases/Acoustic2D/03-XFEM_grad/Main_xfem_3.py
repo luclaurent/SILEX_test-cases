@@ -316,10 +316,10 @@ for itP in [0, 1, 5, 10, 50, 100, 500]:
     toc = time.process_time()
     logger.info("time to compute Heaviside enrichment: {}".format(toc - tic))
 
-    # Enrichednodes = np.unique(fluid_elements[scipy.hstack(([HeavisideEnrichedElements,EdgeEnrichedElements]))])
-    # Enrichednodes = np.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements,EdgeEnrichedElementsInAllMesh]))])
-    # Enrichednodes = np.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements]))])
-    # Enrichednodes = np.unique(fluid_elements[scipy.hstack(([NegativeLStgtElements]))])
+    # Enrichednodes = np.unique(fluid_elements[np.hstack(([HeavisideEnrichedElements,EdgeEnrichedElements]))])
+    # Enrichednodes = np.unique(fluid_elements[np.hstack(([EnrichedElements,PositiveLStgtElements,EdgeEnrichedElementsInAllMesh]))])
+    # Enrichednodes = np.unique(fluid_elements[np.hstack(([EnrichedElements,PositiveLStgtElements]))])
+    # Enrichednodes = np.unique(fluid_elements[np.hstack(([NegativeLStgtElements]))])
     Enrichednodes = np.unique(fluid_elements[EnrichedElements])
     # Enrichednodes = np.unique(fluid_elements)
     SolvedDofA = Enrichednodes - 1

@@ -115,7 +115,7 @@ while (ErrorGlobal>ErrorGlobalMaxi):
     print("Number of elements:",nelem)
 
     # define fixed dof
-    Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
+    Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
 
     # define free dof
     SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
@@ -157,8 +157,8 @@ while (ErrorGlobal>ErrorGlobalMaxi):
     print("The global error is:",ErrorGlobal)
 
     #Elt_max_length=Elt_max_length/1.2
-    local_error=scipy.sqrt(ErrorElem)/scipy.average(scipy.sqrt(ErrorElem))
-    print(scipy.average(scipy.sqrt(ErrorElem)))
+    local_error=np.sqrt(ErrorElem)/scipy.average(np.sqrt(ErrorElem))
+    print(scipy.average(np.sqrt(ErrorElem)))
     print(min(local_error),max(local_error))
     #local_refine = (np.sign(local_error-1.0)+1.0)*0.5
     #local_not_refine = -(np.sign(local_error-1.0)-1.0)*0.5
@@ -184,7 +184,7 @@ while (ErrorGlobal>ErrorGlobalMaxi):
         a23[1,2] = Y[2]
         det_of_sys=silex_lib_elt.det33_ligne_de_un(a23)
         Area=abs(0.5*det_of_sys)
-        current_size=scipy.sqrt(2.0*Area)
+        current_size=np.sqrt(2.0*Area)
         if local_error[e]<1.0:
             NewSize[e]=current_size*2.5
         else:

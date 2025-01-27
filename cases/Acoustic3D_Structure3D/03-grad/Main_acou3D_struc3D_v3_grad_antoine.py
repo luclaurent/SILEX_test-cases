@@ -65,8 +65,8 @@ def computeFreqPerProc(nbStep, nbProc, freqInit, freqEnd):
     if nbFreqProcRemain == 0:
         varCase = 0
     listFreq = np.zeros((nbFreqProc+varCase, nbProc))
-    listAllFreq = scipy.linspace(freqInit, freqEnd, nbStep)
-    # print(scipy.linspace(freqInit,freqEnd,nbStep))
+    listAllFreq = np.linspace(freqInit, freqEnd, nbStep)
+    # print(np.linspace(freqInit,freqEnd,nbStep))
     # build array of frequencies
     itF = 0
     for itP in range(nbProc):
@@ -229,7 +229,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     #
 
     # analytic LS
-    LevelSet=scipy.sqrt((fluid_nodes[:,0]-lx3)**2+(fluid_nodes[:,1]-ly3)**2+(fluid_nodes[:,2]-lz3)**2)-R
+    LevelSet=np.sqrt((fluid_nodes[:,0]-lx3)**2+(fluid_nodes[:,1]-ly3)**2+(fluid_nodes[:,2]-lz3)**2)-R
     #temprorary levelset gradients
     LevelSet_gradient_tmp=[]
     NameParaTmp=['X','Y','Z','R']
@@ -387,7 +387,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     UF = np.zeros(2*fluid_ndof, dtype=float)
     UF[9-1] = 3.1250E-05
 
-    SolvedDof = scipy.hstack([SolvedDofF, SolvedDofA+fluid_ndof])
+    SolvedDof = np.hstack([SolvedDofF, SolvedDofA+fluid_ndof])
 
  
     #################################################################
@@ -555,9 +555,9 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             print(">>> Done!!")
 
             #export results with discontinuities on .pos files
-            varExport=scipy.vstack(uncorrectedpress_save).transpose()
-            varExportC=scipy.vstack(press_save).transpose()
-            varExportB=scipy.vstack(enrichment_save).transpose()
+            varExport=np.vstack(uncorrectedpress_save).transpose()
+            varExportC=np.vstack(press_save).transpose()
+            varExportB=np.vstack(enrichment_save).transpose()
             print("Write pressure field in pos file")
             silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,varExport.real,varExportB.real,'press_plus.pos')
             silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,varExport.real,-varExportB.real,'press_moins.pos')
@@ -565,7 +565,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             #
             itG=0
             for itP in NamePara:
-                varExport=scipy.vstack(dpress_save[itG]).transpose()
+                varExport=np.vstack(dpress_save[itG]).transpose()
                 print("Write gradient of pressure field in pos file (",itP,")")
                 silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,LevelSet,varExport.real,varExportB.real,'Gpress_plus_'+itP+'.pos')
                 silex_lib_xfem_acou_tet4.makexfemposfilefreq(fluid_nodes,fluid_elements1,-LevelSet,varExport.real,-varExportB.real,'Gpress_moins_'+itP+'.pos')

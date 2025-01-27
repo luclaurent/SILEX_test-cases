@@ -74,7 +74,7 @@ elementS2,IdnodeS2=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,2)
 ##silex_lib_gmsh.WriteResults(ResultsFileName+'_vol11',nodes,elementV11,5)
 ##silex_lib_gmsh.WriteResults(ResultsFileName+'_vol12',nodes,elementV12,5)
 
-elements=scipy.vstack([elementV10,elementV11,elementV12])
+elements=np.vstack([elementV10,elementV11,elementV12])
 
 ##silex_lib_gmsh.WriteResults(ResultsFileName+'_complet',nodes,elements,5)
 
@@ -153,9 +153,9 @@ ndof   = nnodes*3
 nelem  = elements.shape[0]
 
 # Boundary conditions
-IdNodesFixed_x=scipy.hstack([IdnodeS3,IdnodeS1])
-IdNodesFixed_y=scipy.hstack([IdnodeS3,IdnodeS1])
-IdNodesFixed_z=scipy.hstack([IdnodeS3,IdnodeS1])
+IdNodesFixed_x=np.hstack([IdnodeS3,IdnodeS1])
+IdNodesFixed_y=np.hstack([IdnodeS3,IdnodeS1])
+IdNodesFixed_z=np.hstack([IdnodeS3,IdnodeS1])
 
 # DEFINE LOAD
 #load = 1.0e2                     # traction loading (Pa)
@@ -166,7 +166,7 @@ IdNodesFixed_z=scipy.hstack([IdnodeS3,IdnodeS1])
 F = np.zeros(ndof,dtype=mytype)
 
 # frequency range
-frequencies=scipy.linspace(0,500,500)
+frequencies=np.linspace(0,500,500)
 
 toc = time.process_time()
 print("time for the user part:",toc-tic)
@@ -190,7 +190,7 @@ print("Number of elements:",elementV12.shape[0])
 print("")
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([
+Fixed_Dofs = np.hstack([
     (np.array(IdNodesFixed_x)-1)*3,
     (np.array(IdNodesFixed_y)-1)*3+1,
     (np.array(IdNodesFixed_z)-1)*3+2])
@@ -206,16 +206,16 @@ Q=np.zeros(ndof,dtype='float')
 #############################################################################
 
 # Dof fixed in the x direction
-Fixed_link_Dofs_x = scipy.hstack([(IdnodeV12-1)*3])
+Fixed_link_Dofs_x = np.hstack([(IdnodeV12-1)*3])
 
 # Dof fixed in the x direction
-Fixed_link_Dofs_y = scipy.hstack([(IdnodeV12-1)*3+1])
+Fixed_link_Dofs_y = np.hstack([(IdnodeV12-1)*3+1])
 
 # Dof fixed in the x direction
-Fixed_link_Dofs_z = scipy.hstack([(IdnodeV12-1)*3+2])
+Fixed_link_Dofs_z = np.hstack([(IdnodeV12-1)*3+2])
 
 # define fixed dof
-Fixed_Dofs_link = scipy.hstack([Fixed_link_Dofs_x,Fixed_link_Dofs_y,Fixed_link_Dofs_z])
+Fixed_Dofs_link = np.hstack([Fixed_link_Dofs_x,Fixed_link_Dofs_y,Fixed_link_Dofs_z])
 
 SolvedDofs_link = np.setdiff1d(range(ndof),Fixed_Dofs_link)
 
@@ -227,10 +227,10 @@ for pre_load_force in [0]: #N
     print('pre load compressive force=',pre_load_force,'N')
 
     # Computation of the scale factor
-    scale  = scipy.linspace(0,1,n)
+    scale  = np.linspace(0,1,n)
 
     # load calculation
-    Force = silex_lib_elt.forceonsurface(nodes,scipy.vstack([elementS1,elementS3]),pre_load,direction)
+    Force = silex_lib_elt.forceonsurface(nodes,np.vstack([elementS1,elementS3]),pre_load,direction)
     NormFext = scipy.linalg.norm(Force)
 
     # Global initialization
@@ -375,7 +375,7 @@ for pre_load_force in [0]: #N
     # initialize displacement vector
     Q=np.zeros(ndof,dtype=mytype)
 
-    Imposed_disp_dof=scipy.hstack([
+    Imposed_disp_dof=np.hstack([
         (np.array(IdNodesFixed_x)-1)*3,
         (np.array(IdNodesFixed_z)-1)*3+2])
 
@@ -393,7 +393,7 @@ for pre_load_force in [0]: #N
     if 1==0:
         eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(K[SolvedDofs,:][:,SolvedDofs],10,M[SolvedDofs,:][:,SolvedDofs],sigma=0,which='LM')
 
-        freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*np.pi))
+        freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
         eigen_vector_S_list=[]
         for i in range(eigen_values_S.shape[0]):
@@ -437,7 +437,7 @@ for pre_load_force in [0]: #N
         #Q[SolvedDofs] = mumps.spsolve( scipy.sparse.csc_matrix(K[SolvedDofs,:][:,SolvedDofs]-(omega*omega)*M[SolvedDofs,:][:,SolvedDofs],dtype=mytype) , np.array(F[SolvedDofs],dtype=mytype), comm=mycomm).T
         Q[SolvedDofs] = mumps.spsolve( kk , np.array(F[SolvedDofs],dtype=mytype)-(K[SolvedDofs,:][:,Fixed_Dofs]-(omega*omega)*M[SolvedDofs,:][:,Fixed_Dofs])*Q[Fixed_Dofs], comm=mycomm).T
 
-        #frf.append(scipy.sqrt(Q[(187-1)*3]**2+Q[(187-1)*3+1]**2+Q[(187-1)*3+2]**2))
+        #frf.append(np.sqrt(Q[(187-1)*3]**2+Q[(187-1)*3+1]**2+Q[(187-1)*3+2]**2))
         frf.append(scipy.linalg.norm(np.array([Q[(187-1)*3],Q[(187-1)*3+1],Q[(187-1)*3+2]])))
         
         disp=np.zeros((nnodes,3),dtype='float')

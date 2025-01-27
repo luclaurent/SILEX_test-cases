@@ -20,7 +20,7 @@ def ElementalStiffness(X,Y,young,section):
     lx        = x2-x1
     ly        = y2-y1
 
-    lelem     = scipy.sqrt(lx**2+ly**2)
+    lelem     = np.sqrt(lx**2+ly**2)
     cos_theta = lx/lelem
     sin_theta = ly/lelem
 
@@ -173,7 +173,7 @@ def elementalnormalforces(X,Y,young,section,inertia,UX,UY):
     y2=Y[1]
     lx        = x2-x1
     ly        = y2-y1
-    lelem     = scipy.sqrt(lx**2+ly**2)
+    lelem     = np.sqrt(lx**2+ly**2)
     cos_theta = lx/lelem
     sin_theta = ly/lelem
 
@@ -190,7 +190,7 @@ def getlength(nodes,elements):
     sumL=0.0
     length=np.zeros(nelem)
     for e in range(nelem):
-        length[e] = scipy.sqrt((nodes[elements[e,1]-1,0]-nodes[elements[e,0]-1,0])**2+(nodes[elements[e,1]-1,1]-nodes[elements[e,0]-1,1])**2)
+        length[e] = np.sqrt((nodes[elements[e,1]-1,0]-nodes[elements[e,0]-1,0])**2+(nodes[elements[e,1]-1,1]-nodes[elements[e,0]-1,1])**2)
     sumL=sum(length)
 
     return length,sumL
@@ -318,7 +318,7 @@ def OptimalityCriteria(xe,dc,dv,volfrac,nelem):
                              scipy.maximum(xe-move,
                                            scipy.minimum(1.0,
                                                          scipy.minimum(xe+move,
-                                                                       xe*scipy.sqrt(-dc/dv/lmid)))))      
+                                                                       xe*np.sqrt(-dc/dv/lmid)))))      
         if sum(xnew) > volfrac*nelem:
             l1 = lmid
         else:

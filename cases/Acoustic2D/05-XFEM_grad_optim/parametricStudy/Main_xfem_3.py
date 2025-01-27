@@ -222,15 +222,19 @@ for x_pos_struc_ini in [6199,6200,6201]:
     toc = time.process_time()
     print("time to compute Heaviside enrichment:",toc-tic)
 
-    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([HeavisideEnrichedElements,EdgeEnrichedElements]))])
-    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements,EdgeEnrichedElementsInAllMesh]))])
-    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements]))])
-    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([NegativeLStgtElements]))])
+    #Enrichednodes = np.unique(fluid_elements[np.hstack(([HeavisideEnrichedElements,EdgeEnrichedElements]))])
+    #Enrichednodes = np.unique(fluid_elements[np.hstack(([EnrichedElements,PositiveLStgtElements,EdgeEnrichedElementsInAllMesh]))])
+    #Enrichednodes = np.unique(fluid_elements[np.hstack(([EnrichedElements,PositiveLStgtElements]))])
+    #Enrichednodes = np.unique(fluid_elements[np.hstack(([NegativeLStgtElements]))])
     Enrichednodes = np.unique(fluid_elements[EnrichedElements])
     #Enrichednodes = np.unique(fluid_elements)
     SolvedDofA=Enrichednodes-1
 
-    silex_lib_gmsh.WriteResults(results_file+'_EnrichedElements',fluid_nodes,fluid_elements[scipy.hstack(([EnrichedElements]))],2)
+    msh2.mshWriter(
+        cwd / (results_file + "_EnrichedElements.msh"),
+        fluid_nodes,
+        {"type": "TRI3", "connectivity": fluid_elements[EnrichedElements.flatten()]},
+    )
 
     #################################################################
     # Construct the whole system
@@ -281,7 +285,7 @@ for x_pos_struc_ini in [6199,6200,6201]:
     frfgradient=[]
 
     if (Flag_frf_analysis==1):
-        print("time at the beginning of the FRF: {}".format(time.ctime())))
+        print("time at the beginning of the FRF: {}".format(time.ctime()))
 
         press_save=[]
         dpress_save=[]
@@ -340,7 +344,7 @@ for x_pos_struc_ini in [6199,6200,6201]:
             dpress_save.append(Dpress_Dtheta.copy())
         
 
-        print("time at the end of the FRF: {}".format(time.ctime())))
+        print("time at the end of the FRF: {}".format(time.ctime()))
         frfsave=[frequencies,frf,frfgradient]
         comm.send(frfsave, dest=0, tag=11)
         if (flag_write_gmsh_results==1) and (rank==0):

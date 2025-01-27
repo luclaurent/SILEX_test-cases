@@ -78,7 +78,7 @@ elements,Idnodes=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',eltype,1)
 nbmodes=20
 
 # FRF: frequency range
-frequencies=scipy.linspace(1,1000,1000)
+frequencies=np.linspace(1,1000,1000)
 
 # Define material
 Young  = 2e11
@@ -138,7 +138,7 @@ rhoelem    = rhoMin+xe**penalrho*(rho-rhoMin)
 
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
 
 # define free dof
 SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
@@ -172,7 +172,7 @@ M=scipy.sparse.csc_matrix( (Vm,(Im,Jm)), shape=(ndof,ndof) )
 if 1==0:
     eigen_values,eigen_vectors= scipy.sparse.linalg.eigsh(K[SolvedDofs,:][:,SolvedDofs],nbmodes,M[SolvedDofs,:][:,SolvedDofs],sigma=0,which='LM')
 
-    freq_eigv=list(scipy.sqrt(eigen_values)/(2*np.pi))
+    freq_eigv=list(np.sqrt(eigen_values)/(2*np.pi))
 
     eigen_vector_list=[]
     for i in range(eigen_values.shape[0]):
@@ -208,9 +208,9 @@ for i in range(len(frequencies)):
     Q[SolvedDofs] = mumps.spsolve( scipy.sparse.csc_matrix(K[SolvedDofs,:][:,SolvedDofs]-(omega*omega)*M[SolvedDofs,:][:,SolvedDofs],dtype='d') , np.array(F[SolvedDofs],dtype='d'), comm=mycomm).T
 
     if flag_xe_optim==1:
-        frf.append(scipy.sqrt( Q[(dico[24]-1)*2]**2 + Q[(dico[24]-1)*2+1]**2) )
+        frf.append(np.sqrt( Q[(dico[24]-1)*2]**2 + Q[(dico[24]-1)*2+1]**2) )
     else:
-        frf.append(scipy.sqrt( Q[(24-1)*2]**2 + Q[(24-1)*2+1]**2) )
+        frf.append(np.sqrt( Q[(24-1)*2]**2 + Q[(24-1)*2+1]**2) )
     #frf.append(scipy.absolute(Q[(24-1)*2+1]))
 
     # displacement written on 2 columns:
@@ -222,7 +222,7 @@ for i in range(len(frequencies)):
 frfsave=[frequencies,frf]
 silex_lib_gmsh.WriteResults2(ResultsFileName+'_disp_frf',nodes,elements,eltype,[[disp_save,'nodal',2,'displacement']])
 
-print (" time at the end of the FRF: {}".format(time.ctime())))
+print (" time at the end of the FRF: {}".format(time.ctime()))
 
 #print ("structure eigen frequencies : ",freq_eigv)
 

@@ -82,7 +82,7 @@ print("Number of nodes:",nnodes)
 print("Number of elements:",nelem)
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
 
 # define free dof
 SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
@@ -102,9 +102,9 @@ K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) )
 toc = time.process_time()
 print("time to compute the stiffness matrix:",toc-tic)
 
-InterfaceIdNodes=scipy.hstack([IdnodeS3,IdnodeS2])
+InterfaceIdNodes=np.hstack([IdnodeS3,IdnodeS2])
 
-InterfaceDofs=scipy.hstack([(InterfaceIdNodes-1)*2,(InterfaceIdNodes-1)*2+1])
+InterfaceDofs=np.hstack([(InterfaceIdNodes-1)*2,(InterfaceIdNodes-1)*2+1])
 InternalDofs=np.setdiff1d(range(ndof),InterfaceDofs)
 
 #############################################################################
@@ -210,8 +210,8 @@ silex_lib_gmsh.WriteResults(ResultsFileName+'_1_hole',nodes,elements,eltype,fiel
 #############################################################################
 
 # Make the whole new mesh:
-nodes_3holes = scipy.vstack([nodes,nodes+[100.0,0.0],nodes+[200.0,0.0]])
-elements_3holes = scipy.vstack([elements,elements+nnodes,elements+2*nnodes])
+nodes_3holes = np.vstack([nodes,nodes+[100.0,0.0],nodes+[200.0,0.0]])
+elements_3holes = np.vstack([elements,elements+nnodes,elements+2*nnodes])
 
 if len(IdnodeS2)!=len(IdnodeS3):
     print("Be carefull...................................................")
@@ -227,9 +227,9 @@ InterfaceIdNodes_1_left  = np.array(list(range(0,int(0.5*len(InterfaceIdNodes)),
 #InterfaceIdNodes_3_left  = IdnodeS3+2*nnodes
 InterfaceIdNodes_3_right = np.array(list(range(int(1.5*len(InterfaceIdNodes)),int(2*len(InterfaceIdNodes)),1)))
 
-InterfaceIdDoflocal_1  = scipy.hstack([np.array(elt1)*2,np.array(elt1)*2+1])
-InterfaceIdDoflocal_2  = scipy.hstack([np.array(elt2)*2,np.array(elt2)*2+1])
-InterfaceIdDoflocal_3  = scipy.hstack([np.array(elt3)*2,np.array(elt3)*2+1])
+InterfaceIdDoflocal_1  = np.hstack([np.array(elt1)*2,np.array(elt1)*2+1])
+InterfaceIdDoflocal_2  = np.hstack([np.array(elt2)*2,np.array(elt2)*2+1])
+InterfaceIdDoflocal_3  = np.hstack([np.array(elt3)*2,np.array(elt3)*2+1])
 
 
 elements_super_3holes=np.zeros((3,len(elt1)))
@@ -243,7 +243,7 @@ nnodes_super_3holes=len( np.unique(np.array(elements_super_3holes)) )
 ndof_super_3holes=nnodes_super_3holes*2
 
 # define fixed dof
-Fixed_super_3holes_Dofs = scipy.hstack([(InterfaceIdNodes_1_left)*2,(InterfaceIdNodes_1_left)*2+1])
+Fixed_super_3holes_Dofs = np.hstack([(InterfaceIdNodes_1_left)*2,(InterfaceIdNodes_1_left)*2+1])
 # define free dof
 Solved_super_3holes_Dofs = np.setdiff1d(range(ndof_super_3holes),Fixed_super_3holes_Dofs)
 
@@ -257,7 +257,7 @@ for e in range(nbelem_super_3holes):
     idnodes=elements_super_3holes[e]
     dofx = (idnodes)*2
     dofy = (idnodes)*2+1
-    dofelem = scipy.hstack([dofx,dofy])
+    dofelem = np.hstack([dofx,dofy])
 
     for i in range(len(dofelem)):
         for j in range(len(dofelem)):
@@ -270,7 +270,7 @@ K_super_3holes=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof_super_3holes,n
 
 Q_super_3holes=np.zeros(ndof_super_3holes)
 F_3holes=np.zeros(ndof_super_3holes)
-F_3holes[scipy.hstack([InterfaceIdNodes_3_right*2,InterfaceIdNodes_3_right*2+1])]=F[scipy.hstack([(IdnodeS2-1)*2,(IdnodeS2-1)*2+1])]
+F_3holes[np.hstack([InterfaceIdNodes_3_right*2,InterfaceIdNodes_3_right*2+1])]=F[np.hstack([(IdnodeS2-1)*2,(IdnodeS2-1)*2+1])]
 
 Q_super_3holes[Solved_super_3holes_Dofs] = mumps.spsolve(K_super_3holes[Solved_super_3holes_Dofs,:][:,Solved_super_3holes_Dofs],F_3holes[Solved_super_3holes_Dofs])
 #Q_super_3holes[Solved_super_3holes_Dofs] = scipy.sparse.linalg.spsolve(K_super_3holes[Solved_super_3holes_Dofs,:][:,Solved_super_3holes_Dofs],F_3holes[Solved_super_3holes_Dofs])

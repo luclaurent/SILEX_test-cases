@@ -57,7 +57,7 @@ mycomm=comm_mumps_one_proc()
 ###########################################################
 
 if rank==0:
-    print ("time at the beginning of the computation: {}".format(time.ctime())))
+    print ("time at the beginning of the computation: {}".format(time.ctime()))
 
 ##############################################################
 ##############################################################
@@ -197,14 +197,14 @@ for i in range(len(IdNodesS4)):
 
 # Boundary conditions on air cavity
 IdNodesFixed_porous_us_x=IdNodesS4
-##IdNodesFixed_porous_us_y=np.unique(scipy.hstack([IdNodesS4,IdNodesS6]))
+##IdNodesFixed_porous_us_y=np.unique(np.hstack([IdNodesS4,IdNodesS6]))
 IdNodesFixed_porous_us_y=IdNodesS4
 IdNodesFixed_porous_us_z=IdNodesS4
 IdNodesFixed_porous_uf_x=IdNodesS4
 IdNodesFixed_porous_uf_y=IdNodesS4
 IdNodesFixed_porous_uf_z=IdNodesS4
 
-Fixed_Dofs_porous = scipy.hstack([(IdNodesFixed_porous_us_x-1)*6,
+Fixed_Dofs_porous = np.hstack([(IdNodesFixed_porous_us_x-1)*6,
                                   (IdNodesFixed_porous_us_y-1)*6+1,
                                   (IdNodesFixed_porous_us_z-1)*6+2,
                                   (IdNodesFixed_porous_uf_x-1)*6+3,
@@ -268,7 +268,7 @@ FixedStrucDofRz=(FixedStrucNodes-1)*6+5
 #FixedStrucDofRy=[]
 #FixedStrucDofRz=[]
 
-FixedStrucDof=scipy.hstack([FixedStrucDofUx,FixedStrucDofUy,FixedStrucDofUz,FixedStrucDofRx,FixedStrucDofRy,FixedStrucDofRz])
+FixedStrucDof=np.hstack([FixedStrucDofUx,FixedStrucDofUy,FixedStrucDofUz,FixedStrucDofRx,FixedStrucDofRy,FixedStrucDofRz])
 
 SolvedDofS=np.setdiff1d(range(struc_ndof),FixedStrucDof)
 
@@ -297,7 +297,7 @@ tic = time.process_time()
 
 eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(KSS[SolvedDofS,:][:,SolvedDofS],nb_mode_S,MSS[SolvedDofS,:][:,SolvedDofS],sigma=0,which='LM')
 
-freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*np.pi))
+freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
 toc = time.process_time()
 if rank==0:
@@ -409,7 +409,7 @@ MFF=scipy.sparse.csc_matrix( (Vffm,(IIf,JJf)), shape=(fluid_ndof1,fluid_ndof1) )
 
 SolvedDofF=list(range(fluid_ndof1))
 
-SolvedDofB=scipy.hstack([IdNodesS3_for_1-1,9-1]) # 9 : node number where acoustic source is imposed
+SolvedDofB=np.hstack([IdNodesS3_for_1-1,9-1]) # 9 : node number where acoustic source is imposed
 SolvedDofI=np.setdiff1d(SolvedDofF,SolvedDofB)
 
 ##############################################################
@@ -428,7 +428,7 @@ SolvedDofP=np.setdiff1d(range(fluid_ndof2),Fixed_Dofs_porous)
 IIpf,JJpf,Vpf=silex_lib_porous_tet4_fortran.computecouplingporousair(fluid_nodes1,InterfaceConnectivity,po_por)
 CPF=scipy.sparse.csc_matrix( (Vpf,(IIpf,JJpf)), shape=(fluid_ndof2,fluid_ndof1) )
 #CBP=CPF[SolvedDofP,:][:,SolvedDofB].T
-#SolvedDof = scipy.hstack([SolvedDofF,SolvedDofP+fluid_ndof1])
+#SolvedDof = np.hstack([SolvedDofF,SolvedDofP+fluid_ndof1])
 
 CBP=scipy.sparse.bmat( [ [CPF[SolvedDofP,:][:,IdNodesS3_for_1-1],CPF[SolvedDofP,:][:,0]*0.0]]).T
 
@@ -468,7 +468,7 @@ if rank==0:
 ##################################################################
 tic = time.process_time()
 
-PartiallyPositiveLStgtElements=scipy.hstack([PositiveLStgtElements,EdgeEnrichedElementsInAllMesh])
+PartiallyPositiveLStgtElements=np.hstack([PositiveLStgtElements,EdgeEnrichedElementsInAllMesh])
 
 #II,JJ,vkaa,vmaa,vkfa,vmfa = silex_lib_xfem_acou_tet4.computeedgeenrichment(fluid_nodes1,fluid_elements1[EdgeEnrichedElements],LevelSet,LevelSetTangent,celerity,rho)
 II,JJ,vkaa,vmaa,vkfa,vmfa = silex_lib_xfem_acou_tet4.computeedgeenrichment(fluid_nodes1,fluid_elements1[PartiallyPositiveLStgtElements],LevelSet,LevelSetTangent,celerity,rho)
@@ -503,7 +503,7 @@ tic = time.process_time()
 
 eigen_values_I,eigen_vectors_I= scipy.sparse.linalg.eigsh(KFF[SolvedDofI,:][:,SolvedDofI],nb_mode_F,MFF[SolvedDofI,:][:,SolvedDofI],sigma=0,which='LM')
 
-freq_eigv_I=list(scipy.sqrt(eigen_values_I)/(2*np.pi))
+freq_eigv_I=list(np.sqrt(eigen_values_I)/(2*np.pi))
 eigen_vector_F_list=[]
 for i in range(nb_mode_F):
     tmp=np.zeros((fluid_ndof1) , dtype='float')
@@ -730,8 +730,8 @@ Mhat_BA = scipy.sparse.csc_matrix((Psi_IB.T).todense()*Mstar_IA.todense())+MFF[S
 UF = np.zeros(fluid_ndof1,dtype=float)
 UF[9-1]=3.1250E-05
 
-#SolvedDof = scipy.hstack([SolvedDofF,SolvedDofA+fluid_ndof1,SolvedDofP+2*fluid_ndof1])
-Freduced_F=scipy.hstack([np.zeros(nb_mode_F,dtype=float),UF[SolvedDofB]])
+#SolvedDof = np.hstack([SolvedDofF,SolvedDofA+fluid_ndof1,SolvedDofP+2*fluid_ndof1])
+Freduced_F=np.hstack([np.zeros(nb_mode_F,dtype=float),UF[SolvedDofB]])
 
 ##############################################################
 # FRF computation
@@ -742,7 +742,7 @@ frequencies=[]
 frf=[]
 
 if (Flag_frf_analysis==1):
-    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime())))
+    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime()))
 
     if rank==0:
         print('nb of total dofs: ',nb_mode_F+len(SolvedDofB)+len(SolvedDofA)+len(SolvedDofP)+nb_mode_S,)
@@ -815,7 +815,7 @@ if (Flag_frf_analysis==1):
     frfsave=[frequencies,frf]
     comm.send(frfsave, dest=0, tag=11)
 
-    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime())))
+    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime()))
 
     if (flag_write_gmsh_results==1) and (rank==0):
         silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',fluid_nodes1,fluid_elements1,4,[[press_save,'nodal',1,'pressure']])

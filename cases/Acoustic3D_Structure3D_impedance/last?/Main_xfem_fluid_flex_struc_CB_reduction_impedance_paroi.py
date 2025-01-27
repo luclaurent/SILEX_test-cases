@@ -56,7 +56,7 @@ mycomm=comm_mumps_one_proc()
 ###########################################################
 
 if rank==0:
-    print ("time at the beginning of the computation: {}".format(time.ctime())))
+    print ("time at the beginning of the computation: {}".format(time.ctime()))
 
 ##############################################################
 ##############################################################
@@ -290,7 +290,7 @@ tic = time.process_time()
 
 eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(KSS[SolvedDofS,:][:,SolvedDofS],nb_mode_S,MSS[SolvedDofS,:][:,SolvedDofS],sigma=0,which='LM')
 
-freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*np.pi))
+freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
 toc = time.process_time()
 if rank==0:
@@ -486,7 +486,7 @@ if rank==0:
     print ("Compute fluid modes")
 eigen_values_I,eigen_vectors_I= scipy.sparse.linalg.eigsh(KFF[SolvedDofI,:][:,SolvedDofI],nb_mode_F,MFF[SolvedDofI,:][:,SolvedDofI],sigma=0,which='LM')
 
-freq_eigv_I=list(scipy.sqrt(eigen_values_I)/(2*np.pi))
+freq_eigv_I=list(np.sqrt(eigen_values_I)/(2*np.pi))
 eigen_vector_F_list=[]
 for i in range(nb_mode_F):
     tmp=np.zeros((fluid_ndof1) , dtype='float')
@@ -647,7 +647,7 @@ CnA = eigen_vectors_S.T*CSA[SolvedDofS,:][:,SolvedDofA]
 ##################################################################
 # Compute structure damping matrix
 ##################################################################
-VDnn = 2.0*modal_damping_S*scipy.sqrt(eigen_values_S)
+VDnn = 2.0*modal_damping_S*np.sqrt(eigen_values_S)
 IIDnn = list(range(nb_mode_F+len(SolvedDofB)+len(SolvedDofA),nb_mode_F+len(SolvedDofB)+len(SolvedDofA)+nb_mode_S))
 JJDnn = list(range(nb_mode_F+len(SolvedDofB)+len(SolvedDofA),nb_mode_F+len(SolvedDofB)+len(SolvedDofA)+nb_mode_S))
 
@@ -740,7 +740,7 @@ frequencies=[]
 frf=[]
 
 if (Flag_frf_analysis==1):
-    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime())))
+    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime()))
 
     if rank==0:
         print('nb of total dofs: ',nb_mode_F+len(SolvedDofB)+len(SolvedDofA)+nb_mode_S,)
@@ -811,7 +811,7 @@ if (Flag_frf_analysis==1):
     if rank!=0:
         comm.send(frfsave, dest=0, tag=11)
 
-    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime())))
+    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime()))
 
     if (flag_write_gmsh_results==1) and (rank==0):
         silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',fluid_nodes1,fluid_elements1,4,[[press_save,'nodal',1,'pressure']])

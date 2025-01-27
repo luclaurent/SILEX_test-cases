@@ -57,7 +57,7 @@ mycomm=comm_mumps_one_proc()
 ###########################################################
 
 if rank==0:
-    print ("time at the beginning of the computation: {}".format(time.ctime())))
+    print ("time at the beginning of the computation: {}".format(time.ctime()))
 
 ##############################################################
 ##############################################################
@@ -199,14 +199,14 @@ for i in range(len(IdNodesS4)):
 
 # Boundary conditions on air cavity
 IdNodesFixed_porous_us_x=IdNodesS4
-##IdNodesFixed_porous_us_y=np.unique(scipy.hstack([IdNodesS4,IdNodesS6]))
+##IdNodesFixed_porous_us_y=np.unique(np.hstack([IdNodesS4,IdNodesS6]))
 IdNodesFixed_porous_us_y=IdNodesS4
 IdNodesFixed_porous_us_z=IdNodesS4
 IdNodesFixed_porous_uf_x=IdNodesS4
 IdNodesFixed_porous_uf_y=IdNodesS4
 IdNodesFixed_porous_uf_z=IdNodesS4
 
-Fixed_Dofs_porous = scipy.hstack([(IdNodesFixed_porous_us_x-1)*6,
+Fixed_Dofs_porous = np.hstack([(IdNodesFixed_porous_us_x-1)*6,
                                   (IdNodesFixed_porous_us_y-1)*6+1,
                                   (IdNodesFixed_porous_us_z-1)*6+2,
                                   (IdNodesFixed_porous_uf_x-1)*6+3,
@@ -251,7 +251,7 @@ MFF=scipy.sparse.csc_matrix( (Vffm,(IIf,JJf)), shape=(fluid_ndof1,fluid_ndof1) )
 
 SolvedDofF=list(range(fluid_ndof1))
 
-SolvedDofB=scipy.hstack([IdNodesS3_for_1-1,9-1]) # 9 : node number where acoustic source is imposed
+SolvedDofB=np.hstack([IdNodesS3_for_1-1,9-1]) # 9 : node number where acoustic source is imposed
 SolvedDofI=np.setdiff1d(SolvedDofF,SolvedDofB)
 
 ##############################################################
@@ -270,7 +270,7 @@ SolvedDofP=np.setdiff1d(range(fluid_ndof2),Fixed_Dofs_porous)
 IIpf,JJpf,Vpf=silex_lib_porous_tet4_fortran.computecouplingporousair(fluid_nodes1,InterfaceConnectivity,po_por)
 CPF=scipy.sparse.csc_matrix( (Vpf,(IIpf,JJpf)), shape=(fluid_ndof2,fluid_ndof1) )
 #CBP=CPF[SolvedDofP,:][:,SolvedDofB].T
-#SolvedDof = scipy.hstack([SolvedDofF,SolvedDofP+fluid_ndof1])
+#SolvedDof = np.hstack([SolvedDofF,SolvedDofP+fluid_ndof1])
 
 CBP=scipy.sparse.bmat( [ [CPF[SolvedDofP,:][:,IdNodesS3_for_1-1],CPF[SolvedDofP,:][:,0]*0.0]]).T
 
@@ -283,7 +283,7 @@ tic = time.process_time()
 
 eigen_values_I,eigen_vectors_I= scipy.sparse.linalg.eigsh(KFF[SolvedDofI,:][:,SolvedDofI],nb_mode_F,MFF[SolvedDofI,:][:,SolvedDofI],sigma=0,which='LM')
 
-freq_eigv_I=list(scipy.sqrt(eigen_values_I)/(2*np.pi))
+freq_eigv_I=list(np.sqrt(eigen_values_I)/(2*np.pi))
 eigen_vector_F_list=[]
 for i in range(nb_mode_F):
     tmp=np.zeros((fluid_ndof1) , dtype='float')
@@ -427,7 +427,7 @@ Mhat_mB = eigen_vectors_I.T*Mstar_IB
 ##Mhat_BA = scipy.sparse.csc_matrix((Psi_IB.T).todense()*Mstar_IA.todense())+MFF[SolvedDofB,:][:,SolvedDofI]*Psi_IA
 
 if rank==0:
-    print ("time at the end of the computation (without the saving part): {}".format(time.ctime())))
+    print ("time at the end of the computation (without the saving part): {}".format(time.ctime()))
 
 
 f=open(results_file+'_offline_matrices.pck','wb')

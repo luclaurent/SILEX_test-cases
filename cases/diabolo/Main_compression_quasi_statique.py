@@ -132,7 +132,7 @@ print (" ")
 nvisu = 13
 visu_dir = 1   # x = 0 | y = 1 | z = 2
 
-elements = scipy.vstack([elemV1,elemV2])
+elements = np.vstack([elemV1,elemV2])
 
 #################################################################################################################
 #                                            BOUNDARY CONDITIONS                                                #
@@ -140,13 +140,13 @@ elements = scipy.vstack([elemV1,elemV2])
 
 
 # Dof fixed in the x direction
-Fixed_Dofs_x = scipy.hstack([(IdnodS2-1)*3])
+Fixed_Dofs_x = np.hstack([(IdnodS2-1)*3])
 
 # Dof fixed in the x direction
-Fixed_Dofs_y = scipy.hstack([(IdnodS2-1)*3+1])
+Fixed_Dofs_y = np.hstack([(IdnodS2-1)*3+1])
 
 # Dof fixed in the x direction
-Fixed_Dofs_z = scipy.hstack([(IdnodS2-1)*3+2])
+Fixed_Dofs_z = np.hstack([(IdnodS2-1)*3+2])
 
 # Free dof
 SolvedDofs = np.setdiff1d(list(range(ndof)),Fixed_Dofs_x)
@@ -165,7 +165,7 @@ load = 1.0e6                     # Quasistatic traction loading (Pa)
 direction = np.array([0,1,0]) # force in direction +y
 
 # Computation of the scale factor
-scale  = scipy.linspace(0,1,n)
+scale  = np.linspace(0,1,n)
 
 # load calculation
 Force = -silex_lib_elt.forceonsurface(nodes,elemS1,load,direction)

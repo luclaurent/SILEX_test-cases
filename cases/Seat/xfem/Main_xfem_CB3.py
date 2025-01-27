@@ -49,7 +49,7 @@ mycomm=comm_mumps_one_proc()
 time_init=time.ctime()
 tic00=time.process_time()
 if rank==0:
-    print ("time at the beginning of the computation: {}".format(time.ctime())))
+    print ("time at the beginning of the computation: {}".format(time.ctime()))
 
 # parallepipedic cavity with plane structure
 mesh_file='geom/sieges_xfem'
@@ -155,7 +155,7 @@ FixedStrucDofRz=(FixedStrucNodes-1)*6+5
 #FixedStrucDofRy=[]
 #FixedStrucDofRz=[]
 
-FixedStrucDof=scipy.hstack([FixedStrucDofUx,FixedStrucDofUy,FixedStrucDofUz,FixedStrucDofRx,FixedStrucDofRy,FixedStrucDofRz])
+FixedStrucDof=np.hstack([FixedStrucDofUx,FixedStrucDofUy,FixedStrucDofUz,FixedStrucDofRx,FixedStrucDofRy,FixedStrucDofRz])
 
 SolvedDofS=np.setdiff1d(range(struc_ndof),FixedStrucDof)
 
@@ -304,7 +304,7 @@ if rank==0:
 ##################################################################
 tic = time.process_time()
 
-PartiallyPositiveLStgtElements=scipy.hstack([PositiveLStgtElements,EdgeEnrichedElementsInAllMesh])
+PartiallyPositiveLStgtElements=np.hstack([PositiveLStgtElements,EdgeEnrichedElementsInAllMesh])
 
 #II,JJ,vkaa,vmaa,vkfa,vmfa = silex_lib_xfem_acou_tet4.computeedgeenrichment(fluid_nodes,fluid_elements[EdgeEnrichedElements],LevelSet,LevelSetTangent,celerity,rho)
 II,JJ,vkaa,vmaa,vkfa,vmfa = silex_lib_xfem_acou_tet4.computeedgeenrichment(fluid_nodes,fluid_elements[PartiallyPositiveLStgtElements],LevelSet,LevelSetTangent,celerity,rho)
@@ -387,7 +387,7 @@ S=scipy.sparse.coo_matrix(Static_mode_S)
 
 MSS_static_S1 = scipy.dot(MSS[SolvedDofS,:][:,SolvedDofS],scipy.sparse.coo_matrix(S).T)
 staticT__MSS_static_11 = np.array(S*MSS_static_S1.todense())[0][0]
-S=S/(scipy.sqrt(staticT__MSS_static_11))
+S=S/(np.sqrt(staticT__MSS_static_11))
 
 for i in range(nb_mode_S):
     a=eigen_vectors_S[lines,:][:,i]
@@ -396,7 +396,7 @@ for i in range(nb_mode_S):
     S=S-tmp*a.T
     MSS_static_S1 = MSS[SolvedDofS,:][:,SolvedDofS]*S.T
     staticT__MSS_static_11 = np.array(S*MSS_static_S1.todense())[0][0]
-    S=S/(scipy.sqrt(staticT__MSS_static_11))
+    S=S/(np.sqrt(staticT__MSS_static_11))
 
 toc = time.process_time()
 if rank==0:
@@ -409,7 +409,7 @@ tic = time.process_time()
 
 PSn = scipy.sparse.bmat( [ [scipy.sparse.coo_matrix(eigen_vectors_S),scipy.sparse.coo_matrix(S).T] ] )
 
-freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*np.pi))
+freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 freq_eigv_S.append(0.0)
 
 eigen_vector_S_list=[]
@@ -431,7 +431,7 @@ if (flag_write_gmsh_results==1) and (rank==0):
 ##################################################################
 # Compute structure damping matrix
 ##################################################################
-VDnn = 2.0*modal_damping_S*scipy.sqrt(eigen_values_S)
+VDnn = 2.0*modal_damping_S*np.sqrt(eigen_values_S)
 IIDnn = list(range(nb_mode_F+nb_mode_A,nb_mode_F+nb_mode_A+nb_mode_S))
 JJDnn = list(range(nb_mode_F+nb_mode_A,nb_mode_F+nb_mode_A+nb_mode_S))
 
@@ -444,7 +444,7 @@ tic = time.process_time()
 
 eigen_values_F,eigen_vectors_F= scipy.sparse.linalg.eigsh(KFF[SolvedDofF,:][:,SolvedDofF],nb_mode_F,MFF[SolvedDofF,:][:,SolvedDofF],sigma=0,which='LM')
 
-freq_eigv_F=list(scipy.sqrt(eigen_values_F)/(2*np.pi))
+freq_eigv_F=list(np.sqrt(eigen_values_F)/(2*np.pi))
 eigen_vector_F_list=[]
 for i in range(nb_mode_F):
     tmp=eigen_vectors_F[:,i].real
@@ -662,7 +662,7 @@ frf=[]
 
 if (Flag_frf_analysis==1):
     if rank==0:
-        print ("time at the beginning of the FRF: {}".format(time.ctime())))
+        print ("time at the beginning of the FRF: {}".format(time.ctime()))
 
     press_save=[]
     disp_save=[]
@@ -699,7 +699,7 @@ if (Flag_frf_analysis==1):
             disp_save.append(disp)
             press_save.append(CorrectedPressure.real)
 
-    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime())))
+    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime()))
     frfsave=[frequencies,frf]
     comm.send(frfsave, dest=0, tag=11)
 
@@ -726,6 +726,6 @@ if (Flag_frf_analysis==1):
         f.close()
         print("Real time at the beginning = ",time_init)
         print("Real time before FRF       = ",time_before_frf)
-        print("Real time at the end       =  {}".format(time.ctime())))
+        print("Real time at the end       =  {}".format(time.ctime()))
         print("Total time = ",time.process_time()-tic00)
 

@@ -117,17 +117,17 @@ if rank==0:
     print( "Number of elements in V1:",nelem1)
     print( "Number of elements in V2:",nelem2)
 
-elements=scipy.vstack([elementsV1,elementsV2])
+elements=np.vstack([elementsV1,elementsV2])
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
 SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
-Dof1=scipy.hstack([(IdnodesV1-1)*3,(IdnodesV1-1)*3+1,(IdnodesV1-1)*3+2])
-Dof2=scipy.hstack([(IdnodesV2-1)*3,(IdnodesV2-1)*3+1,(IdnodesV2-1)*3+2])
-Dof3=scipy.hstack([(IdnodeS5-1)*3,(IdnodeS5-1)*3+1,(IdnodeS5-1)*3+2])
+Dof1=np.hstack([(IdnodesV1-1)*3,(IdnodesV1-1)*3+1,(IdnodesV1-1)*3+2])
+Dof2=np.hstack([(IdnodesV2-1)*3,(IdnodesV2-1)*3+1,(IdnodesV2-1)*3+2])
+Dof3=np.hstack([(IdnodeS5-1)*3,(IdnodeS5-1)*3+1,(IdnodeS5-1)*3+2])
 
 SolvedDofs1 = np.setdiff1d(Dof1,Fixed_Dofs)
 SolvedDofs2 = np.setdiff1d(Dof2,Fixed_Dofs)

@@ -54,13 +54,13 @@ elementsS3,IdnodeS3=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',2,3)
 # volume
 elementsV,IdnodeV=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',4,10)
 
-#elementsS=scipy.vstack([elementsS1,elementsS2,elementsS3])
-elementsS=scipy.vstack([elementsS2,elementsS3])
+#elementsS=np.vstack([elementsS1,elementsS2,elementsS3])
+elementsS=np.vstack([elementsS2,elementsS3])
 
-IdnodeS=np.unique(scipy.hstack([IdnodeS1,IdnodeS2,IdnodeS3]))
+IdnodeS=np.unique(np.hstack([IdnodeS1,IdnodeS2,IdnodeS3]))
 InternalNodes = np.setdiff1d(IdnodeV,IdnodeS)
 
-#dof1=scipy.hstack([IdnodeS1,IdnodeS1*6+1,IdnodeS1*6+2,IdnodeS1+3,IdnodeS1*6+4,IdnodeS1*6+5])
+#dof1=np.hstack([IdnodeS1,IdnodeS1*6+1,IdnodeS1*6+2,IdnodeS1+3,IdnodeS1*6+4,IdnodeS1*6+5])
 
 
 # write the surface mesh in a gmsh-format file to verify if its correct
@@ -100,9 +100,9 @@ rho4       = 20.0 # kg/m3
 IdNodesFixed_x=IdnodeS1
 IdNodesFixed_y=IdnodeS1
 IdNodesFixed_z=IdnodeS1
-IdNodesFixed_rotx=np.unique(scipy.hstack([IdnodeS1,InternalNodes]))
-IdNodesFixed_roty=np.unique(scipy.hstack([IdnodeS1,InternalNodes]))
-IdNodesFixed_rotz=np.unique(scipy.hstack([IdnodeS1,InternalNodes]))
+IdNodesFixed_rotx=np.unique(np.hstack([IdnodeS1,InternalNodes]))
+IdNodesFixed_roty=np.unique(np.hstack([IdnodeS1,InternalNodes]))
+IdNodesFixed_rotz=np.unique(np.hstack([IdnodeS1,InternalNodes]))
 
 # compute external forces from pressure
 # press = facteur charge * masse * 9.81 / surface alaire 
@@ -131,7 +131,7 @@ print("Number of elements in volume:",elementsV.shape[0])
 print("Number of dof:",ndof)
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([
+Fixed_Dofs = np.hstack([
     (np.array(IdNodesFixed_x)-1)*6,
     (np.array(IdNodesFixed_y)-1)*6+1,
     (np.array(IdNodesFixed_z)-1)*6+2,

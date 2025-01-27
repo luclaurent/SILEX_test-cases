@@ -44,8 +44,8 @@ def computeFreqPerProc(nbStep,nbProc,freqInit,freqEnd):
     if nbFreqProcRemain==0:
         varCase=0
     listFreq=np.zeros((nbFreqProc+varCase,nbProc))
-    listAllFreq=scipy.linspace(freqInit,freqEnd,nbStep)
-    #print(scipy.linspace(freqInit,freqEnd,nbStep))
+    listAllFreq=np.linspace(freqInit,freqEnd,nbStep)
+    #print(np.linspace(freqInit,freqEnd,nbStep))
     #build array of frequencies
     itF=0
     for itP in range(nbProc):
@@ -149,21 +149,21 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     # create coordinates of nodes of the structure (half circle)
     nbNodesHC=50
     nbNodesWall=1
-    thetaHC=scipy.linspace(-np.pi/2,np.pi/2,nbNodesHC)
+    thetaHC=np.linspace(-np.pi/2,np.pi/2,nbNodesHC)
     
     xNodesHC=x_pos_struc-radius_hcircle*np.sin(thetaHC)
     yNodesHC=y_pos_struc-radius_hcircle*np.cos(thetaHC)
 
-    struc_nodes=scipy.vstack([xNodesHC,yNodesHC]).transpose()
-    struc_nodes=scipy.vstack([struc_nodes,[x_pos_struc-radius_hcircle,max(fluid_nodes[:,1])],[x_pos_struc+radius_hcircle,max(fluid_nodes[:,1])]])
+    struc_nodes=np.vstack([xNodesHC,yNodesHC]).transpose()
+    struc_nodes=np.vstack([struc_nodes,[x_pos_struc-radius_hcircle,max(fluid_nodes[:,1])],[x_pos_struc+radius_hcircle,max(fluid_nodes[:,1])]])
     print(struc_nodes)
 
-    lCA=scipy.linspace(1,nbNodesHC-1,nbNodesHC-1)
-    lCB=scipy.linspace(2,nbNodesHC,nbNodesHC-1)
+    lCA=np.linspace(1,nbNodesHC-1,nbNodesHC-1)
+    lCB=np.linspace(2,nbNodesHC,nbNodesHC-1)
 
 
-    struc_elements=scipy.vstack([lCA,lCB]).transpose()
-    struc_elements=scipy.vstack([struc_elements,[nbNodesHC,nbNodesHC+1],[1,nbNodesHC+2]])
+    struc_elements=np.vstack([lCA,lCB]).transpose()
+    struc_elements=np.vstack([struc_elements,[nbNodesHC,nbNodesHC+1],[1,nbNodesHC+2]])
     print(struc_elements)
 
 
@@ -174,7 +174,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     # level set 3 cases
     for itN in range(fluid_nnodes):
         if fluid_nodes[itN,1]<y_pos_struc:
-            LevelSet[itN]=scipy.sqrt((fluid_nodes[itN,0]-x_pos_struc)**2+(fluid_nodes[itN,1]-y_pos_struc)**2)-radius_hcircle
+            LevelSet[itN]=np.sqrt((fluid_nodes[itN,0]-x_pos_struc)**2+(fluid_nodes[itN,1]-y_pos_struc)**2)-radius_hcircle
             LevelSet_gradient_X[itN]=-(fluid_nodes[itN,0]-x_pos_struc)/(LevelSet[itN]+radius_hcircle)
             LevelSet_gradient_Y[itN]=-(fluid_nodes[itN,1]-y_pos_struc)/(LevelSet[itN]+radius_hcircle)
             LevelSet_gradient_R[itN]=-1            
@@ -264,7 +264,11 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
 
     SolvedDofA=Enrichednodes-1
 
-    silex_lib_gmsh.WriteResults(results_file+'_EnrichedElements',fluid_nodes,fluid_elements[scipy.hstack(([EnrichedElements]))],2)
+    msh2.mshWriter(
+        cwd / (results_file + "_EnrichedElements.msh"),
+        fluid_nodes,
+        {"type": "TRI3", "connectivity": fluid_elements[EnrichedElements.flatten()]},
+    )
 
     #################################################################
     # Construct the whole system
@@ -344,7 +348,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     frfgradient_R=[]
 
     if (Flag_frf_analysis==1):
-        print("time at the beginning of the FRF: {}".format(time.ctime())))
+        print("time at the beginning of the FRF: {}".format(time.ctime()))
 
         press_save=[]
         dpress_save_X=[]
@@ -430,7 +434,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
         
         #####################
         #####################
-        print("time at the end of the FRF: {}".format(time.ctime())))
+        print("time at the end of the FRF: {}".format(time.ctime()))
         frfsave=[frequencies,frf,frfgradient_X,frfgradient_Y,frfgradient_R]
         if rank!=0 :
             comm.send(frfsave, dest=0, tag=11)

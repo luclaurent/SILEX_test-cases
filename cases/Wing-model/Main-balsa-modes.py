@@ -61,7 +61,7 @@ silex_lib_gmsh.WriteResults(ResultsFileName+'_surf3',nodes,elementsS3,2)
 silex_lib_gmsh.WriteResults(ResultsFileName+'_surf4',nodes,elementsS4,2)
 silex_lib_gmsh.WriteResults(ResultsFileName+'_surf5',nodes,elementsS5,2)
 
-elements=scipy.vstack([elementsS1,elementsS2,elementsS3,elementsS4,elementsS5])
+elements=np.vstack([elementsS1,elementsS2,elementsS3,elementsS4,elementsS5])
 
 silex_lib_gmsh.WriteResults(ResultsFileName+'_complet',nodes,elements,2)
 
@@ -114,15 +114,15 @@ print("Number of elements:",nelem)
 #      CLEAN MESH
 Id_nodes_used=np.unique(elements)
 Id_nodes_nonused=np.setdiff1d(range(1,nnodes),Id_nodes_used)
-IdNodesFixed_x=scipy.hstack([IdNodesFixed_x,Id_nodes_nonused])
-IdNodesFixed_y=scipy.hstack([IdNodesFixed_y,Id_nodes_nonused])
-IdNodesFixed_z=scipy.hstack([IdNodesFixed_z,Id_nodes_nonused])
-IdNodesFixed_rotx=scipy.hstack([IdNodesFixed_rotx,Id_nodes_nonused])
-IdNodesFixed_roty=scipy.hstack([IdNodesFixed_roty,Id_nodes_nonused])
-IdNodesFixed_rotz=scipy.hstack([IdNodesFixed_rotz,Id_nodes_nonused])
+IdNodesFixed_x=np.hstack([IdNodesFixed_x,Id_nodes_nonused])
+IdNodesFixed_y=np.hstack([IdNodesFixed_y,Id_nodes_nonused])
+IdNodesFixed_z=np.hstack([IdNodesFixed_z,Id_nodes_nonused])
+IdNodesFixed_rotx=np.hstack([IdNodesFixed_rotx,Id_nodes_nonused])
+IdNodesFixed_roty=np.hstack([IdNodesFixed_roty,Id_nodes_nonused])
+IdNodesFixed_rotz=np.hstack([IdNodesFixed_rotz,Id_nodes_nonused])
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([
+Fixed_Dofs = np.hstack([
     (np.array(IdNodesFixed_x)-1)*6,
     (np.array(IdNodesFixed_y)-1)*6+1,
     (np.array(IdNodesFixed_z)-1)*6+2,
@@ -175,7 +175,7 @@ M=M1+M2+M3+M4+M5
 
 eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(K[SolvedDofs,:][:,SolvedDofs],10,M[SolvedDofs,:][:,SolvedDofs],sigma=0,which='LM')
 
-freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*np.pi))
+freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
 eigen_vector_S_list=[]
 for i in range(eigen_values_S.shape[0]):

@@ -66,7 +66,7 @@ silex_lib_gmsh.WriteResults(ResultsFileName+'_vol10',nodes,elementV10,5)
 silex_lib_gmsh.WriteResults(ResultsFileName+'_vol11',nodes,elementV11,5)
 silex_lib_gmsh.WriteResults(ResultsFileName+'_vol12',nodes,elementV12,5)
 
-elements=scipy.vstack([elementV10,elementV11,elementV12])
+elements=np.vstack([elementV10,elementV11,elementV12])
 
 silex_lib_gmsh.WriteResults(ResultsFileName+'_complet',nodes,elements,5)
 
@@ -125,12 +125,12 @@ param3 = [mu3,Lambda3,0.0,0.0,0.0,0.0,0.0,0.0]  # Material parameter in a vector
 nb_modes = 100
 
 # Boundary conditions
-##IdNodesFixed_x=scipy.hstack([IdnodeS1,IdnodeS3])
-##IdNodesFixed_y=scipy.hstack([IdnodeS1,IdnodeS3])
-##IdNodesFixed_z=scipy.hstack([IdnodeS1,IdnodeS3])
-IdNodesFixed_x=scipy.hstack([IdnodeS1,IdnodeS3])
-IdNodesFixed_y=scipy.hstack([IdnodeS1,IdnodeS3])
-IdNodesFixed_z=scipy.hstack([IdnodeS1,IdnodeS3])
+##IdNodesFixed_x=np.hstack([IdnodeS1,IdnodeS3])
+##IdNodesFixed_y=np.hstack([IdnodeS1,IdnodeS3])
+##IdNodesFixed_z=np.hstack([IdnodeS1,IdnodeS3])
+IdNodesFixed_x=np.hstack([IdnodeS1,IdnodeS3])
+IdNodesFixed_y=np.hstack([IdnodeS1,IdnodeS3])
+IdNodesFixed_z=np.hstack([IdnodeS1,IdnodeS3])
 
 toc = time.process_time()
 print("time for the user part:",toc-tic)
@@ -158,7 +158,7 @@ print("")
 
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([
+Fixed_Dofs = np.hstack([
     (np.array(IdNodesFixed_x)-1)*3,
     (np.array(IdNodesFixed_y)-1)*3+1,
     (np.array(IdNodesFixed_z)-1)*3+2])
@@ -202,7 +202,7 @@ print("time to compute the stiffness and mass matrix :",toc-tic)
 
 eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(K[SolvedDofs,:][:,SolvedDofs],nb_modes,M[SolvedDofs,:][:,SolvedDofs],sigma=0,which='LM')
 
-freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*np.pi))
+freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
 eigen_vector_S_list=[]
 for i in range(eigen_values_S.shape[0]):

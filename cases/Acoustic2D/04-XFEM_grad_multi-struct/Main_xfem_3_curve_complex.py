@@ -1,26 +1,56 @@
 import string
 import time
+from pathlib import Path
+import numpy as np
+from loguru import logger
 import scipy
 import scipy.sparse
 import scipy.sparse.linalg
-import scipy.io
-import getopt
 
 import pylab as pl
 import pickle
+import getopt
 
-#import mumps
+# import mumps
 
 import sys
-sys.path.append('../../../librairies')
-import silex_lib_gmsh
-import silex_lib_tri3_acou
+from meshRW import msh, msh2
+from SILEXlib import silex_lib_fem, silex_lib_xfem
+from SILEXlib import MeshField
 
-
-
-import mumps
+# load classes
+objFEM = silex_lib_fem.LinearAcousticsTRI3()
+objXFEM = silex_lib_xfem.LinearAcousticsTRI3()
 
 from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+
+nproc = comm.Get_size()
+rank = comm.Get_rank()
+log_format = (
+    "<cyan> R{extra[rank]}</cyan> |"
+    "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+    "<level>{level: <8}</level> | "
+    "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
+    "<level>{message}</level>"
+)
+
+logger.remove()
+logger.configure(extra={"rank": 0})  # Default values
+logger.add(
+    sys.stdout,
+    level="DEBUG",
+    format=log_format,
+    colorize=True,
+    backtrace=True,
+    diagnose=True,
+)
+logger = logger.bind(rank=rank)
+
+# mpirun -np 2 python Main_xfem.py
+logger.info("START")
+
 def mpiInfo():
     comm = MPI.COMM_WORLD
     nproc=comm.Get_size()
@@ -43,8 +73,8 @@ def computeFreqPerProc(nbStep,nbProc,freqInit,freqEnd):
     if nbFreqProcRemain==0:
         varCase=0
     listFreq=np.zeros((nbFreqProc+varCase,nbProc))
-    listAllFreq=scipy.linspace(freqInit,freqEnd,nbStep)
-    #print(scipy.linspace(freqInit,freqEnd,nbStep))
+    listAllFreq=np.linspace(freqInit,freqEnd,nbStep)
+    #logger.info(np.linspace(freqInit,freqEnd,nbStep))
     #build array of frequencies
     itF=0
     for itP in range(nbProc):
@@ -53,7 +83,7 @@ def computeFreqPerProc(nbStep,nbProc,freqInit,freqEnd):
                 listFreq[itC,itP]=listAllFreq[itF]
                 itF += 1
 
-    #print(listFreq)
+    #logger.info(listFreq)
     return listFreq
 
 ###########################################################
@@ -77,6 +107,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     # parallepipedic cavity with plane structure
     mesh_file='geom/xfem3_noarea_fin_dim_b'
     results_file_ini='results_curve/xfem_3_'
+    cwd = Path(__file__).resolve().parent
 
     listFreqPerProc = computeFreqPerProc(nbStep,nbProc,freqMin,freqMax)
 
@@ -112,38 +143,56 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
 
     file_extension=str(ValpStruct)[0:5]
     results_file=results_file_ini+file_extension
-    print(results_file)
+    logger.info(results_file)
 
     # center and radius of half-circle
     x_pos_struc=positionStructX
     y_pos_struc=positionStructY
     radius_hcircle=radiusStruct
-    print(x_pos_struc)
-    print(y_pos_struc)
-    print(radius_hcircle)
+    logger.info(x_pos_struc)
+    logger.info(y_pos_struc)
+    logger.info(radius_hcircle)
 
     ##############################################################
     # Load fluid mesh
     ##############################################################
 
     tic = time.process_time()
+    # start reading mesh
+    mesh = msh.mshReader(cwd / (mesh_file + "_fluid.msh"))
 
-    fluid_nodes    = silex_lib_gmsh.ReadGmshNodes(mesh_file+'_fluid.msh',2)
-    fluid_elements,Idnodes = silex_lib_gmsh.ReadGmshElements(mesh_file+'_fluid.msh',2,1)
-    fluid_elements5,Idnodes5 = silex_lib_gmsh.ReadGmshElements(mesh_file+'_fluid.msh',2,5)
+    fluid_nodes = mesh.getNodes()[:, 0:2]
+    fluid_elements = mesh.getElements(tag=1)["TRI3"]
+    fluid_elements5 = mesh.getElements(tag=5)["TRI3"]
+    Idnodes = np.unique(fluid_elements.flatten())
+    Idnodes5 = np.unique(fluid_elements5.flatten())
 
-    fluid_nnodes   = fluid_nodes.shape[0]
-    fluid_nelem    = fluid_elements.shape[0]
-    fluid_ndof     = fluid_nnodes
+    fluid_nnodes = fluid_nodes.shape[0]
+    fluid_nelem = fluid_elements.shape[0]
+    fluid_ndof = len(np.unique(fluid_elements.flatten()))
 
-    fluid_elements_boun,IdnodeS2 = silex_lib_gmsh.ReadGmshElements(mesh_file+'_fluid.msh',1,2)
+    fluid_elements_boun = mesh.getElements(tag=2)["LIN2"]
+    IdnodeS2 = np.unique(fluid_elements_boun.flatten())
 
-    if (flag_write_gmsh_results==1) and (rank==0):
-        silex_lib_gmsh.WriteResults(results_file+'_fluid_mesh',fluid_nodes,fluid_elements,2)
-        silex_lib_gmsh.WriteResults(results_file+'_control_volume_fluid_mesh',fluid_nodes,fluid_elements5,2)
-        silex_lib_gmsh.WriteResults(results_file+'_fluid_boundary',fluid_nodes,fluid_elements_boun,1)
-    print("nnodes for fluid=",fluid_nnodes)
-    print("nelem for fluid=",fluid_nelem)
+    if (flag_write_gmsh_results == 1) and (rank == 0):
+        msh2.mshWriter(
+            cwd / (results_file + "_fluid_mesh.msh"),
+            fluid_nodes,
+            {"type": "TRI3", "connectivity": fluid_elements},
+        )
+        msh2.mshWriter(
+            cwd / (results_file + "_control_volume_fluid_mesh.msh"),
+            fluid_nodes,
+            {"type": "TRI3", "connectivity": fluid_elements5},
+        )
+        msh2.mshWriter(
+            cwd / (results_file + "_fluid_boundary.msh"),
+            fluid_nodes,
+            {"type": "LIN2", "connectivity": fluid_elements_boun},
+        )
+    logger.info("nnodes for fluid= {}".format(fluid_nnodes))
+    logger.info("nelem for fluid= {}".format(fluid_nelem))
+    logger.info("nelem for control volume= {}".format(fluid_elements5.shape[0]))
 
 
 
@@ -155,30 +204,54 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
 
     # create coordinates of nodes of the structure (half circle)
     nbNodesHC=50
-    thetaHC=scipy.linspace(0,0+np.pi,nbNodesHC)
+    thetaHC=np.linspace(0,0+np.pi,nbNodesHC)
     
     xNodesHC=x_pos_struc-radius_hcircle*np.sin(thetaHC)
     yNodesHC=y_pos_struc-radius_hcircle*np.cos(thetaHC)
-    struc_nodes=scipy.vstack([xNodesHC,yNodesHC]).transpose()
+    struc_nodes=np.vstack([xNodesHC,yNodesHC]).transpose()
 
-    lA=scipy.linspace(1,nbNodesHC-1)
-    lB=scipy.linspace(2,nbNodesHC)
-    struc_elements=scipy.vstack([lA,lB]).transpose()
+    lA=np.linspace(1,nbNodesHC-1)
+    lB=np.linspace(2,nbNodesHC)
+    struc_elements=np.vstack([lA,lB]).transpose()
 
 
 
-    LevelSet=scipy.sqrt((fluid_nodes[:,0]-x_pos_struc)**2+(fluid_nodes[:,1]-y_pos_struc)**2)-radius_hcircle
+    LevelSet=np.sqrt((fluid_nodes[:,0]-x_pos_struc)**2+(fluid_nodes[:,1]-y_pos_struc)**2)-radius_hcircle
     LevelSetTangent=fluid_nodes[:,0]-x_pos_struc
 
     # level set gradient with respect to parameters
     LevelSet_gradient_X=-(fluid_nodes[:,0]-x_pos_struc)/(LevelSet+radius_hcircle)
 
     if (flag_write_gmsh_results==1) and (rank==0):
-        silex_lib_gmsh.WriteResults(results_file+'_tangent_level_set',fluid_nodes,fluid_elements,2,[[LevelSetTangent,'nodal',1,'Tangent level set']])
-        silex_lib_gmsh.WriteResults(results_file+'_level_set',fluid_nodes,fluid_elements,2,[[LevelSet,'nodal',1,'Level set']])
+        msh2.mshWriter(
+            cwd / (results_file + "_level_sets.msh"),
+            fluid_nodes,
+            {"type": "TRI3", "connectivity": fluid_elements},
+            fields=[
+                {
+                    "data": LevelSet,
+                    "type": "nodal",
+                    "dim": 1,
+                    "name": "levelset",
+                },
+                {
+                    "data": LevelSetTangent,
+                    "type": "nodal",
+                    "dim": 1,
+                    "name": "levelset_tangent",
+                },
+                {
+                    "data": LevelSet_gradient_X,
+                    "type": "nodal",
+                    "dim": 1,
+                    "name": "levelset_tangent /X",
+                }
+            ],
+            append=True,
+        )
 
     toc = time.process_time()
-    print("time to compute level set:",toc-tic)
+    logger.info("time to compute level set: {}".format(toc-tic))
 
 
     ##################################################################
@@ -189,34 +262,49 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     
     struc_boun=np.array([3])
 
-    silex_lib_gmsh.WriteResults(results_file+'_struc_mesh',struc_nodes,struc_elements,1)
-
-    EnrichedElements,NbEnrichedElements=silex_lib_tri3_acou.getenrichedelements(struc_nodes,struc_elements,fluid_nodes,fluid_elements)
-    EnrichedElements=np.unique(EnrichedElements[list(range(NbEnrichedElements))])-1
-
+    msh2.mshWriter(
+        cwd / (results_file + "_struc_mesh.msh"),
+        struc_nodes,
+        {"type": "LIN2", "connectivity": struc_elements},
+    )
+    
+    EnrichedElements = objXFEM.getEnrichedElements(
+        fluid_nodes, fluid_elements, struc_nodes, struc_elements
+    )
     toc = time.process_time()
-    print("time to find surface enriched elements:",toc-tic)
+    logger.info("time to find surface enriched elements: {}".format(toc-tic))
 
     if (flag_write_gmsh_results==1) and (rank==0):
-        silex_lib_gmsh.WriteResults(results_file+'_enriched_elements',fluid_nodes,fluid_elements[EnrichedElements],2)
+        msh2.mshWriter(
+            cwd / (results_file + "_enriched_elements.msh"),
+            fluid_nodes,
+            {"type": "TRI3", "connectivity": fluid_elements[EnrichedElements]},
+        )
 
     tic = time.process_time()
 
-    EdgeEnrichedElements,nbenrelts = silex_lib_tri3_acou.getedgeenrichedelements(struc_nodes,struc_boun,fluid_nodes,fluid_elements)
-    EdgeEnrichedElements=np.unique(EdgeEnrichedElements[list(range(nbenrelts))])-1
+    EdgeEnrichedElements = objXFEM.getEdgeEnrichedElements(
+        fluid_nodes, fluid_elements, struc_nodes, struc_boun
+    )
 
     toc = time.process_time()
-    print("time to find edge enriched elements:",toc-tic)
+    logger.info("time to find edge enriched elements: {}".format(toc-tic))
 
     if (flag_write_gmsh_results==1) and (rank==0):
-        silex_lib_gmsh.WriteResults(results_file+'_edge_enriched_elements',fluid_nodes,fluid_elements[EdgeEnrichedElements],2)
+        msh2.mshWriter(
+            cwd / (results_file + "_edge_enriched_elements.msh"),
+            fluid_nodes,
+            {"type": "TRI3", "connectivity": fluid_elements[EdgeEnrichedElements]},
+        )
 
     ##############################################################
     # Compute Standard Fluid Matrices
     ##############################################################
     tic = time.process_time()
 
-    IIf,JJf,Vffk,Vffm=silex_lib_tri3_acou.globalacousticmatrices(fluid_elements,fluid_nodes,celerity,rho)
+    IIf, JJf, Vffk, Vffm = objFEM.getMatrices(
+        fluid_nodes, fluid_elements, [celerity, rho]
+    )
 
     KFF = scipy.sparse.csc_matrix( (Vffk,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
     MFF = scipy.sparse.csc_matrix( (Vffm,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
@@ -225,42 +313,58 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     #SolvedDofF=range(fluid_ndof)
 
     toc = time.process_time()
-    print("time to compute fluid matrices:",toc-tic)
+    logger.info("time to compute fluid matrices: {}".format(toc-tic))
 
     ##################################################################
     # Compute enrichment: Heaviside + Edge
     ##################################################################
     tic = time.process_time()
+    (
+        NegativeLSelements,
+        PositiveLSelements,
+        NegativeLStgtElements,
+        PositiveLStgtElements,
+    ) = objXFEM.getLocationElementsLS(fluid_elements, LevelSet, LevelSetTangent)
 
-    #HeavisideEnrichedElements=np.setdiff1d(EnrichedElements,EdgeEnrichedElements)
+    # EdgeEnrichedElementsInAllMesh = objXFEM.getEnrichedElements(
+    #     fluidElements=fluid_elements, levelset=LevelSetTangent
+    # )
+    # IdElementTip = objXFEM.getElementContainingPoint(
+    #     fluid_elements, fluid_nodes, [0.6, 0.65]
+    # )
 
-    #Enrichednodes = np.unique(fluid_elements[HeavisideEnrichedElements])
-    #Enrichednodes = np.unique(fluid_elements[EnrichedElements])
-
-    #print xvibacoufo.getpositivenegativeelts.__doc__
-
-    NegativeLSelements,PositiveLSelements,NegativeLStgtElements,PositiveLStgtElements,nbNegLS,nbPosLS,nbNegLSt,nbPosLSt=silex_lib_tri3_acou.getpositivenegativeelts(fluid_elements,LevelSet,LevelSetTangent)
-
-    NegativeLSelements=NegativeLSelements[list(range(nbNegLS))]
-    PositiveLSelements=PositiveLSelements[list(range(nbPosLS))]
-    NegativeLStgtElements=NegativeLStgtElements[list(range(nbNegLSt))]
-    PositiveLStgtElements=PositiveLStgtElements[list(range(nbPosLSt))]
-
-    EdgeEnrichedElementsInAllMesh,nbEdgeEnrichedElementsInAllMesh=silex_lib_tri3_acou.getenrichedelementsfromlevelset(fluid_elements,LevelSetTangent)
-    EdgeEnrichedElementsInAllMesh=np.unique(EdgeEnrichedElementsInAllMesh[list(range(nbEdgeEnrichedElementsInAllMesh))])
-
-    IdElementTip=silex_lib_tri3_acou.getelementcontainingpoint(fluid_elements,fluid_nodes,[0.6,0.65])
-
-    #if (flag_write_gmsh_results==1) and (rank==0):
-    #    silex_lib_gmsh.WriteResults(results_file+'_NegativeLSelements',fluid_nodes,fluid_elements[NegativeLSelements],2)
-    #    silex_lib_gmsh.WriteResults(results_file+'_PositiveLSelements',fluid_nodes,fluid_elements[PositiveLSelements],2)
-    #    silex_lib_gmsh.WriteResults(results_file+'_NegativeLStgtElements',fluid_nodes,fluid_elements[NegativeLStgtElements],2)
-    #    silex_lib_gmsh.WriteResults(results_file+'_PositiveLStgtElements',fluid_nodes,fluid_elements[PositiveLStgtElements],2)
-
+    if (flag_write_gmsh_results == 1) and (rank == 0):
+        msh2.mshWriter(
+            cwd / (results_file + "_NegativeLSelements.msh"),
+            fluid_nodes,
+            {"type": "TRI3", "connectivity": fluid_elements[NegativeLSelements]},
+        )
+        msh2.mshWriter(
+            cwd / (results_file + "_PositiveLSelements.msh"),
+            fluid_nodes,
+            {"type": "TRI3", "connectivity": fluid_elements[PositiveLSelements]},
+        )
+        msh2.mshWriter(
+            cwd / (results_file + "_NegativeLStgtElements.msh"),
+            fluid_nodes,
+            {"type": "TRI3", "connectivity": fluid_elements[NegativeLStgtElements]},
+        )
+        msh2.mshWriter(
+            cwd / (results_file + "_PositiveLStgtElements.msh"),
+            fluid_nodes,
+            {"type": "TRI3", "connectivity": fluid_elements[PositiveLStgtElements]},
+        )
 
 
 
-    IIaa,JJaa,IIaf,JJaf,Vaak,Vaam,Vafk,Vafm=silex_lib_tri3_acou.globalxfemacousticmatrices(fluid_elements,fluid_nodes,LevelSet,LevelSetTangent,celerity,rho,flag_edge_enrichment)
+    IIaa, JJaa, IIaf, JJaf, Vaak, Vaam, Vafk, Vafm = objXFEM.getMatrices(
+        fluid_nodes,
+        fluid_elements,
+        LevelSet,
+        LevelSetTangent,
+        [celerity, rho],
+        flag_edge_enrichment,
+    )
 
     KAA = scipy.sparse.csc_matrix( (Vaak,(IIaa,JJaa)), shape=(fluid_ndof,fluid_ndof) )
     MAA = scipy.sparse.csc_matrix( (Vaam,(IIaa,JJaa)), shape=(fluid_ndof,fluid_ndof) )
@@ -268,17 +372,21 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     MAF = scipy.sparse.csc_matrix( (Vafm,(IIaf,JJaf)), shape=(fluid_ndof,fluid_ndof) )
 
     toc = time.process_time()
-    print("time to compute Heaviside enrichment:",toc-tic)
+    logger.info("time to compute Heaviside enrichment: {}".format(toc-tic))
 
-    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([HeavisideEnrichedElements,EdgeEnrichedElements]))])
-    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements,EdgeEnrichedElementsInAllMesh]))])
-    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements]))])
-    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([NegativeLStgtElements]))])
+    #Enrichednodes = np.unique(fluid_elements[np.hstack(([HeavisideEnrichedElements,EdgeEnrichedElements]))])
+    #Enrichednodes = np.unique(fluid_elements[np.hstack(([EnrichedElements,PositiveLStgtElements,EdgeEnrichedElementsInAllMesh]))])
+    #Enrichednodes = np.unique(fluid_elements[np.hstack(([EnrichedElements,PositiveLStgtElements]))])
+    #Enrichednodes = np.unique(fluid_elements[np.hstack(([NegativeLStgtElements]))])
     Enrichednodes = np.unique(fluid_elements[EnrichedElements])
     #Enrichednodes = np.unique(fluid_elements)
     SolvedDofA=Enrichednodes-1
 
-    silex_lib_gmsh.WriteResults(results_file+'_EnrichedElements',fluid_nodes,fluid_elements[scipy.hstack(([EnrichedElements]))],2)
+    msh2.mshWriter(
+        cwd / (results_file + "_EnrichedElements.msh"),
+        fluid_nodes,
+        {"type": "TRI3", "connectivity": fluid_elements[EnrichedElements.flatten()]},
+    )
 
     #################################################################
     # Construct the whole system
@@ -298,18 +406,31 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     # Compute gradients with respect to parameters
     ##################################################################
 
-    print(silex_lib_tri3_acou.globalacousticgradientmatrices.__doc__)
-
+    
     #gradient wrt Xc
-    IIf_X,JJf_X,Vfak_gradient_X,Vfam_gradient_X=silex_lib_tri3_acou.globalacousticgradientmatrices(fluid_elements[EnrichedElements],fluid_nodes,celerity,rho,LevelSet_gradient_X,LevelSet)
+    IIf_X, JJf_X, Vfak_gradient_X, Vfam_gradient_X, _ = objXFEM.getGradientMatrices(
+        fluid_nodes,
+        fluid_elements[EnrichedElements],
+        levelset=LevelSet,
+        levelsetTg=None,
+        levelsetGradient=LevelSet_gradient_X,
+        material=[celerity, rho],
+    )
     #IIf,JJf,Vfak_gradient,Vfam_gradient=silex_lib_tri3_acou.globalacousticgradientmatrices(fluid_elements,fluid_nodes,celerity,rho,LevelSet_gradient,LevelSet)
     dMFA_dtheta_X = scipy.sparse.csc_matrix( (Vfam_gradient_X,(IIf_X,JJf_X)), shape=(fluid_ndof,fluid_ndof) )
     dKFA_dtheta_X = scipy.sparse.csc_matrix( (Vfak_gradient_X,(IIf_X,JJf_X)), shape=(fluid_ndof,fluid_ndof) )
 
     
-    f=open(results_file+'_KAF_MAF.pck','wb')
-    pickle.dump([dKFA_dtheta_X[SolvedDofF,:][:,SolvedDofA],dMFA_dtheta_X[SolvedDofF,:][:,SolvedDofA],KAF[SolvedDofF,:][:,SolvedDofA],MAF[SolvedDofF,:][:,SolvedDofA]], f)
-    f.close()
+    with open(cwd / (results_file + "_KAF_MAF.pck"), "wb") as f:
+        pickle.dump(
+            [
+                dKFA_dtheta_X[SolvedDofF, :][:, SolvedDofA],
+                dMFA_dtheta_X[SolvedDofF, :][:, SolvedDofA],
+                KAF[SolvedDofF, :][:, SolvedDofA],
+                MAF[SolvedDofF, :][:, SolvedDofA],
+            ],
+            f,
+        )
 
     dK_X=scipy.sparse.bmat( [[None,fluid_damping*dKFA_dtheta_X[SolvedDofF,:][:,SolvedDofA]],
                                      [fluid_damping*dKFA_dtheta_X[SolvedDofA,:][:,SolvedDofF],None]
@@ -332,7 +453,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     frfgradient_X=[]
 
     if (Flag_frf_analysis==1):
-        print("time at the beginning of the FRF: {}".format(time.ctime())))
+        logger.info("time at the beginning of the FRF: {}".format(time.ctime()))
 
         press_save=[]
         dpress_save_X=[]
@@ -347,7 +468,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
             #freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
             frequencies.append(freq)
             omega=2*np.pi*freq
-            print("proc number",rank,"frequency=",freq)
+            logger.info("proc number",rank,"frequency=",freq)
 
             FF[SolvedDofF]=-(KFF[SolvedDofF,:][:,IdnodeS2-1]-(omega**2)*MFF[SolvedDofF,:][:,IdnodeS2-1])*(np.ones((len(IdnodeS2))))
             FA = np.zeros(fluid_ndof)
@@ -356,7 +477,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
             #F  = scipy.sparse.csc_matrix(F)
 
             #sol = mumps.spsolve(scipy.sparse.coo_matrix(K-(omega**2)*M,dtype='float'), F, comm=mycomm )
-            sol = scipy.sparse.linalg.spsolve(scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='cfloat'), F)
+            sol = scipy.sparse.linalg.spsolve(scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='complex'), F)
             
             #eigen_values_small,eigen_vectors= scipy.sparse.linalg.eigsh(K-(omega**2)*M,1,sigma=0,which='SM')
             #eigen_values_large,eigen_vectors= scipy.sparse.linalg.eigsh(K-(omega**2)*M,1,sigma=0,which='LM')
@@ -370,7 +491,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
             tmp_X=-(dK_X-(omega**2)*dM_X)*sol
 
             #Dsol_Dtheta = mumps.spsolve(  scipy.sparse.coo_matrix(K-(omega**2)*M,dtype='float')  , tmp , comm=mycomm )
-            Dsol_Dtheta_X = scipy.sparse.linalg.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='cfloat')  , tmp_X )
+            Dsol_Dtheta_X = scipy.sparse.linalg.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='complex')  , tmp_X )
 
             press = np.zeros(fluid_ndof,dtype=complex)
             press[IdnodeS2-1] = np.ones(len(IdnodeS2))
@@ -380,7 +501,17 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
             CorrectedPressure=press
             CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA]+enrichment[SolvedDofA]*np.sign(LevelSet[SolvedDofA])
             #frf.append(silex_acou_lib_tri3.computequadratiquepressure(fluid_elements,fluid_nodes,CorrectedPressure))
-            frf.append(silex_lib_tri3_acou.computexfemcomplexquadratiquepressure(fluid_elements5,fluid_nodes,press+0j,0.0*enrichment+0j,LevelSet,LevelSetTangent,flag_edge_enrichment))
+            frf.append(
+                objXFEM.getQuadraticPressure(
+                    fluid_nodes,
+                    fluid_elements5,
+                    press,
+                    enrichment,
+                    LevelSet,
+                    LevelSetTangent,
+                    flag_edge_enrichment,
+                )
+            )
             #frf[i]=xvibacoufo.computexfemcomplexquadratiquepressure(fluid_elements,fluid_nodes,CorrectedPressure+0j,0.0*enrichment+0j,LevelSet,LevelSetTangent)
             #press_save.append(CorrectedPressure.copy())
             press_save.append(press.copy())
@@ -391,17 +522,50 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
             Denrichment_Dtheta[SolvedDofA,0]= Dsol_Dtheta_X[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
             #DCorrectedPressure_Dtheta=np.array(Dpress_Dtheta)
             #DCorrectedPressure_Dtheta[SolvedDofA]=DCorrectedPressure_Dtheta[SolvedDofA].T+np.array(Denrichment_Dtheta[SolvedDofA]*np.sign(LevelSet[SolvedDofA]).T)
-            frfgradient_X.append(silex_lib_tri3_acou.computexfemcomplexquadratiquepressuregradient(fluid_elements5,fluid_nodes,press+0j,Dpress_Dtheta[:,0]+0j,0.0*enrichment+0j,0.0*Denrichment_Dtheta[:,0]+0j,LevelSet,LevelSetTangent,flag_edge_enrichment))
+            frfgradient_X.append(
+                objXFEM.getGradientQuadraticPressure(
+                    fluid_nodes,
+                    fluid_elements5,
+                    press,
+                    enrichment*0.0,
+                    Dpress_Dtheta[:,0],
+                    Denrichment_Dtheta[:,0]*0.0,
+                    LevelSet,
+                    LevelSetTangent,
+                    flag_edge_enrichment,
+                )
+            )
             dpress_save_X.append(Dpress_Dtheta[:,0].copy())
         
 
-        print("time at the end of the FRF: {}".format(time.ctime())))
+        logger.info("time at the end of the FRF: {}".format(time.ctime()))
         frfsave=[frequencies,frf,frfgradient_X]
         if rank!=0 :
             comm.send(frfsave, dest=0, tag=11)
 
         if (flag_write_gmsh_results==1) and (rank==0):
-            silex_lib_gmsh.WriteResults2(results_file+'_results_fluid_frf',fluid_nodes,fluid_elements,2,[[press_save,'nodal',1,'pressure'],[dpress_save_X,'nodal',1,'pressure gradient X']])
+            msh2.mshWriter(
+                cwd / (results_file + "_results_fluid_frf.msh"),
+                fluid_nodes,
+                [{"type": "TRI3", "connectivity": fluid_elements}],
+                fields=[
+                    {
+                        "data": press_save,
+                        "type": "nodal",
+                        "dim": 1,
+                        "nbsteps": len(press_save),
+                        "name": "pressure",
+                    },
+                    {
+                        "data": dpress_save_X,
+                        "type": "nodal",
+                        "dim": 1,
+                        "nbsteps": len(press_save),
+                        "name": "pressure gradient /X",
+                    }
+                ],
+                append=True,
+            )
 
         # save the FRF problem
         Allfrequencies=np.zeros(nbStep)
@@ -412,9 +576,9 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
             for i in range(nproc):
                 if i==0:
                     data=frfsave
-                    print(data)
+                    logger.info(data)
                 else:
-                    print(i)
+                    logger.info(i)
                     data=comm.recv(source=i, tag=11)
                     #data=data_buffer
 
@@ -426,13 +590,15 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
 
             Allfrequencies, Allfrf,Allfrfgradient_X= zip(*sorted(zip(Allfrequencies, Allfrf,Allfrfgradient[:,0])))
             Allfrfsave=[np.array(list(Allfrequencies)),np.array(list(Allfrf)),np.array(list(Allfrfgradient_X))]#,press_save,dpress_save]
-            f=open(results_file+'_results.frf','wb')
-            pickle.dump(Allfrfsave, f)
-            print(Allfrfsave)
-            f.close()
-            #save on mat file
-            scipy.io.savemat(results_file+'_results.mat',mdict={'AllFRF': Allfrfsave})
-            scipy.io.savemat(results_file_ini+'results.mat',mdict={'AllFRF': Allfrfsave})
+            with open(cwd / (results_file + "_results.frf"), "wb") as f:
+                pickle.dump(Allfrfsave, f)
+            # save on mat file
+            scipy.io.savemat(
+                cwd / (results_file + "_results.mat"), mdict={"AllFRF": Allfrfsave}
+            )
+            scipy.io.savemat(
+                cwd / (results_file_ini + "results.mat"), mdict={"AllFRF": Allfrfsave}
+            )
 
 
 #function for dealing with options
@@ -482,11 +648,11 @@ def manageOpt(argv,dV):
 #usage definition
 def usage():
     dV=defaultV
-    print("Usage: ",sys.argv[0],"-psFfh [+arg]")
-    print("\t -p : number of processors (default value ",dV.nbProc,")")
-    print("\t -s : number of steps in the frequency range (default value ",dV.nbStep,")")
-    print("\t -F : maximum frequency (default value ",dV.freqMax,")")
-    print("\t -f : minimum frequency (default value ",dV.freqMin,")")
+    logger.info("Usage: ",sys.argv[0],"-psFfh [+arg]")
+    logger.info("\t -p : number of processors (default value ",dV.nbProc,")")
+    logger.info("\t -s : number of steps in the frequency range (default value ",dV.nbStep,")")
+    logger.info("\t -F : maximum frequency (default value ",dV.freqMax,")")
+    logger.info("\t -f : minimum frequency (default value ",dV.freqMin,")")
 
 #default values
 class defaultV:

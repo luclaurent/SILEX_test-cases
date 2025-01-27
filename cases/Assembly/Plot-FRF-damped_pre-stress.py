@@ -57,7 +57,7 @@ frf_beam3_no_pre_stress_no_damping_3000modes=pickle.load(f)
 f.close()
 
 
-RefDisp=scipy.sqrt(2*(1e-4)**2)
+RefDisp=np.sqrt(2*(1e-4)**2)
 
 pylab.figure(1)
 

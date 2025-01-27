@@ -43,8 +43,8 @@ def computeFreqPerProc(nbStep,nbProc,freqInit,freqEnd):
     if nbFreqProcRemain==0:
         varCase=0
     listFreq=np.zeros((nbFreqProc+varCase,nbProc))
-    listAllFreq=scipy.linspace(freqInit,freqEnd,nbStep)
-    #print(scipy.linspace(freqInit,freqEnd,nbStep))
+    listAllFreq=np.linspace(freqInit,freqEnd,nbStep)
+    #print(np.linspace(freqInit,freqEnd,nbStep))
     #build array of frequencies
     itF=0
     for itP in range(nbProc):
@@ -155,19 +155,19 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
 
     # create coordinates of nodes of the structure (half circle)
     nbNodesHC=50
-    thetaHC=scipy.linspace(0,0+np.pi,nbNodesHC)
+    thetaHC=np.linspace(0,0+np.pi,nbNodesHC)
     
     xNodesHC=x_pos_struc-radius_hcircle*np.sin(thetaHC)
     yNodesHC=y_pos_struc-radius_hcircle*np.cos(thetaHC)
-    struc_nodes=scipy.vstack([xNodesHC,yNodesHC]).transpose()
+    struc_nodes=np.vstack([xNodesHC,yNodesHC]).transpose()
 
-    lA=scipy.linspace(1,nbNodesHC-1)
-    lB=scipy.linspace(2,nbNodesHC)
-    struc_elements=scipy.vstack([lA,lB]).transpose()
+    lA=np.linspace(1,nbNodesHC-1)
+    lB=np.linspace(2,nbNodesHC)
+    struc_elements=np.vstack([lA,lB]).transpose()
 
 
 
-    LevelSet=scipy.sqrt((fluid_nodes[:,0]-x_pos_struc)**2+(fluid_nodes[:,1]-y_pos_struc)**2)-radius_hcircle
+    LevelSet=np.sqrt((fluid_nodes[:,0]-x_pos_struc)**2+(fluid_nodes[:,1]-y_pos_struc)**2)-radius_hcircle
     LevelSetTangent=fluid_nodes[:,0]-x_pos_struc
 
     # level set gradient with respect to parameters
@@ -270,15 +270,19 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     toc = time.process_time()
     print("time to compute Heaviside enrichment:",toc-tic)
 
-    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([HeavisideEnrichedElements,EdgeEnrichedElements]))])
-    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements,EdgeEnrichedElementsInAllMesh]))])
-    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([EnrichedElements,PositiveLStgtElements]))])
-    #Enrichednodes = np.unique(fluid_elements[scipy.hstack(([NegativeLStgtElements]))])
+    #Enrichednodes = np.unique(fluid_elements[np.hstack(([HeavisideEnrichedElements,EdgeEnrichedElements]))])
+    #Enrichednodes = np.unique(fluid_elements[np.hstack(([EnrichedElements,PositiveLStgtElements,EdgeEnrichedElementsInAllMesh]))])
+    #Enrichednodes = np.unique(fluid_elements[np.hstack(([EnrichedElements,PositiveLStgtElements]))])
+    #Enrichednodes = np.unique(fluid_elements[np.hstack(([NegativeLStgtElements]))])
     Enrichednodes = np.unique(fluid_elements[EnrichedElements])
     #Enrichednodes = np.unique(fluid_elements)
     SolvedDofA=Enrichednodes-1
 
-    silex_lib_gmsh.WriteResults(results_file+'_EnrichedElements',fluid_nodes,fluid_elements[scipy.hstack(([EnrichedElements]))],2)
+    msh2.mshWriter(
+        cwd / (results_file + "_EnrichedElements.msh"),
+        fluid_nodes,
+        {"type": "TRI3", "connectivity": fluid_elements[EnrichedElements.flatten()]},
+    )
 
     #################################################################
     # Construct the whole system
@@ -332,7 +336,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
     frfgradient_X=[]
 
     if (Flag_frf_analysis==1):
-        print("time at the beginning of the FRF: {}".format(time.ctime())))
+        print("time at the beginning of the FRF: {}".format(time.ctime()))
 
         press_save=[]
         dpress_save_X=[]
@@ -356,7 +360,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
             #F  = scipy.sparse.csc_matrix(F)
 
             #sol = mumps.spsolve(scipy.sparse.coo_matrix(K-(omega**2)*M,dtype='float'), F, comm=mycomm )
-            sol = scipy.sparse.linalg.spsolve(scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='cfloat'), F)
+            sol = scipy.sparse.linalg.spsolve(scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='complex'), F)
             
             #eigen_values_small,eigen_vectors= scipy.sparse.linalg.eigsh(K-(omega**2)*M,1,sigma=0,which='SM')
             #eigen_values_large,eigen_vectors= scipy.sparse.linalg.eigsh(K-(omega**2)*M,1,sigma=0,which='LM')
@@ -370,7 +374,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
             tmp_X=-(dK_X-(omega**2)*dM_X)*sol
 
             #Dsol_Dtheta = mumps.spsolve(  scipy.sparse.coo_matrix(K-(omega**2)*M,dtype='float')  , tmp , comm=mycomm )
-            Dsol_Dtheta_X = scipy.sparse.linalg.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='cfloat')  , tmp_X )
+            Dsol_Dtheta_X = scipy.sparse.linalg.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='complex')  , tmp_X )
 
             press = np.zeros(fluid_ndof,dtype=complex)
             press[IdnodeS2-1] = np.ones(len(IdnodeS2))
@@ -395,7 +399,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,positionStructX,positionStruct
             dpress_save_X.append(Dpress_Dtheta[:,0].copy())
         
 
-        print("time at the end of the FRF: {}".format(time.ctime())))
+        print("time at the end of the FRF: {}".format(time.ctime()))
         frfsave=[frequencies,frf,frfgradient_X]
         if rank!=0 :
             comm.send(frfsave, dest=0, tag=11)

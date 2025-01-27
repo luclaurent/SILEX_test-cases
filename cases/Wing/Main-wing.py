@@ -71,7 +71,7 @@ silex_lib_gmsh.WriteResults(ResultsFileName+'_surf5_peau_superieure_longeron',no
 silex_lib_gmsh.WriteResults(ResultsFileName+'_surf6_bord_attaque',nodes,elementsS6,2)
 silex_lib_gmsh.WriteResults(ResultsFileName+'_surf7_bord_fuite',nodes,elementsS7,2)
 
-elements=scipy.vstack([elementsS1,elementsS2,elementsS3,elementsS4,elementsS5,elementsS6,elementsS7])
+elements=np.vstack([elementsS1,elementsS2,elementsS3,elementsS4,elementsS5,elementsS6,elementsS7])
 
 # Define material
 Young     = 200000.0
@@ -142,15 +142,15 @@ print("Number of elements:",nelem)
 #      CLEAN MESH
 Id_nodes_used=np.unique(elements)
 Id_nodes_nonused=np.setdiff1d(range(1,nnodes),Id_nodes_used)
-IdNodesFixed_x=scipy.hstack([IdNodesFixed_x,Id_nodes_nonused])
-IdNodesFixed_y=scipy.hstack([IdNodesFixed_y,Id_nodes_nonused])
-IdNodesFixed_z=scipy.hstack([IdNodesFixed_z,Id_nodes_nonused])
-IdNodesFixed_rotx=scipy.hstack([IdNodesFixed_rotx,Id_nodes_nonused])
-IdNodesFixed_roty=scipy.hstack([IdNodesFixed_roty,Id_nodes_nonused])
-IdNodesFixed_rotz=scipy.hstack([IdNodesFixed_rotz,Id_nodes_nonused])
+IdNodesFixed_x=np.hstack([IdNodesFixed_x,Id_nodes_nonused])
+IdNodesFixed_y=np.hstack([IdNodesFixed_y,Id_nodes_nonused])
+IdNodesFixed_z=np.hstack([IdNodesFixed_z,Id_nodes_nonused])
+IdNodesFixed_rotx=np.hstack([IdNodesFixed_rotx,Id_nodes_nonused])
+IdNodesFixed_roty=np.hstack([IdNodesFixed_roty,Id_nodes_nonused])
+IdNodesFixed_rotz=np.hstack([IdNodesFixed_rotz,Id_nodes_nonused])
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([
+Fixed_Dofs = np.hstack([
     (np.array(IdNodesFixed_x)-1)*6,
     (np.array(IdNodesFixed_y)-1)*6+1,
     (np.array(IdNodesFixed_z)-1)*6+2,

@@ -61,29 +61,29 @@ elementV12,IdnodeV12=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',eltype,
 
 ### face du bas: pied 1 : SUPER-NODE 1
 ##elementS101,IdnodeS101=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,101)
-##dofS101=scipy.hstack([(IdnodeS101-1)*3,(IdnodeS101-1)*3+1,(IdnodeS101-1)*3+2])
+##dofS101=np.hstack([(IdnodeS101-1)*3,(IdnodeS101-1)*3+1,(IdnodeS101-1)*3+2])
 ### face du bas: pied 2 : SUPER-NODE 2
 ##elementS102,IdnodeS102=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,102)
-##dofS102=scipy.hstack([(IdnodeS102-1)*3,(IdnodeS102-1)*3+1,(IdnodeS102-1)*3+2])
+##dofS102=np.hstack([(IdnodeS102-1)*3,(IdnodeS102-1)*3+1,(IdnodeS102-1)*3+2])
 ### face du bas: pied 3 : SUPER-NODE 3
 ##elementS103,IdnodeS103=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,103)
-##dofS103=scipy.hstack([(IdnodeS103-1)*3,(IdnodeS103-1)*3+1,(IdnodeS103-1)*3+2])
+##dofS103=np.hstack([(IdnodeS103-1)*3,(IdnodeS103-1)*3+1,(IdnodeS103-1)*3+2])
 ### face du bas: pied 4 : SUPER-NODE 4
 ##elementS104,IdnodeS104=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,104)
-##dofS104=scipy.hstack([(IdnodeS104-1)*3,(IdnodeS104-1)*3+1,(IdnodeS104-1)*3+2])
+##dofS104=np.hstack([(IdnodeS104-1)*3,(IdnodeS104-1)*3+1,(IdnodeS104-1)*3+2])
 
 # face du haut: pied 1 : SUPER-NODE 5
 elementS201,IdnodeS201=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,201)
-dofS201=scipy.hstack([(IdnodeS201-1)*3,(IdnodeS201-1)*3+1,(IdnodeS201-1)*3+2])
+dofS201=np.hstack([(IdnodeS201-1)*3,(IdnodeS201-1)*3+1,(IdnodeS201-1)*3+2])
 # face du haut: pied 2 : SUPER-NODE 6
 elementS202,IdnodeS202=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,202)
-dofS202=scipy.hstack([(IdnodeS202-1)*3,(IdnodeS202-1)*3+1,(IdnodeS202-1)*3+2])
+dofS202=np.hstack([(IdnodeS202-1)*3,(IdnodeS202-1)*3+1,(IdnodeS202-1)*3+2])
 # face du haut: pied 3 : SUPER-NODE 7
 elementS203,IdnodeS203=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,203)
-dofS203=scipy.hstack([(IdnodeS203-1)*3,(IdnodeS203-1)*3+1,(IdnodeS203-1)*3+2])
+dofS203=np.hstack([(IdnodeS203-1)*3,(IdnodeS203-1)*3+1,(IdnodeS203-1)*3+2])
 # face du haut: pied 4 : SUPER-NODE 8
 elementS204,IdnodeS204=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,204)
-dofS204=scipy.hstack([(IdnodeS204-1)*3,(IdnodeS204-1)*3+1,(IdnodeS204-1)*3+2])
+dofS204=np.hstack([(IdnodeS204-1)*3,(IdnodeS204-1)*3+1,(IdnodeS204-1)*3+2])
 
 # SUPER BEAM ELEMENTS : bas-haut
 elementBeam = np.array([[1,5],[2,6],[3,7],[4,8]])
@@ -119,7 +119,7 @@ IdSuperNodesFixed_rotz = IdSuperNodesDown
 ##silex_lib_gmsh.WriteResults(ResultsFileName+'_vol12',nodes,elementV12,5)
 ##silex_lib_gmsh.WriteResults(ResultsFileName+'_SUPER_NODES',SuperNodes,elementBeam,1)
 
-##elements=scipy.vstack([elementV10,elementV11,elementV12])
+##elements=np.vstack([elementV10,elementV11,elementV12])
 elements=elementV12
 silex_lib_gmsh.WriteResults(ResultsFileName+'_complet',nodes,elements,5)
 
@@ -154,7 +154,7 @@ flag3  = 2                                      # flag for Neo Hooke hyperelasti
 param3 = [mu3,Lambda3,0.0,0.0,0.0,0.0,0.0,0.0]  # Material parameter in a vector
 
 # Boundary conditions
-Fixed_Dofs = scipy.hstack([ndof+(IdSuperNodesFixed_x-1)*6,ndof+(IdSuperNodesFixed_y-1)*6+1,ndof+(IdSuperNodesFixed_z-1)*6+2,ndof+(IdSuperNodesFixed_rotx-1)*6+3,ndof+(IdSuperNodesFixed_roty-1)*6+4,ndof+(IdSuperNodesFixed_rotz-1)*6+5])
+Fixed_Dofs = np.hstack([ndof+(IdSuperNodesFixed_x-1)*6,ndof+(IdSuperNodesFixed_y-1)*6+1,ndof+(IdSuperNodesFixed_z-1)*6+2,ndof+(IdSuperNodesFixed_rotx-1)*6+3,ndof+(IdSuperNodesFixed_roty-1)*6+4,ndof+(IdSuperNodesFixed_rotz-1)*6+5])
 
 # DEFINE LOAD : ON SUPER NODE 1 IN y DIRECTION
 ##Fprime = np.zeros(ndof+6*SuperNodes.shape[0])
@@ -177,7 +177,7 @@ Fprime = np.zeros(ndof+6*SuperNodes.shape[0],dtype=mytype)
 #F[(56-1)*3+1]=1.0
 
 # frequency range
-frequencies=scipy.linspace(0,500,500)
+frequencies=np.linspace(0,500,500)
 
 toc = time.process_time()
 print("time for the user part:",toc-tic)
@@ -197,7 +197,7 @@ print("")
 
 # define free dof
 SolvedDofs = np.setdiff1d(range(ndof+6*SuperNodes.shape[0]),Fixed_Dofs)
-SolvedDofs = np.setdiff1d(SolvedDofs,scipy.hstack([dofS201,dofS202,dofS203,dofS204]))
+SolvedDofs = np.setdiff1d(SolvedDofs,np.hstack([dofS201,dofS202,dofS203,dofS204]))
 
 # initialize displacement vector
 Qprime=np.zeros(ndof+6*SuperNodes.shape[0],dtype=mytype)
@@ -319,7 +319,7 @@ if 1==0:
 
     eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(K[SolvedDofs,:][:,SolvedDofs],30,M[SolvedDofs,:][:,SolvedDofs],sigma=0,which='LM')
 
-    freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*np.pi))
+    freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
     eigen_vector_S_list=[]
     for i in range(eigen_values_S.shape[0]):
@@ -382,7 +382,7 @@ for i in range(len(frequencies)):
     Qprime[SolvedDofs] = mumps.spsolve( kk , np.array(Fprime[SolvedDofs],dtype=mytype)-(K[SolvedDofs,:][:,Fixed_Dofs]-(omega*omega)*M[SolvedDofs,:][:,Fixed_Dofs])*Qprime[Fixed_Dofs], comm=mycomm).T
     Q=R*Qprime
 
-    #frf.append(scipy.sqrt(Q[(187-1)*3]**2+Q[(187-1)*3+1]**2+Q[(187-1)*3+2]**2))
+    #frf.append(np.sqrt(Q[(187-1)*3]**2+Q[(187-1)*3+1]**2+Q[(187-1)*3+2]**2))
     frf.append(scipy.linalg.norm(np.array([Q[(123-1)*3],Q[(123-1)*3+1],Q[(123-1)*3+2]])))
     #print('node 123: Displacement = ',[Q[(123-1)*3],Q[(123-1)*3+1],Q[(123-1)*3+2]])
     

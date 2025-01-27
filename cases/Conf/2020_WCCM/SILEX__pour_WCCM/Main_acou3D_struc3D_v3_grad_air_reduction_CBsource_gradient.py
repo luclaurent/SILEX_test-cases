@@ -344,7 +344,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         (Vffm, (IIf, JJf)), shape=(fluid_ndof, fluid_ndof))
 
     SolvedDofF = list(range(fluid_ndof))
-    SolvedDofB=scipy.hstack([9-1]) # 9 : node number where acoustic source is imposed
+    SolvedDofB=np.hstack([9-1]) # 9 : node number where acoustic source is imposed
     SolvedDofI=np.setdiff1d(SolvedDofF,SolvedDofB)
     #SolvedDofI=SolvedDofF
 
@@ -380,7 +380,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     eigen_values_I,eigen_vectors_I= scipy.sparse.linalg.eigsh(KFF[SolvedDofI,:][:,SolvedDofI],nb_mode_F,MFF[SolvedDofI,:][:,SolvedDofI],sigma=0,which='LM')
 
-    freq_eigv_I=list(scipy.sqrt(eigen_values_I)/(2*np.pi))
+    freq_eigv_I=list(np.sqrt(eigen_values_I)/(2*np.pi))
     eigen_vector_F_list=[]
     for i in range(nb_mode_F):
         tmp=np.zeros((fluid_ndof) , dtype='float')
@@ -534,7 +534,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     UFreduc = np.zeros(fluid_ndof, dtype=float)
     UFreduc[9-1] = 3.1250E-05
-    Freduced_F=scipy.hstack([np.zeros(nb_mode_F,dtype=float),UF[SolvedDofB]])
+    Freduced_F=np.hstack([np.zeros(nb_mode_F,dtype=float),UF[SolvedDofB]])
 
     #################################################################
     # Compute gradients with respect to parameters

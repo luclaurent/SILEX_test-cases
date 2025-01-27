@@ -52,11 +52,11 @@ def NLsystem(X):
     #Big_matrix=scipy.sparse.bmat([
     #    [scipy.dot(G,A*G)*K*fluid_damping-scipy.dot(G,B*G)*M  ,  K_sum_fi_Gi_A*fluid_damping-M_sum_fi_Gi_B],
     #    [K_sum_fi_Gi_A.T*fluid_damping-M_sum_fi_Gi_B.T        ,  scipy.dot(F,K*F)*A*fluid_damping-scipy.dot(F,M*F)*B]] )
-    #Second_member = scipy.hstack([  P*scipy.dot(cc,G)  ,  cc*scipy.dot(P,F)  ])
+    #Second_member = np.hstack([  P*scipy.dot(cc,G)  ,  cc*scipy.dot(P,F)  ])
     Big_matrix=scipy.sparse.bmat([
         [scipy.dot(G,A*G)*K*fluid_damping-scipy.dot(G,B*G)*M  ,  K_sum_fi_Gi_A*fluid_damping-M_sum_fi_Gi_B+scipy.tensordot(P,cc,0)],
         [K_sum_fi_Gi_A.T*fluid_damping-M_sum_fi_Gi_B.T+scipy.tensordot(cc,P,0)        ,  scipy.dot(F,K*F)*A*fluid_damping-scipy.dot(F,M*F)*B]] )
-    #Second_member = scipy.hstack([  P*scipy.dot(cc,G)  ,  cc*scipy.dot(P,F)  ])
+    #Second_member = np.hstack([  P*scipy.dot(cc,G)  ,  cc*scipy.dot(P,F)  ])
 
     #residue = Big_matrix*scipy.sparse.coo_matrix(X).T-scipy.sparse.coo_matrix(Second_member).T
 
@@ -111,7 +111,7 @@ print(mytype)
 nb_fcts_PGD = 1
 
 nb_node_w  = nb_freq_step
-nodes_w    = scipy.linspace(freq_ini*2.0*np.pi, freq_end*2.0*np.pi , num=nb_freq_step)
+nodes_w    = np.linspace(freq_ini*2.0*np.pi, freq_end*2.0*np.pi , num=nb_freq_step)
 Idnodes_w  = list(range(1,nb_node_w+1,1))
 omega_ndof = nb_node_w
 nb_elem_w  = nb_node_w-1
@@ -211,7 +211,7 @@ for i in range(nb_fcts_PGD):
 ##    G=np.array(  scipy.random.random(ndof_w) , dtype=mytype  )
     F=np.array(  np.zeros(ndof_x)+1.0 , dtype=mytype  )
     G=np.array(  np.zeros(ndof_w)+1.0 , dtype=mytype  )
-    X=scipy.hstack([F,G])
+    X=np.hstack([F,G])
 
     X_old=X.copy()
 
@@ -233,7 +233,7 @@ for i in range(nb_fcts_PGD):
 ##        Big_matrix=scipy.sparse.bmat( [[scipy.dot(G,A*G)*K*fluid_damping-scipy.dot(G,B*G)*M  ,  K_sum_fi_Gi_A*fluid_damping-M_sum_fi_Gi_B],
 ##                [K_sum_fi_Gi_A.T*fluid_damping-M_sum_fi_Gi_B.T,scipy.dot(F,K*F)*A*fluid_damping-scipy.dot(F,M*F)*B]
 ##                                                 ] )
-##        Second_member = scipy.hstack([  scipy.dot(cc,G)*P  ,  cc*scipy.dot(P,F)  ])
+##        Second_member = np.hstack([  scipy.dot(cc,G)*P  ,  cc*scipy.dot(P,F)  ])
 ##        X = mumps.spsolve( Big_matrix , Second_member , comm=mycomm).T
     
 ##    X_new = scipy.optimize.newton_krylov( NLsystem , X_old, verbose=1)

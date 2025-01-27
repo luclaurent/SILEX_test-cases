@@ -70,8 +70,8 @@ IdNodesFixed_z=IdnodeS1
 
 #direction2 = [-2000.0+3000,-2000.0,0.0]
 #direction3 = [-2000.0-3000,-2000.0,0.0]
-#press2 = scipy.sqrt(direction2[0]**2+direction2[1]**2+direction2[2]**2)/(10.0*np.pi*10.0)
-#press3 = scipy.sqrt(direction3[0]**2+direction3[1]**2+direction3[2]**2)/(10.0*np.pi*10.0)
+#press2 = np.sqrt(direction2[0]**2+direction2[1]**2+direction2[2]**2)/(10.0*np.pi*10.0)
+#press3 = np.sqrt(direction3[0]**2+direction3[1]**2+direction3[2]**2)/(10.0*np.pi*10.0)
 #F2 = silex_lib_elt.forceonsurface(nodes,elementsS2,press2,direction2)
 #F3 = silex_lib_elt.forceonsurface(nodes,elementsS3,press3,direction3)
 #F=F2+F3
@@ -93,7 +93,7 @@ print("Number of nodes:",nnodes)
 print("Number of elements:",nelem)
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
 SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
@@ -106,10 +106,10 @@ Q=np.zeros(ndof)
 #################################################################################
 
 R2 = silex_lib_extra.rigidify_surface(IdnodeS2,nodes,[52.0,39.0,36.0])
-dofS2 = scipy.hstack([(IdnodeS2-1)*3,(IdnodeS2-1)*3+1,(IdnodeS2-1)*3+2])
+dofS2 = np.hstack([(IdnodeS2-1)*3,(IdnodeS2-1)*3+1,(IdnodeS2-1)*3+2])
 
 R3 = silex_lib_extra.rigidify_surface(IdnodeS3,nodes,[52.0,39.0,-36.0])
-dofS3 = scipy.hstack([(IdnodeS3-1)*3,(IdnodeS3-1)*3+1,(IdnodeS3-1)*3+2])
+dofS3 = np.hstack([(IdnodeS3-1)*3,(IdnodeS3-1)*3+1,(IdnodeS3-1)*3+2])
 
 sparse_ones = scipy.sparse.csc_matrix( (list(np.ones(ndof)),(list(range(ndof)),list(range(ndof)))), shape=(ndof,ndof) )
 

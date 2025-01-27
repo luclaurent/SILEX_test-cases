@@ -130,7 +130,7 @@ print (" ")
 nvisu1 = 15
 nvisu2 = 13
 
-elements = scipy.vstack([elemV1,elemV2])
+elements = np.vstack([elemV1,elemV2])
 
 
 #################################################################################################################
@@ -139,13 +139,13 @@ elements = scipy.vstack([elemV1,elemV2])
 
 
 # Dof fixed in the x direction
-Fixed_Dofs_x = scipy.hstack([(IdnodS2-1)*3])
+Fixed_Dofs_x = np.hstack([(IdnodS2-1)*3])
 
 # Dof fixed in the x direction
-Fixed_Dofs_y = scipy.hstack([(IdnodS2-1)*3+1])
+Fixed_Dofs_y = np.hstack([(IdnodS2-1)*3+1])
 
 # Dof fixed in the x direction
-Fixed_Dofs_z = scipy.hstack([(IdnodS2-1)*3+2])
+Fixed_Dofs_z = np.hstack([(IdnodS2-1)*3+2])
 
 # Free dof
 SolvedDofs = np.setdiff1d(list(range(ndof)),Fixed_Dofs_x)
@@ -164,7 +164,7 @@ n = 20                          # Number of increment in the quasistatic part
 couplemax = 1.0e-3 # couple en N.m ????
 
 # Computation of the scale factor
-scale  = scipy.linspace(0,1,n)
+scale  = np.linspace(0,1,n)
 
 # load calculation
 alpha_flexion=2*couplemax/np.pi/50e-3**4

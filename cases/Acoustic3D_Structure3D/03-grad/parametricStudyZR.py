@@ -23,8 +23,8 @@ Zmax=2.
 Rmin=0.5
 Rmax=3.
 
-Zl=scipy.linspace(Zmin,Zmax,nbVal)
-Rl=scipy.linspace(Rmin,Rmax,nbVal)
+Zl=np.linspace(Zmin,Zmax,nbVal)
+Rl=np.linspace(Rmin,Rmax,nbVal)
 Zm,Rm=scipy.meshgrid(Zl,Rl)
 ZZm=list()
 

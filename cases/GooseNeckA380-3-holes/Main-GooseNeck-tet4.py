@@ -110,7 +110,7 @@ IdNodesFixed_z=IdnodeS4
 Load1x = 500 # N
 Load1y = 500 # N
 Load1z = 500 # N
-press1 = scipy.sqrt(Load1x**2+Load1y**2+Load1z**2)/S1 #MPa
+press1 = np.sqrt(Load1x**2+Load1y**2+Load1z**2)/S1 #MPa
 # give the direction of the surfacic load:
 #          if [0.0,0.0,0.0] then the local normal to the surface is used
 #          otherwise, the direction is normalized to 1
@@ -121,7 +121,7 @@ F1 = silex_lib_elt.forceonsurface(nodes,elementsS1,press1,direction1)
 Load2x = 500 # N
 Load2y = 500 # N
 Load2z = 500 # N
-press2 = scipy.sqrt(Load2x**2+Load2y**2+Load2z**2)/S2 #MPa
+press2 = np.sqrt(Load2x**2+Load2y**2+Load2z**2)/S2 #MPa
 # give the direction of the surfacic load:
 #          if [0.0,0.0,0.0] then the local normal to the surface is used
 #          otherwise, the direction is normalized to 1
@@ -132,7 +132,7 @@ F2 = silex_lib_elt.forceonsurface(nodes,elementsS2,press2,direction2)
 Load3x = 500 # N
 Load3y = 500 # N
 Load3z = 500 # N
-press3 = scipy.sqrt(Load3x**2+Load3y**2+Load3z**2)/S3 #MPa
+press3 = np.sqrt(Load3x**2+Load3y**2+Load3z**2)/S3 #MPa
 # give the direction of the surfacic load:
 #          if [0.0,0.0,0.0] then the local normal to the surface is used
 #          otherwise, the direction is normalized to 1
@@ -156,7 +156,7 @@ print ("Number of nodes:",nnodes)
 print ("Number of elements:",nelem)
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
 SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)

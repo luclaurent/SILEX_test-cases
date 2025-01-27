@@ -49,40 +49,40 @@ nodes=silex_lib_gmsh.ReadGmshNodes(MeshFileName+'.msh',ndim)
 
 # volume des plaque en acier dessus et dessous
 elementV10,IdnodeV10=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',eltype,10)
-dofSV10=scipy.hstack([(IdnodeV10-1)*3,(IdnodeV10-1)*3+1,(IdnodeV10-1)*3+2])
+dofSV10=np.hstack([(IdnodeV10-1)*3,(IdnodeV10-1)*3+1,(IdnodeV10-1)*3+2])
 
 # volume en caoutchouc
 elementV11,IdnodeV11=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',eltype,11)
-dofSV11=scipy.hstack([(IdnodeV11-1)*3,(IdnodeV11-1)*3+1,(IdnodeV11-1)*3+2])
+dofSV11=np.hstack([(IdnodeV11-1)*3,(IdnodeV11-1)*3+1,(IdnodeV11-1)*3+2])
 
 # volume structure au dessus
 elementV12,IdnodeV12=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',eltype,12)
 
 # face du bas: pied 1 : SUPER-NODE 1
 elementS101,IdnodeS101=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,101)
-dofS101=scipy.hstack([(IdnodeS101-1)*3,(IdnodeS101-1)*3+1,(IdnodeS101-1)*3+2])
+dofS101=np.hstack([(IdnodeS101-1)*3,(IdnodeS101-1)*3+1,(IdnodeS101-1)*3+2])
 # face du bas: pied 2 : SUPER-NODE 2
 elementS102,IdnodeS102=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,102)
-dofS102=scipy.hstack([(IdnodeS102-1)*3,(IdnodeS102-1)*3+1,(IdnodeS102-1)*3+2])
+dofS102=np.hstack([(IdnodeS102-1)*3,(IdnodeS102-1)*3+1,(IdnodeS102-1)*3+2])
 # face du bas: pied 3 : SUPER-NODE 3
 elementS103,IdnodeS103=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,103)
-dofS103=scipy.hstack([(IdnodeS103-1)*3,(IdnodeS103-1)*3+1,(IdnodeS103-1)*3+2])
+dofS103=np.hstack([(IdnodeS103-1)*3,(IdnodeS103-1)*3+1,(IdnodeS103-1)*3+2])
 # face du bas: pied 4 : SUPER-NODE 4
 elementS104,IdnodeS104=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,104)
-dofS104=scipy.hstack([(IdnodeS104-1)*3,(IdnodeS104-1)*3+1,(IdnodeS104-1)*3+2])
+dofS104=np.hstack([(IdnodeS104-1)*3,(IdnodeS104-1)*3+1,(IdnodeS104-1)*3+2])
 
 # face du haut: pied 1 : SUPER-NODE 5
 elementS201,IdnodeS201=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,201)
-dofS201=scipy.hstack([(IdnodeS201-1)*3,(IdnodeS201-1)*3+1,(IdnodeS201-1)*3+2])
+dofS201=np.hstack([(IdnodeS201-1)*3,(IdnodeS201-1)*3+1,(IdnodeS201-1)*3+2])
 # face du haut: pied 2 : SUPER-NODE 6
 elementS202,IdnodeS202=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,202)
-dofS202=scipy.hstack([(IdnodeS202-1)*3,(IdnodeS202-1)*3+1,(IdnodeS202-1)*3+2])
+dofS202=np.hstack([(IdnodeS202-1)*3,(IdnodeS202-1)*3+1,(IdnodeS202-1)*3+2])
 # face du haut: pied 3 : SUPER-NODE 7
 elementS203,IdnodeS203=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,203)
-dofS203=scipy.hstack([(IdnodeS203-1)*3,(IdnodeS203-1)*3+1,(IdnodeS203-1)*3+2])
+dofS203=np.hstack([(IdnodeS203-1)*3,(IdnodeS203-1)*3+1,(IdnodeS203-1)*3+2])
 # face du haut: pied 4 : SUPER-NODE 8
 elementS204,IdnodeS204=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,204)
-dofS204=scipy.hstack([(IdnodeS204-1)*3,(IdnodeS204-1)*3+1,(IdnodeS204-1)*3+2])
+dofS204=np.hstack([(IdnodeS204-1)*3,(IdnodeS204-1)*3+1,(IdnodeS204-1)*3+2])
 
 
 # write the surface mesh in a gmsh-format file to verify if its correct
@@ -93,7 +93,7 @@ dofS204=scipy.hstack([(IdnodeS204-1)*3,(IdnodeS204-1)*3+1,(IdnodeS204-1)*3+2])
 ##silex_lib_gmsh.WriteResults(ResultsFileName+'_vol11',nodes,elementV11,5)
 ##silex_lib_gmsh.WriteResults(ResultsFileName+'_vol12',nodes,elementV12,5)
 
-elements=scipy.vstack([elementV10,elementV11,elementV12])
+elements=np.vstack([elementV10,elementV11,elementV12])
 
 ##silex_lib_gmsh.WriteResults(ResultsFileName+'_complet',nodes,elements,5)
 
@@ -174,14 +174,14 @@ param3 = [mu3,Lambda3,0.0,0.0,0.0,0.0,0.0,0.0]  # Material parameter in a vector
 ##IdNodesFixed_y=IdnodeS3
 ##IdNodesFixed_z=IdnodeS3
 
-IdNodesFixed_x=scipy.hstack([IdnodeS101,IdnodeS102,IdnodeS103,IdnodeS104])
-IdNodesFixed_y=scipy.hstack([IdnodeS101,IdnodeS102,IdnodeS103,IdnodeS104])
-IdNodesFixed_z=scipy.hstack([IdnodeS101,IdnodeS102,IdnodeS103,IdnodeS104])
+IdNodesFixed_x=np.hstack([IdnodeS101,IdnodeS102,IdnodeS103,IdnodeS104])
+IdNodesFixed_y=np.hstack([IdnodeS101,IdnodeS102,IdnodeS103,IdnodeS104])
+IdNodesFixed_z=np.hstack([IdnodeS101,IdnodeS102,IdnodeS103,IdnodeS104])
 
 
-##IdNodesFixed_x=scipy.hstack([IdnodeS3,IdnodeS1])
-##IdNodesFixed_y=scipy.hstack([IdnodeS3,IdnodeS1])
-##IdNodesFixed_z=scipy.hstack([IdnodeS3,IdnodeS1])
+##IdNodesFixed_x=np.hstack([IdnodeS3,IdnodeS1])
+##IdNodesFixed_y=np.hstack([IdnodeS3,IdnodeS1])
+##IdNodesFixed_z=np.hstack([IdnodeS3,IdnodeS1])
 
 # get number of nodes, dof and elements from the mesh
 nnodes = nodes.shape[0]
@@ -194,7 +194,7 @@ ndof   = nnodes*3
 ###direction = np.array([1,1,0]) # force in direction +x +y
 
 # load calculation
-#F = silex_lib_elt.forceonsurface(nodes,scipy.vstack([elementS1,elementS3]),load,direction)
+#F = silex_lib_elt.forceonsurface(nodes,np.vstack([elementS1,elementS3]),load,direction)
 F = np.zeros(ndof,dtype=mytype)
 
 ##F=np.zeros(ndof,dtype=mytype)
@@ -203,7 +203,7 @@ F = np.zeros(ndof,dtype=mytype)
 ##F[(63-1)*3+2]=1.0
 
 # frequency range
-frequencies=scipy.linspace(0,500,50)
+frequencies=np.linspace(0,500,50)
 
 toc = time.process_time()
 print("time for the user part:",toc-tic)
@@ -228,7 +228,7 @@ print("")
 
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([
+Fixed_Dofs = np.hstack([
     (np.array(IdNodesFixed_x)-1)*3,
     (np.array(IdNodesFixed_y)-1)*3+1,
     (np.array(IdNodesFixed_z)-1)*3+2])
@@ -239,7 +239,7 @@ SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 # initialize displacement vector
 Q=np.zeros(ndof,dtype=mytype)
 
-Imposed_disp_dof=scipy.hstack([
+Imposed_disp_dof=np.hstack([
     (np.array(IdNodesFixed_x)-1)*3,
     (np.array(IdNodesFixed_z)-1)*3+2])
 
@@ -288,11 +288,11 @@ print("time to compute the stiffness and mass matrix :",toc-tic)
 #############################################################################
 #       Make the CB basis
 #############################################################################
-Dofs_s = scipy.hstack([dofS101,dofS102,dofS103,dofS104,dofS201,dofS202,dofS203,dofS204])
-Dofs_n = np.setdiff1d(scipy.hstack([dofSV10,dofSV11]),Dofs_s)
+Dofs_s = np.hstack([dofS101,dofS102,dofS103,dofS104,dofS201,dofS202,dofS203,dofS204])
+Dofs_n = np.setdiff1d(np.hstack([dofSV10,dofSV11]),Dofs_s)
 
 eigen_values_s,eigen_vectors_s= scipy.sparse.linalg.eigsh(K[Dofs_n,:][:,Dofs_n],nb_modes,M[Dofs_n,:][:,Dofs_n],sigma=0,which='LM')
-freq_eigv_s=list(scipy.sqrt(eigen_values_s)/(2*np.pi))
+freq_eigv_s=list(np.sqrt(eigen_values_s)/(2*np.pi))
 
 eigen_vector_s_list=[]
 for i in range(eigen_values_s.shape[0]):
@@ -354,7 +354,7 @@ STOP
 if 1==0:
     eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(K[SolvedDofs,:][:,SolvedDofs],10,M[SolvedDofs,:][:,SolvedDofs],sigma=0,which='LM')
 
-    freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*np.pi))
+    freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
     eigen_vector_S_list=[]
     for i in range(eigen_values_S.shape[0]):
@@ -400,7 +400,7 @@ for i in range(len(frequencies)):
 
     Q[SolvedDofs] = mumps.spsolve( kk , np.array(F[SolvedDofs],dtype=mytype)-(K[SolvedDofs,:][:,Fixed_Dofs]-(omega*omega)*M[SolvedDofs,:][:,Fixed_Dofs])*Q[Fixed_Dofs], comm=mycomm).T
     
-    #frf.append(scipy.sqrt(Q[(187-1)*3]**2+Q[(187-1)*3+1]**2+Q[(187-1)*3+2]**2))
+    #frf.append(np.sqrt(Q[(187-1)*3]**2+Q[(187-1)*3+1]**2+Q[(187-1)*3+2]**2))
     frf.append(scipy.linalg.norm(np.array([Q[(187-1)*3],Q[(187-1)*3+1],Q[(187-1)*3+2]])))
     
     #print('node 187: Displacement = ',[Q[(187-1)*3],Q[(187-1)*3+1],Q[(187-1)*3+2]])

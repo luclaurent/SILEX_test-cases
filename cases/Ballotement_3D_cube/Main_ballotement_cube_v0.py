@@ -247,7 +247,7 @@ frequencies=[]
 QuantityOfInterest=[]
 damping=None
 #SolvedDofF=list(range(fluid_ndof))
-print ("Time at the beginning of the FRF: {}".format(time.ctime())))
+print ("Time at the beginning of the FRF: {}".format(time.ctime()))
 for f in np.linspace(dataPb['freq_ini'],
                     dataPb['freq_end'],
                     dataPb['nb_freq_step']):
@@ -276,7 +276,7 @@ silex_lib_gmsh.WriteResults2(results_file.as_posix() +'_results_fluid_frf',
                              [[press,'nodal',1,'pressure']]
                              )
 
-print ("Time at the end of the FRF: {}".format(time.ctime())))
+print ("Time at the end of the FRF: {}".format(time.ctime()))
 
 f=open(results_file.as_posix() +'_results.frf','wb')
 pickle.dump(frfsave, f)

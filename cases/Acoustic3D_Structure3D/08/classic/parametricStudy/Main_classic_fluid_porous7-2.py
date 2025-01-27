@@ -48,8 +48,8 @@ def computeFreqPerProc(nbStep,nbProc,freqInit,freqEnd):
     if nbFreqProcRemain==0:
         varCase=0
     listFreq=np.zeros((nbFreqProc+varCase,nbProc))
-    listAllFreq=scipy.linspace(freqInit,freqEnd,nbStep)
-    #print(scipy.linspace(freqInit,freqEnd,nbStep))
+    listAllFreq=np.linspace(freqInit,freqEnd,nbStep)
+    #print(np.linspace(freqInit,freqEnd,nbStep))
     #build array of frequencies
     itF=0
     for itP in range(nbProc):
@@ -213,15 +213,15 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
     #stop
 
     IdNodesFixed_porous_us_x=IdNodesS4
-    ##IdNodesFixed_porous_us_y=np.unique(scipy.hstack([IdNodesS4,IdNodesS6]))
-    ##IdNodesFixed_porous_us_z=np.unique(scipy.hstack([IdNodesS4,IdNodesS5]))
+    ##IdNodesFixed_porous_us_y=np.unique(np.hstack([IdNodesS4,IdNodesS6]))
+    ##IdNodesFixed_porous_us_z=np.unique(np.hstack([IdNodesS4,IdNodesS5]))
     IdNodesFixed_porous_us_y=IdNodesS4
     IdNodesFixed_porous_us_z=IdNodesS4
     IdNodesFixed_porous_uf_x=IdNodesS4
     IdNodesFixed_porous_uf_y=IdNodesS4
     IdNodesFixed_porous_uf_z=IdNodesS4
 
-    Fixed_Dofs_porous = scipy.hstack([(IdNodesFixed_porous_us_x-1)*6,
+    Fixed_Dofs_porous = np.hstack([(IdNodesFixed_porous_us_x-1)*6,
                                       (IdNodesFixed_porous_us_y-1)*6+1,
                                       (IdNodesFixed_porous_us_z-1)*6+2,
                                       (IdNodesFixed_porous_uf_x-1)*6+3,
@@ -278,7 +278,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
     IIpf,JJpf,Vpf=silex_lib_porous_tet4_fortran.computecouplingporousair(fluid_nodes1,InterfaceConnectivity,po_por)
     CPF=scipy.sparse.csc_matrix( (Vpf,(IIpf,JJpf)), shape=(fluid_ndof2,fluid_ndof1) )
 
-    SolvedDof = scipy.hstack([SolvedDofF,SolvedDofP+fluid_ndof1])
+    SolvedDof = np.hstack([SolvedDofF,SolvedDofP+fluid_ndof1])
 
     ##################################################################
     # Construct the whole system
@@ -310,7 +310,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
     frf=[]
 
     if (Flag_frf_analysis==1):
-        print ("\nProc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime())))
+        print ("\nProc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime()))
 
         press_save=[]
         disp_save=[]
@@ -367,7 +367,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
             print ("Write results")
             silex_lib_gmsh.WriteResults2(results_file+'_results_fluid_frf',fluid_nodes1,fluid_elements1,4,[[press_save,'nodal',1,'pressure']])
 
-        print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime())))
+        print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime()))
 
         # save the FRF problem
         Allfrequencies=np.zeros(nbStep)

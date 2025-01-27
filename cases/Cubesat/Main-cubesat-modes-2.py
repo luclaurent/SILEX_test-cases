@@ -49,7 +49,7 @@ elementsS1,IdnodeS1=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',1,1)
 silex_lib_gmsh.WriteResults(ResultsFileName+'_surf10',nodes,elementsS10,2)
 silex_lib_gmsh.WriteResults(ResultsFileName+'_ligne1',nodes,elementsS1,1)
 
-#elements=scipy.vstack([elementsS10,elementsS1,elementsS2,elementsS3,elementsS4])
+#elements=np.vstack([elementsS10,elementsS1,elementsS2,elementsS3,elementsS4])
 elements=elementsS10
 
 silex_lib_gmsh.WriteResults(ResultsFileName+'_complet',nodes,elements,2)
@@ -88,7 +88,7 @@ print("Number of nodes:",nnodes)
 print("Number of elements:",nelem)
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([
+Fixed_Dofs = np.hstack([
     (np.array(IdNodesFixed_x)-1)*6,
     (np.array(IdNodesFixed_y)-1)*6+1,
     (np.array(IdNodesFixed_z)-1)*6+2,
@@ -124,7 +124,7 @@ M=scipy.sparse.csc_matrix( (Vm,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
 #Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 
 eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(K[SolvedDofs,:][:,SolvedDofs],50,M[SolvedDofs,:][:,SolvedDofs],sigma=0,which='LM')
-freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*np.pi))
+freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
 eigen_vector_S_list=[]
 for i in range(eigen_values_S.shape[0]):

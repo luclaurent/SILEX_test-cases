@@ -62,8 +62,8 @@ nu     = 0.4
 # Boundary conditions
 
 # define fixed dof
-#Fixed_Dofs = scipy.hstack([(IdnodeS1-1)*3,(IdnodeS2-1)*3+1,(IdnodeS1-1)*3+2])
-Fixed_Dofs = scipy.hstack([(IdnodeS5-1)*3,(IdnodeS5-1)*3+1,(IdnodeS5-1)*3+2])
+#Fixed_Dofs = np.hstack([(IdnodeS1-1)*3,(IdnodeS2-1)*3+1,(IdnodeS1-1)*3+2])
+Fixed_Dofs = np.hstack([(IdnodeS5-1)*3,(IdnodeS5-1)*3+1,(IdnodeS5-1)*3+2])
 
 # define free dof
 SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
@@ -94,7 +94,7 @@ logger.info("Number of nodes:",nnodes
 logger.info("Number of elements:",nelem
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
 SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
@@ -170,7 +170,7 @@ logger.info("time to compute the whole problem:",toc0-tic0
 ##############################################################################
 #tic = time.process_time()
 #
-#SigmaNodes=scipy.vstack([sigma1,sigma2,sigma3,sigma4,sigma5,sigma6,sigma7]).T
+#SigmaNodes=np.vstack([sigma1,sigma2,sigma3,sigma4,sigma5,sigma6,sigma7]).T
 #
 #import numpy.linalg
 #

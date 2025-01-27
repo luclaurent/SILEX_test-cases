@@ -82,7 +82,7 @@ for e in range(nelem):
     lx        = x2-x1
     ly        = y2-y1
 
-    lelem     = scipy.sqrt(lx**2+ly**2)
+    lelem     = np.sqrt(lx**2+ly**2)
     cos_theta = lx/lelem
     sin_theta = ly/lelem
 

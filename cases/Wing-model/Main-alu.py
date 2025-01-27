@@ -63,7 +63,7 @@ elementsS5,IdnodeS5=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',eltype,5
 ##silex_lib_gmsh.WriteResults(ResultsFileName+'_surf4',nodes,elementsS4,2)
 ##silex_lib_gmsh.WriteResults(ResultsFileName+'_surf5',nodes,elementsS5,2)
 
-elements=scipy.vstack([elementsS1,elementsS2,elementsS3,elementsS4,elementsS5])
+elements=np.vstack([elementsS1,elementsS2,elementsS3,elementsS4,elementsS5])
 
 ##silex_lib_gmsh.WriteResults(ResultsFileName+'_complet',nodes,elements,2)
 
@@ -116,15 +116,15 @@ print("Number of elements:",nelem)
 #      CLEAN MESH
 Id_nodes_used=np.unique(elements)
 Id_nodes_nonused=np.setdiff1d(range(1,nnodes),Id_nodes_used)
-IdNodesFixed_x=scipy.hstack([IdNodesFixed_x,Id_nodes_nonused])
-IdNodesFixed_y=scipy.hstack([IdNodesFixed_y,Id_nodes_nonused])
-IdNodesFixed_z=scipy.hstack([IdNodesFixed_z,Id_nodes_nonused])
-IdNodesFixed_rotx=scipy.hstack([IdNodesFixed_rotx,Id_nodes_nonused])
-IdNodesFixed_roty=scipy.hstack([IdNodesFixed_roty,Id_nodes_nonused])
-IdNodesFixed_rotz=scipy.hstack([IdNodesFixed_rotz,Id_nodes_nonused])
+IdNodesFixed_x=np.hstack([IdNodesFixed_x,Id_nodes_nonused])
+IdNodesFixed_y=np.hstack([IdNodesFixed_y,Id_nodes_nonused])
+IdNodesFixed_z=np.hstack([IdNodesFixed_z,Id_nodes_nonused])
+IdNodesFixed_rotx=np.hstack([IdNodesFixed_rotx,Id_nodes_nonused])
+IdNodesFixed_roty=np.hstack([IdNodesFixed_roty,Id_nodes_nonused])
+IdNodesFixed_rotz=np.hstack([IdNodesFixed_rotz,Id_nodes_nonused])
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([
+Fixed_Dofs = np.hstack([
     (np.array(IdNodesFixed_x)-1)*6,
     (np.array(IdNodesFixed_y)-1)*6+1,
     (np.array(IdNodesFixed_z)-1)*6+2,
@@ -224,8 +224,8 @@ if flag_write_fields==3:
 
 
 # for an x3d output:
-elementsshift = scipy.vstack([[elements[:,1]],[elements[:,0]],[elements[:,2]]]).T
-elementsx3d = scipy.vstack([elements, elementsshift])
+elementsshift = np.vstack([[elements[:,1]],[elements[:,0]],[elements[:,2]]]).T
+elementsx3d = np.vstack([elements, elementsshift])
 
 silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elementsx3d,2,fields_to_write)
 

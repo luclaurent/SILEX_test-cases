@@ -145,17 +145,17 @@ print (" ")
 #nvisu = 13
 #visu_dir = 1   # x = 0 | y = 1 | z = 2
 
-elements = scipy.vstack([elemV1,elemV2])
+elements = np.vstack([elemV1,elemV2])
 
 #################################################################################
 #               BUILD THE R MATRIX                                              #
 #################################################################################
 
 R1 = silex_lib_extra.rigidify_surface(IdnodS1,nodes,[0.0,0.0,0.0])
-dofS1 = scipy.hstack([(IdnodS1-1)*3,(IdnodS1-1)*3+1,(IdnodS1-1)*3+2])
+dofS1 = np.hstack([(IdnodS1-1)*3,(IdnodS1-1)*3+1,(IdnodS1-1)*3+2])
 
 R2 = silex_lib_extra.rigidify_surface(IdnodS2,nodes,[0.0,0.104,0.0])
-dofS2 = scipy.hstack([(IdnodS2-1)*3,(IdnodS2-1)*3+1,(IdnodS2-1)*3+2])
+dofS2 = np.hstack([(IdnodS2-1)*3,(IdnodS2-1)*3+1,(IdnodS2-1)*3+2])
 
 sparse_ones = scipy.sparse.csc_matrix( (list(np.ones(ndof)),(list(range(ndof)),list(range(ndof)))), shape=(ndof,ndof) )
 
@@ -173,9 +173,9 @@ R = scipy.sparse.bmat( [ [ sparse_ones
 #################################################################################################################
 
 # Boundary conditions
-#IdNodesFixed_x=scipy.hstack((IdnodS1,IdnodS2))
-#IdNodesFixed_y=scipy.hstack((IdnodS1,IdnodS2))
-#IdNodesFixed_z=scipy.hstack((IdnodS1,IdnodS2))
+#IdNodesFixed_x=np.hstack((IdnodS1,IdnodS2))
+#IdNodesFixed_y=np.hstack((IdnodS1,IdnodS2))
+#IdNodesFixed_z=np.hstack((IdnodS1,IdnodS2))
 
 #################################################################################################################
 #                                              LOADING PART                                                     #
@@ -204,12 +204,12 @@ Qprime     = np.zeros(ndof+6+6)
 #################################################################################################################
 
 # define fixed dof
-#Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
+#Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
 #SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
-#SolvedDofsPrime = scipy.hstack([SolvedDofs,list(range(ndof,ndof+6))])
+#SolvedDofsPrime = np.hstack([SolvedDofs,list(range(ndof,ndof+6))])
 #SolvedDofsPrime = np.setdiff1d(SolvedDofsPrime,dofS1)
 
 SolvedDofsPrime = np.setdiff1d(list(range(ndof+6+6)),dofS1)
@@ -254,7 +254,7 @@ eigen_values_S,eigen_vectors_S = scipy.sparse.linalg.eigsh(Kprime[Dofs_n,:][:,Do
                                                            sigma=0, \
                                                            which='LM')
 
-freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*np.pi))
+freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
 eigen_vector_S_list=[]
 for i in range(eigen_values_S.shape[0]):
@@ -268,7 +268,7 @@ for i in range(eigen_values_S.shape[0]):
 
 silex_lib_gmsh.WriteResults2(ResultsFileName+'_structure_modes',nodes,elements,5,[[eigen_vector_S_list,'nodal',3,'modes']])
 
-print("Valeur propre max: ",scipy.sqrt(max(eigen_values_S))," Hz")
+print("Valeur propre max: ",np.sqrt(max(eigen_values_S))," Hz")
 print(" ")
 
 #############################################################################
