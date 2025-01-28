@@ -133,7 +133,7 @@ IdNodesFixed_y=np.hstack([IdnodeS1,IdnodeS3])
 IdNodesFixed_z=np.hstack([IdnodeS1,IdnodeS3])
 
 toc = time.process_time()
-print("time for the user part:",toc-tic)
+print("time for the user part: {}".format(toc-tic))
 
 #############################################################################
 #      EXPERT PART
@@ -192,7 +192,7 @@ M3=scipy.sparse.csc_matrix( (Vm3,(Ik3,Jk3)), shape=(ndof,ndof) )
 M = M1 + M2 + M3
 
 toc = time.process_time()
-print("time to compute the stiffness and mass matrix :",toc-tic)
+print("time to compute the stiffness and mass matrix : {}".format(toc-tic))
 
 #############################################################################
 #       Eigen value problem
@@ -216,7 +216,7 @@ for i in range(eigen_values_S.shape[0]):
 
 toc = time.process_time()
 print ("structure eigen frequencies : ",freq_eigv_S)
-print ("time for computing the structure modes:",toc-tic)
+print ("time for computing the structure modes: {}".format(toc-tic))
 #############################################################################
 #         Write results to gmsh format
 #############################################################################

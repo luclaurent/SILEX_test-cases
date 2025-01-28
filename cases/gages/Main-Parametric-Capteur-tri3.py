@@ -80,7 +80,7 @@ for a in A:
         F=silex_lib_elt.forceonline(nodes,elementsS3,[20.0*sigma_max,-120.0/40.0,-20.0*sigma_max,-120.0/40.0],[192.0,0.0,192.0,40.0])
 
         toc = time.process_time()
-        print("time for the reading data part:",toc-tic)
+        print("time for the reading data part: {}".format(toc-tic))
 
         tic0 = time.process_time()
         #############################################################################
@@ -114,7 +114,7 @@ for a in A:
         K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) )
 
         toc = time.process_time()
-        print("time to compute the stiffness matrix:",toc-tic)
+        print("time to compute the stiffness matrix: {}".format(toc-tic))
 
         #############################################################################
         #       Solve the problem
@@ -123,7 +123,7 @@ for a in A:
         tic = time.process_time()
         Q[np.ix_(SolvedDofs)] = scipy.sparse.linalg.spsolve(K[np.ix_(SolvedDofs,SolvedDofs)],F[np.ix_(SolvedDofs)])
         toc = time.process_time()
-        print("time to solve the problem:",toc-tic)
+        print("time to solve the problem: {}".format(toc-tic))
 
         #############################################################################
         #       compute stress, smooth stress, strain and error
@@ -133,7 +133,7 @@ for a in A:
         SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu,thickness],Q)
 
         toc = time.process_time()
-        print("time to compute stresses:",toc-tic)
+        print("time to compute stresses: {}".format(toc-tic))
         print("The global error is:",ErrorGlobal)
 
         Eb.append(EpsilonNodes[10-1,0])

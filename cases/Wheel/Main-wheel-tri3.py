@@ -86,7 +86,7 @@ F=np.zeros(ndof)
 F[(4-1)*2+1]=10 # between 2 spokes
 
 toc = time.process_time()
-print("time for the reading data part:",toc-tic)
+print("time for the reading data part: {}".format(toc-tic))
 
 #R3=silex_lib_extra.turn_dof2D(IdnodeS3,nodes,[     0.0 , 0.0 ])
 #R4=silex_lib_extra.turn_dof2D(IdnodeS4,nodes,[ -1180.0 , 0.0 ])
@@ -128,7 +128,7 @@ K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) )
 #K=R.T*K*R
 
 toc = time.process_time()
-print("time to compute the stiffness matrix:",toc-tic)
+print("time to compute the stiffness matrix: {}".format(toc-tic))
 
 #############################################################################
 #       Solve the problem
@@ -141,7 +141,7 @@ Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 #Q=R*Q
 
 toc = time.process_time()
-print("time to solve the problem:",toc-tic)
+print("time to solve the problem: {}".format(toc-tic))
 
 #############################################################################
 #       compute stress, smooth stress, strain and error
@@ -151,7 +151,7 @@ tic = time.process_time()
 SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu,thickness],Q)
 
 toc = time.process_time()
-print("time to compute stresses:",toc-tic)
+print("time to compute stresses: {}".format(toc-tic))
 print("The global error is:",ErrorGlobal)
 
 
@@ -206,7 +206,7 @@ silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_writ
 
 
 toc = time.process_time()
-print("time to write results:",toc-tic)
+print("time to write results: {}".format(toc-tic))
 print("----- END -----")
 
 

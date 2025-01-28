@@ -64,7 +64,7 @@ IdNodesFixed_z=IdnodeS1
 F = silex_lib_elt.forceonsurface(nodes,elementsS2,10.0,[0.0,1.0,0.0])
 
 toc = time.process_time()
-print("time for the reading data part:",toc-tic)
+print("time for the reading data part: {}".format(toc-tic))
 
 tic0 = time.process_time()
 
@@ -111,7 +111,7 @@ Ik,Jk,Vk,Mk=silex_lib_elt.stiffnessmatrix(nodes,elements,[Young,nu,rho])
 K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) )
 
 toc = time.process_time()
-print("time to compute the stiffness matrix:",toc-tic)
+print("time to compute the stiffness matrix: {}".format(toc-tic))
 
 #############################################################################
 #       Solve the problem
@@ -121,7 +121,7 @@ tic = time.process_time()
 #Q[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 toc = time.process_time()
-print("time to solve the problem:",toc-tic)
+print("time to solve the problem: {}".format(toc-tic))
 
 #############################################################################
 #       compute stress in elements
@@ -130,7 +130,7 @@ print("time to solve the problem:",toc-tic)
 tic = time.process_time()
 SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu],Q)
 toc = time.process_time()
-print("time to compute stresses:",toc-tic)
+print("time to compute stresses: {}".format(toc-tic))
 print("The global error is:",ErrorGlobal)
 
 
@@ -194,7 +194,7 @@ if flag_write_fields==1:
 silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_write)
 
 toc = time.process_time()
-print ("time to write results:",toc-tic)
+print ("time to write results: {}".format(toc-tic))
 print ("----- END -----")
 
 

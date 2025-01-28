@@ -162,7 +162,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
         silex_lib_gmsh.WriteResults(results_file+'_level_set',fluid_nodes,fluid_elements,2,dataW)
 
     toc = time.process_time()
-    print("time to compute level set:",toc-tic)
+    print("time to compute level set: {}".format(toc-tic))
 
 
     ##################################################################
@@ -180,7 +180,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
     EnrichedElements=np.unique(EnrichedElements[list(range(NbEnrichedElements))])-1
 
     toc = time.process_time()
-    print("time to find surface enriched elements:",toc-tic)
+    print("time to find surface enriched elements: {}".format(toc-tic))
 
     if (flag_write_gmsh_results==1) and (rank==0):
         silex_lib_gmsh.WriteResults(results_file+'_enriched_elements',fluid_nodes,fluid_elements[EnrichedElements],2)
@@ -191,7 +191,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
     EdgeEnrichedElements=np.unique(EdgeEnrichedElements[list(range(nbenrelts))])-1
 
     toc = time.process_time()
-    print("time to find edge enriched elements:",toc-tic)
+    print("time to find edge enriched elements: {}".format(toc-tic))
 
     if (flag_write_gmsh_results==1) and (rank==0):
         silex_lib_gmsh.WriteResults(results_file+'_edge_enriched_elements',fluid_nodes,fluid_elements[EdgeEnrichedElements],2)
@@ -209,7 +209,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
     SolvedDofF=np.setdiff1d(list(range(fluid_ndof)),IdnodeS2-1)
 
     toc = time.process_time()
-    print("time to compute fluid matrices:",toc-tic)
+    print("time to compute fluid matrices: {}".format(toc-tic))
 
     ##################################################################
     # Compute enrichment: Heaviside + Edge
@@ -224,7 +224,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
     MAF = scipy.sparse.csc_matrix( (Vafm,(IIaf,JJaf)), shape=(fluid_ndof,fluid_ndof) )
 
     toc = time.process_time()
-    print("time to compute Heaviside enrichment:",toc-tic)
+    print("time to compute Heaviside enrichment: {}".format(toc-tic))
 
     Enrichednodes = np.unique(fluid_elements[EnrichedElements])
 
@@ -421,7 +421,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
                     k=k+1
             #####################
             #####################zip(*sorted(zip(Allfrequencies, Allfrf,Allfrfgradient)))
-            IXsort=scipy.argsort(Allfrequencies)
+            IXsort=np.argsort(Allfrequencies)
             AllfreqSorted=np.zeros(nbStep)
             AllfrfSorted=np.zeros(nbStep)
             AllfrfgradientSorted=np.zeros([nbStep,nbPara])

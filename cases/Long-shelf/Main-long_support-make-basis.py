@@ -95,7 +95,7 @@ F5z = silex_lib_elt.forceonsurface(nodes,elementsS5,press,direction)
 Fbasis=[F1x,F1y,F1z,F2x,F2y,F2z,F3x,F3y,F3z,F4x,F4y,F4z,F5x,F5y,F5z]
 
 toc = time.process_time()
-print("time for the user part:",toc-tic)
+print("time for the user part: {}".format(toc-tic))
 
 #############################################################################
 #      EXPERT PART
@@ -126,7 +126,7 @@ tic = time.process_time()
 #print silex_lib_elt.stiffnessmatrix.__doc__
 Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(nodes,elements,[Young,nu])
 toc = time.process_time()
-print("time to compute the stiffness matrix / FORTRAN:",toc-tic)
+print("time to compute the stiffness matrix / FORTRAN: {}".format(toc-tic))
 
 K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
 MySolve = scipy.sparse.linalg.factorized(K[SolvedDofs,:][:,SolvedDofs]) # Makes LU decomposition
@@ -144,7 +144,7 @@ for F in Fbasis:
     Q[SolvedDofs] = MySolve( F[SolvedDofs] )
     Qbasis.append(Q)
     toc = time.process_time()
-    print("time to solve one basis problem:",toc-tic)
+    print("time to solve one basis problem: {}".format(toc-tic))
     i=i+1
 
 print("---------------------")
@@ -163,7 +163,7 @@ for Q in Qbasis:
     Sigmabasis.append(SigmaNodes)
     toc = time.process_time()
     print('basis ',i)
-    print("time to compute stres and error:",toc-tic)
+    print("time to compute stres and error: {}".format(toc-tic))
     print("The global error is:",ErrorGlobal)
     i=i+1
 
@@ -201,7 +201,7 @@ for i in range(len(Qbasis)):
     silex_lib_gmsh.WriteResults(ResultsFileName+'_'+str(i+1),nodes,elements,eltype,fields_to_write)
 
     toc = time.process_time()
-    print("time to write results:",toc-tic)
+    print("time to write results: {}".format(toc-tic))
 
 print("WRITE BASIS")
 f=open(ResultsFileName+'_basis','wb')

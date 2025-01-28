@@ -80,7 +80,7 @@ if ctx.myid == 0:
 
 
     toc = time.process_time()
-    print ("time for the user part:",toc-tic)
+    print ("time for the user part: {}".format(toc-tic))
 
     #############################################################################
     #      EXPERT PART
@@ -113,7 +113,7 @@ if ctx.myid == 0:
     toc = time.process_time()
 
     K=scipy.sparse.csr_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
-    print ("time to compute the stiffness matrix / FORTRAN:",toc-tic)
+    print ("time to compute the stiffness matrix / FORTRAN: {}".format(toc-tic))
 
     #############################################################################
     #       Solve the problem
@@ -134,7 +134,7 @@ ctx.run(job=6) # Analysis + Factorization + Solve
 if ctx.myid == 0:
     Q[np.ix_(SolvedDofs)]=qq
     toc = time.process_time()
-    print("time to solve the problem / multi-processor",toc-tic)
+    print("time to solve the problem / multi-processor {}".format(toc-tic))
 
 ctx.destroy()
 
@@ -147,7 +147,7 @@ if ctx.myid == 0:
     SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu],Q)
 
     toc = time.process_time()
-    print ("time to compute stres and error:",toc-tic)
+    print ("time to compute stres and error: {}".format(toc-tic))
     print ("The global error is:",ErrorGlobal)
     print ("Total time for the computational part:",toc-tic0)
 
@@ -211,7 +211,7 @@ if ctx.myid == 0:
     silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_write)
 
     toc = time.process_time()
-    print ("time to write results:",toc-tic)
+    print ("time to write results: {}".format(toc-tic))
     print ("----- END -----")
 
 

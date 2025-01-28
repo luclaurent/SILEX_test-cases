@@ -74,7 +74,7 @@ IdNodesFixed_y=IdnodeS4
 IdNodesFixed_z=IdnodeS4
 
 toc = time.process_time()
-print("time for the reading data part:",toc-tic)
+print("time for the reading data part: {}".format(toc-tic))
 
 tic0 = time.process_time()
 
@@ -117,7 +117,7 @@ K=K1+K2
 M=M1+M2
 
 toc = time.process_time()
-print("time to compute the stiffness matrix:",toc-tic)
+print("time to compute the stiffness matrix: {}".format(toc-tic))
 
 #############################################################################
 #       Solve the problem
@@ -140,7 +140,7 @@ for i in range(eigen_values_S.shape[0]):
 
 toc = time.process_time()
 print ("structure eigen frequencies : ",freq_eigv_S)
-print ("time for computing the structure modes:",toc-tic)
+print ("time for computing the structure modes: {}".format(toc-tic))
 #############################################################################
 #         Write results to gmsh format
 #############################################################################
@@ -151,7 +151,7 @@ silex_lib_gmsh.WriteResults2(ResultsFileName+'_structure_modes',nodes,elements,e
 
 
 toc = time.process_time()
-print ("time to write results:",toc-tic)
+print ("time to write results: {}".format(toc-tic))
 print ("----- END -----")
 
 

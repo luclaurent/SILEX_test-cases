@@ -316,7 +316,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
                     Allfrf[k]=data[1][j]
                     k=k+1
             #####################
-            IXsort=scipy.argsort(Allfrequencies)
+            IXsort=np.argsort(Allfrequencies)
             AllfreqSorted=np.zeros(nbStep)
             AllfrfSorted=np.zeros(nbStep)
             for itS in range(0,nbStep):

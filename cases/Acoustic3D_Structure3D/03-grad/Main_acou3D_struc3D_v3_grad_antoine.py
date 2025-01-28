@@ -597,7 +597,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
                     k=k+1
             #####################
             #####################zip(*sorted(zip(Allfrequencies, Allfrf,Allfrfgradient)))
-            IXsort=scipy.argsort(Allfrequencies)
+            IXsort=np.argsort(Allfrequencies)
             AllfreqSorted=np.zeros(nbStep)
             AllfrfSorted=np.zeros(nbStep)
             AllfrfgradientSorted=np.zeros([nbStep,nbPara])

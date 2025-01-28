@@ -73,7 +73,7 @@ F = silex_lib_elt.forceonsurface(nodes,elementsS4,press,direction)
 
 
 toc = time.process_time()
-print("time for the user part:",toc-tic)
+print("time for the user part: {}".format(toc-tic))
 
 #############################################################################
 #      EXPERT PART
@@ -104,7 +104,7 @@ tic = time.process_time()
 #print silex_lib_elt.stiffnessmatrix.__doc__
 Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(nodes,elements,[Young,nu])
 toc = time.process_time()
-print("time to compute the stiffness matrix / FORTRAN:",toc-tic)
+print("time to compute the stiffness matrix / FORTRAN: {}".format(toc-tic))
 
 K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
 
@@ -116,7 +116,7 @@ tic = time.process_time()
 #Q[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 toc = time.process_time()
-print("time to solve the problem:",toc-tic)
+print("time to solve the problem: {}".format(toc-tic))
 
 #############################################################################
 #       compute smooth stress and error in elements
@@ -126,7 +126,7 @@ tic = time.process_time()
 SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu],Q)
 
 toc = time.process_time()
-print("time to compute stress and error:",toc-tic)
+print("time to compute stress and error: {}".format(toc-tic))
 print("The global error is:",ErrorGlobal)
 print("Total time for the computational part:",toc-tic0)
 
@@ -190,6 +190,6 @@ if flag_write_fields==1:
 silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_write)
 
 toc = time.process_time()
-print ("time to write results:",toc-tic)
+print ("time to write results: {}".format(toc-tic))
 print ("----- END -----")
 

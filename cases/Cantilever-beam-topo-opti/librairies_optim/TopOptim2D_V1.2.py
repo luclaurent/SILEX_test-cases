@@ -79,7 +79,7 @@ Flag_Filter = 2
 F=np.zeros(nodes.shape[0]*ndim)
 F[11]=-1
 toc = time.process_time()
-print("time for the reading data part:",toc-tic)
+print("time for the reading data part: {}".format(toc-tic))
 
 #############################################################################
 #      EXPERT PART
@@ -214,7 +214,7 @@ tic = time.process_time()
 #
 #toc = time.process_time()
 #print("number of optimization loops: ",loop)
-#print("time to compute stresses:",toc-tic)
+#print("time to compute stresses: {}".format(toc-tic))
 #print("The global error is:",ErrorGlobal)
 #
 #load=np.zeros((nnodes,ndim))
@@ -238,6 +238,6 @@ tic = time.process_time()
 
 silex_lib_gmsh.WriteResults2(ResultsFileName+'_Density_'+str(volfrac)+'_'+str(influence)+'rmin_'+str(gsf)+str(nelem)+'elems',nodes,elements,eltype,[[XE_to_plot_list,'elemental',1,'xe optim.']])
 toc = time.process_time()
-print("Time to write result",toc-tic)
+print("Time to write result {}".format(toc-tic))
 
 

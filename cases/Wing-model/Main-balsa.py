@@ -98,7 +98,7 @@ F[(602-1)*6+2]=-20e-3*9.81 # force en B
 
 
 toc = time.process_time()
-print("time for the user part:",toc-tic)
+print("time for the user part: {}".format(toc-tic))
 
 #############################################################################
 #      EXPERT PART
@@ -150,7 +150,7 @@ Ik3,Jk3,Vk3,Vm3=silex_lib_elt.stiffnessmatrix(nodes,elementsS3,[Young,nu,thickne
 Ik4,Jk4,Vk4,Vm4=silex_lib_elt.stiffnessmatrix(nodes,elementsS4,[Young,nu,thickness4,140.0])
 Ik5,Jk5,Vk5,Vm5=silex_lib_elt.stiffnessmatrix(nodes,elementsS5,[Young,nu,thickness5,140.0])
 toc = time.process_time()
-print("time to compute the stiffness matrix / FORTRAN:",toc-tic)
+print("time to compute the stiffness matrix / FORTRAN: {}".format(toc-tic))
 
 K1=scipy.sparse.csc_matrix( (Vk1,(Ik1,Jk1)), shape=(ndof,ndof) ,dtype=float)
 K2=scipy.sparse.csc_matrix( (Vk2,(Ik2,Jk2)), shape=(ndof,ndof) ,dtype=float)
@@ -169,7 +169,7 @@ tic = time.process_time()
 #Q[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 toc = time.process_time()
-print("time to solve the problem:",toc-tic)
+print("time to solve the problem: {}".format(toc-tic))
 
 #############################################################################
 #       compute smooth stress and error in elements
@@ -202,7 +202,7 @@ DirPrinMin1S2  = output2[8]
 DirPrinMin2S2  = output2[9]
 
 toc = time.process_time()
-print("time to compute stres and error:",toc-tic)
+print("time to compute stres and error: {}".format(toc-tic))
 #logger.info("The global error is:",ErrorGlobal
 print("Total time for the computational part:",toc-tic0)
 
@@ -272,7 +272,7 @@ print('Point B : deplacement MINI = ',disp[602-1,:])
 print('Point C : deplacement MINI = ',disp[566-1,:])
 
 toc = time.process_time()
-print("time to write results:",toc-tic)
+print("time to write results: {}".format(toc-tic))
 print("----- END -----")
 
 

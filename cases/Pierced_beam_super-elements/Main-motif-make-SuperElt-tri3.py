@@ -66,7 +66,7 @@ IdNodesFixed_y=IdnodeS3
 F=silex_lib_elt.forceonline(nodes,elementsS2,[0.0,4500.0/100.0,0.0,4500.0/100.0],[100.0,0.0,100.0,100.0])
 
 toc = time.process_time()
-print("time for the reading data part:",toc-tic)
+print("time for the reading data part: {}".format(toc-tic))
 
 tic0 = time.process_time()
 #############################################################################
@@ -100,7 +100,7 @@ Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(nodes,elements,[Young,nu,thickness])
 K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) )
 
 toc = time.process_time()
-print("time to compute the stiffness matrix:",toc-tic)
+print("time to compute the stiffness matrix: {}".format(toc-tic))
 
 InterfaceIdNodes=np.hstack([IdnodeS3,IdnodeS2])
 
@@ -147,7 +147,7 @@ Q[InternalDofs] = -InvK_internal_interface*Q[InterfaceDofs]
 #Q[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 #Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 #toc = time.process_time()
-#print("time to solve the problem:",toc-tic)
+#print("time to solve the problem: {}".format(toc-tic))
 
 #############################################################################
 #       compute stress, smooth stress, strain and error
@@ -157,7 +157,7 @@ tic = time.process_time()
 SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu,thickness],Q)
 
 toc = time.process_time()
-print("time to compute stresses:",toc-tic)
+print("time to compute stresses: {}".format(toc-tic))
 print("The global error is:",ErrorGlobal)
 
 
@@ -310,5 +310,5 @@ fields_to_write=[ [dispAll,'nodal',ndim,'displacement'], [loadAll,'nodal',ndim,'
 silex_lib_gmsh.WriteResults('Results_super_elements_3_holes',nodes_3holes,elements_3holes,eltype,fields_to_write)
 
 toc = time.process_time()
-print("time to write results:",toc-tic)
+print("time to write results: {}".format(toc-tic))
 print("----- END -----")

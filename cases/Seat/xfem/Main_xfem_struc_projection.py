@@ -166,7 +166,7 @@ LevelSet,distance = silex_lib_xfem_acou_tet4.computelevelset(fluid_nodes,struc_n
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute level set:",toc-tic)
+    print ("time to compute level set: {}".format(toc-tic))
 
 
 tic = time.process_time()
@@ -177,7 +177,7 @@ LevelSetTangent,tmp = silex_lib_xfem_acou_tet4.computelevelset(fluid_nodes,tange
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute tangent level set:",toc-tic)
+    print ("time to compute tangent level set: {}".format(toc-tic))
 
 if (flag_write_gmsh_results==1) and (rank==0):
     silex_lib_gmsh.WriteResults2(results_file+'_signed_distance',fluid_nodes,fluid_elements,4,[[[LevelSet],'nodal',1,'Level set']])
@@ -199,7 +199,7 @@ EnrichedElements=np.unique(EnrichedElements[list(range(NbEnrichedElements))])
 EnrichedElements=LSEnrichedElements[EnrichedElements-1]
 toc = time.process_time()
 if rank==0:
-    print ("time to find surface enriched elements:",toc-tic)
+    print ("time to find surface enriched elements: {}".format(toc-tic))
 
 
 tic = time.process_time()
@@ -214,7 +214,7 @@ EdgeEnrichedElementsInAllMesh=np.unique(EdgeEnrichedElementsInAllMesh[list(range
 
 toc = time.process_time()
 if rank==0:
-    print ("time to find edge enriched elements:",toc-tic)
+    print ("time to find edge enriched elements: {}".format(toc-tic))
 
 HeavisideEnrichedElements=np.setdiff1d(EnrichedElements,EdgeEnrichedElements)
 
@@ -239,7 +239,7 @@ MFF = scipy.sparse.csc_matrix( (Vffm,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute fluid matrices:",toc-tic)
+    print ("time to compute fluid matrices: {}".format(toc-tic))
 
 ##############################################################
 # Compute structure matrices
@@ -253,7 +253,7 @@ MSS = scipy.sparse.csc_matrix( (Vms,(IIks,JJks)), shape=(struc_ndof,struc_ndof) 
 
 toc = time.process_time()
 if rank==0:
-    print ("time for computing structure:",toc-tic)
+    print ("time for computing structure: {}".format(toc-tic))
 
 ##################################################################
 # Compute Heaviside enrichment
@@ -284,7 +284,7 @@ SolvedDofA=Enrichednodes-1
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute Heaviside enrichment:",toc-tic)
+    print ("time to compute Heaviside enrichment: {}".format(toc-tic))
 
 ##################################################################
 # Compute Edge enrichment
@@ -304,7 +304,7 @@ MAFedge = scipy.sparse.csc_matrix( (vmfa,(II,JJ)), shape=(fluid_ndof,fluid_ndof)
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute edge enrichment:",toc-tic)
+    print ("time to compute edge enrichment: {}".format(toc-tic))
 
 KAA=KAAheaviside+KAAedge
 MAA=MAAheaviside+MAAedge
@@ -340,7 +340,7 @@ CSA=0.5*scipy.sparse.csc_matrix( (Vc1,(IIc1,JJc1)), shape=(struc_ndof,fluid_ndof
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute coupling matrices:",toc-tic)
+    print ("time to compute coupling matrices: {}".format(toc-tic))
 
 ##################################################################
 # Compute eigen modes of the structure
@@ -351,7 +351,7 @@ eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(KSS[SolvedDofS,:][:,So
 
 toc = time.process_time()
 if rank==0:
-    print ("time for computing the structure modal basis:",toc-tic)
+    print ("time for computing the structure modal basis: {}".format(toc-tic))
 
 ##################################################################
 # Add static solution to the structure basis
@@ -361,7 +361,7 @@ Static_mode_S = mumps.spsolve( KSS[SolvedDofS,:][:,SolvedDofS] , FS[SolvedDofS] 
 #Static_mode_S = scipy.sparse.linalg.spsolve( KSS[SolvedDofS,:][:,SolvedDofS] , FS[SolvedDofS] ).T
 toc = time.process_time()
 if rank==0:
-    print ("time for computing the structure static mode:",toc-tic)
+    print ("time for computing the structure static mode: {}".format(toc-tic))
 
 ##################################################################
 # Orthogonalisation of the static mode
@@ -387,7 +387,7 @@ for i in range(nb_mode_S):
 
 toc = time.process_time()
 if rank==0:
-    print ("time for orthogonalization of the static mode:",toc-tic)
+    print ("time for orthogonalization of the static mode: {}".format(toc-tic))
 
 ##################################################################
 # Build and save the Structure Basis

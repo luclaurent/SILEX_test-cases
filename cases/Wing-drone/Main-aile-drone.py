@@ -115,7 +115,7 @@ F = silex_lib_dkt.forceonsurface(nodes,elementsS2,press,direction)
 
 
 toc = time.process_time()
-print("time for the user part:",toc-tic)
+print("time for the user part: {}".format(toc-tic))
 
 #############################################################################
 #      EXPERT PART
@@ -156,7 +156,7 @@ Ik2,Jk2,Vk2,Vm2=silex_lib_dkt.stiffnessmatrix(nodes,elementsS2,[Young2,nu2,thick
 Ik3,Jk3,Vk3,Vm3=silex_lib_dkt.stiffnessmatrix(nodes,elementsS3,[Young3,nu3,thickness3,1000.0])
 Ik4,Jk4,Vk4=silex_lib_tet4.stiffnessmatrixdktcoupling(nodes,elementsV,[Young4,nu4])
 toc = time.process_time()
-print("time to compute the stiffness matrix / FORTRAN:",toc-tic)
+print("time to compute the stiffness matrix / FORTRAN: {}".format(toc-tic))
 
 #K1=scipy.sparse.csc_matrix( (Vk1,(Ik1,Jk1)), shape=(ndof,ndof) ,dtype=float)
 K2=scipy.sparse.csc_matrix( (Vk2,(Ik2,Jk2)), shape=(ndof,ndof) ,dtype=float)
@@ -175,7 +175,7 @@ tic = time.process_time()
 #Q[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 toc = time.process_time()
-print("time to solve the problem:",toc-tic)
+print("time to solve the problem: {}".format(toc-tic))
 
 #############################################################################
 #         Get displacement to gmsh format
@@ -220,7 +220,7 @@ DirPrinMin1S3  = output3[8]
 DirPrinMin2S3  = output3[9]
 
 toc = time.process_time()
-print("time to compute stres and error:",toc-tic)
+print("time to compute stres and error: {}".format(toc-tic))
 print("The global error is (in volume only):",ErrorGlobalV)
 print("Total time for the computational part:",toc-tic0)
 
@@ -273,7 +273,7 @@ silex_lib_gmsh.WriteResults(ResultsFileName+'_peau_superieure',nodes,elementsS3,
 silex_lib_gmsh.WriteResults(ResultsFileName+'volume',nodes,elementsV,4,fields_to_writeV)
 
 toc = time.process_time()
-print("time to write results:",toc-tic)
+print("time to write results: {}".format(toc-tic))
 print("----- END -----")
 
 

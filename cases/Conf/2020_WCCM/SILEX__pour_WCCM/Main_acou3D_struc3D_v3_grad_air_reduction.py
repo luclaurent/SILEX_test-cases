@@ -394,7 +394,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     toc = time.process_time()
     if rank==0:
-        print ("time for computing the fluid modes:",toc-tic)
+        print ("time for computing the fluid modes: {}".format(toc-tic))
 
     ##################################################################
     # Compute Psi_IA for the fluid: Psi_IA = - KII^{-1} * KIA
@@ -425,7 +425,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     Psi_IA=scipy.sparse.csc_matrix(Psi_IA)
     toc = time.process_time()
-    print ("time to compute PSI_IA:",toc-tic)
+    print ("time to compute PSI_IA: {}".format(toc-tic))
 
     ##################################################################
     # Construct the whole system

@@ -145,7 +145,7 @@ tic = time.process_time()
 Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(nodes,elements,[Young,nu])
 toc = time.process_time()
 if rank==0:
-    print("time to compute the stiffness matrix :",toc-tic)
+    print("time to compute the stiffness matrix : {}".format(toc-tic))
 
 K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
 
@@ -217,7 +217,7 @@ if rank==0:
 if rank==0:
     SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu],Q)
     toc = time.process_time()
-    print("time to compute stres and error:",toc-tic)
+    print("time to compute stres and error: {}".format(toc-tic))
     print("The global error is:",ErrorGlobal)
     print("Total time for the computational part:",toc-tic0)
 
@@ -280,7 +280,7 @@ if rank==0:
     silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_write)
 
     toc = time.process_time()
-    print ("time to write results:",toc-tic)
+    print ("time to write results: {}".format(toc-tic))
     print ("----- END -----")
 
 

@@ -326,7 +326,7 @@ pickle.dump(tosave, f)
 f.close()
 
 toc = time.process_time()
-print("time to make the SUPER BEAM ELEMENT:",toc-tic)
+print("time to make the SUPER BEAM ELEMENT: {}".format(toc-tic))
 
 
 ###############################################################################
@@ -348,7 +348,7 @@ print("time to make the SUPER BEAM ELEMENT:",toc-tic)
 ##silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,5,fields_to_write)
 ##
 toc = time.process_time()
-print("time to write results:",toc-tic)
+print("time to write results: {}".format(toc-tic))
 print("----- END -----")
 
 

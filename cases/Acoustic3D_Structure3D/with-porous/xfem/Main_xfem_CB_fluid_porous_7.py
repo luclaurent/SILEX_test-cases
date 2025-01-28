@@ -244,7 +244,7 @@ LevelSet,distance = silex_lib_xfem_acou_tet4.computelevelset(fluid_nodes1,struc_
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute level set:",toc-tic)
+    print ("time to compute level set: {}".format(toc-tic))
 
 tic = time.process_time()
 
@@ -254,7 +254,7 @@ LevelSetTangent,tmp = silex_lib_xfem_acou_tet4.computelevelset(fluid_nodes1,tang
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute tangent level set:",toc-tic)
+    print ("time to compute tangent level set: {}".format(toc-tic))
 
 if (flag_write_gmsh_results==1) and (rank==0):
     silex_lib_gmsh.WriteResults2(results_file+'_LS_signed_distance',fluid_nodes1,fluid_elements1,4,[[[LevelSet],'nodal',1,'Level set']])
@@ -274,7 +274,7 @@ EnrichedElements=np.unique(EnrichedElements[list(range(NbEnrichedElements))])
 EnrichedElements=LSEnrichedElements[EnrichedElements-1]
 toc = time.process_time()
 if rank==0:
-    print ("time to find surface enriched elements:",toc-tic)
+    print ("time to find surface enriched elements: {}".format(toc-tic))
 
 tic = time.process_time()
 
@@ -286,7 +286,7 @@ EdgeEnrichedElementsInAllMesh=np.unique(EdgeEnrichedElementsInAllMesh[list(range
 
 toc = time.process_time()
 if rank==0:
-    print ("time to find edge enriched elements:",toc-tic)
+    print ("time to find edge enriched elements: {}".format(toc-tic))
 
 HeavisideEnrichedElements=np.setdiff1d(EnrichedElements,EdgeEnrichedElements)
 
@@ -360,7 +360,7 @@ SolvedDofA=Enrichednodes-1
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute Heaviside enrichment:",toc-tic)
+    print ("time to compute Heaviside enrichment: {}".format(toc-tic))
 
 ##################################################################
 # Compute Edge enrichment
@@ -380,7 +380,7 @@ MAFedge = scipy.sparse.csc_matrix( (vmfa,(II,JJ)), shape=(fluid_ndof1,fluid_ndof
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute edge enrichment:",toc-tic)
+    print ("time to compute edge enrichment: {}".format(toc-tic))
 
 KAA=KAAheaviside+KAAedge
 MAA=MAAheaviside+MAAedge
@@ -426,7 +426,7 @@ if (flag_write_gmsh_results==1) and (rank==0):
 
 toc = time.process_time()
 if rank==0:
-    print ("time for computing the fluid modes:",toc-tic)
+    print ("time for computing the fluid modes: {}".format(toc-tic))
 
 ##################################################################
 # Compute Psi_FA for the fluid: Psi_FA = - KFF^{-1} * KFA
@@ -481,7 +481,7 @@ Psi_FA=scipy.sparse.csc_matrix(Psi_FA)
 toc = time.process_time()
 
 if rank==0:
-    print ("time to compute PSI_FA:",toc-tic)
+    print ("time to compute PSI_FA: {}".format(toc-tic))
 
 if (flag_write_gmsh_results==1) and (rank==0):
     silex_lib_gmsh.WriteResults2(results_file+'_Psi_FA',fluid_nodes1,fluid_elements1,4,[[[Psi_FA[:,40].todense(),Psi_FA[:,50].todense(),Psi_FA[:,80].todense()],'nodal',1,'PSI FA pressure']])
@@ -506,14 +506,14 @@ M_diag_mm= scipy.sparse.csc_matrix( (VM_diag_mm,(IIDmm,JJDmm)), shape=(nb_mode_F
 Khat_AA = KAA[SolvedDofA,:][:,SolvedDofA]+Psi_FA.T*KAF[SolvedDofF,:][:,SolvedDofA]
 toc = time.process_time()
 if rank==0:
-    print ("time to compute Khat_hat:",toc-tic)
+    print ("time to compute Khat_hat: {}".format(toc-tic))
 
 tic = time.process_time()
 
 Mstar_FA = MFF[SolvedDofF,:][:,SolvedDofF]*Psi_FA+MAF[SolvedDofF,:][:,SolvedDofA]
 toc = time.process_time()
 if rank==0:
-    print ("time to compute Mstar:",toc-tic)
+    print ("time to compute Mstar: {}".format(toc-tic))
 
 tic = time.process_time()
 
@@ -521,7 +521,7 @@ Mhat_AA = MAA[SolvedDofA,:][:,SolvedDofA]+scipy.sparse.csc_matrix((Psi_FA.T).tod
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute Mhat:",toc-tic)
+    print ("time to compute Mhat: {}".format(toc-tic))
 
 CmP=PhiFm.T*CPF[SolvedDofP,:][:,SolvedDofF].T
 CAP=Psi_FA.T*CPF[SolvedDofP,:][:,SolvedDofF].T

@@ -328,7 +328,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
 
     toc = time.process_time()
     if rank==0:
-        print ("time for computing structure:",toc-tic)
+        print ("time for computing structure: {}".format(toc-tic))
 
     ##################################################################
     # Compute eigen modes of the structure
@@ -341,7 +341,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
 
     toc = time.process_time()
     if rank==0:
-        print ("time for computing the structure modal basis:",toc-tic)
+        print ("time for computing the structure modal basis: {}".format(toc-tic))
 
     eigen_vector_S_list=[]
     for i in range(nb_mode_S):
@@ -366,7 +366,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
 
     toc = time.process_time()
     if rank==0:
-        print ("time to compute level set:",toc-tic)
+        print ("time to compute level set: {}".format(toc-tic))
 
     tic = time.process_time()
 
@@ -376,7 +376,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
 
     toc = time.process_time()
     if rank==0:
-        print ("time to compute tangent level set:",toc-tic)
+        print ("time to compute tangent level set: {}".format(toc-tic))
 
     if (flag_write_gmsh_results==1) and (rank==0):
         silex_lib_gmsh.WriteResults2(results_file+'_LS_signed_distance',fluid_nodes1,fluid_elements1,4,[[[LevelSet],'nodal',1,'Level set']])
@@ -396,7 +396,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
     EnrichedElements=LSEnrichedElements[EnrichedElements-1]
     toc = time.process_time()
     if rank==0:
-        print ("time to find surface enriched elements:",toc-tic)
+        print ("time to find surface enriched elements: {}".format(toc-tic))
 
     tic = time.process_time()
 
@@ -408,7 +408,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
 
     toc = time.process_time()
     if rank==0:
-        print ("time to find edge enriched elements:",toc-tic)
+        print ("time to find edge enriched elements: {}".format(toc-tic))
 
     HeavisideEnrichedElements=np.setdiff1d(EnrichedElements,EdgeEnrichedElements)
 
@@ -433,7 +433,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
 
     toc = time.process_time()
     if rank==0:
-        print ("time to compute coupling matrices:",toc-tic)
+        print ("time to compute coupling matrices: {}".format(toc-tic))
 
     ##############################################################
     # Compute Standard Fluid Matrices
@@ -500,7 +500,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
 
     toc = time.process_time()
     if rank==0:
-        print ("time to compute Heaviside enrichment:",toc-tic)
+        print ("time to compute Heaviside enrichment: {}".format(toc-tic))
 
     ##################################################################
     # Compute Edge enrichment
@@ -520,7 +520,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
 
     toc = time.process_time()
     if rank==0:
-        print ("time to compute edge enrichment:",toc-tic)
+        print ("time to compute edge enrichment: {}".format(toc-tic))
 
     KAA=KAAheaviside+KAAedge
     MAA=MAAheaviside+MAAedge
@@ -557,7 +557,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
     ##
     ##toc = time.process_time()
     ##if rank==0:
-    ##    print ("time for computing the fluid modes:",toc-tic)
+    ##    print ("time for computing the fluid modes: {}".format(toc-tic))
 
 
     ##################################################################
@@ -613,7 +613,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
     toc = time.process_time()
 
     if rank==0:
-        print ("time to compute PSI_IA:",toc-tic)
+        print ("time to compute PSI_IA: {}".format(toc-tic))
 
     ##if rank==0:
     ##    eigen_vector_I_list=[]
@@ -671,7 +671,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
     ##toc = time.process_time()
     ##
     ##if rank==0:
-    ##    print ("time to compute PSI_FB:",toc-tic)
+    ##    print ("time to compute PSI_FB: {}".format(toc-tic))
 
     ##if rank==0:
     ##    eigen_vector_I_list=[]
@@ -737,7 +737,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
 
     toc = time.process_time()
     if rank==0:
-        print ("time to compute Khat_hat:",toc-tic)
+        print ("time to compute Khat_hat: {}".format(toc-tic))
 
     tic = time.process_time()
 
@@ -746,7 +746,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
 
     toc = time.process_time()
     if rank==0:
-        print ("time to compute Mstar:",toc-tic)
+        print ("time to compute Mstar: {}".format(toc-tic))
 
     tic = time.process_time()
 
@@ -761,7 +761,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
 
     toc = time.process_time()
     if rank==0:
-        print ("time to compute Mhat:",toc-tic)
+        print ("time to compute Mhat: {}".format(toc-tic))
 
     #CmP=PhiFm.T*CPF[SolvedDofP,:][:,SolvedDofF].T
     #CAP=Psi_FA.T*CPF[SolvedDofP,:][:,SolvedDofF].T

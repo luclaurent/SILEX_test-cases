@@ -394,7 +394,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     toc = time.process_time()
     if rank==0:
-        print ("time for computing the fluid modes:",toc-tic)
+        print ("time for computing the fluid modes: {}".format(toc-tic))
 
     ##################################################################
     # Compute Psi_IA for the fluid: Psi_IA = - KII^{-1} * KIA
@@ -417,7 +417,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     Psi_IA=scipy.sparse.csc_matrix(Psi_IA)
     toc = time.process_time()
-    print ("time to compute PSI_IA:",toc-tic)
+    print ("time to compute PSI_IA: {}".format(toc-tic))
 
     ##################################################################
     # Compute Psi_IB for the fluid: Psi_IB = - KII^{-1} * KIB
@@ -474,7 +474,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     toc = time.process_time()
 
     if rank==0:
-        print ("time to compute PSI_FB:",toc-tic)
+        print ("time to compute PSI_FB: {}".format(toc-tic))
 
 
     
@@ -565,7 +565,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
         DPsi_IA_Dtheta=scipy.sparse.csc_matrix(DPsi_IA_Dtheta)
         toc = time.process_time()
-        print ("time to compute DPSI_IA_Dtheta:",toc-tic)
+        print ("time to compute DPSI_IA_Dtheta: {}".format(toc-tic))
 
 
         DKhat_AA_Dtheta = DPsi_IA_Dtheta.T*KAF[SolvedDofI,:][:,SolvedDofA]+Psi_IA.T*dKFA_dtheta[SolvedDofI,:][:,SolvedDofA]

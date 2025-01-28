@@ -111,7 +111,7 @@ toc = time.process_time()
 if rank==0:
     print ("fluid eigen frequencies : ",freq_eigv_F[0]," to ",freq_eigv_F[nb_mode_F-1])
     #silex_lib_gmsh.WriteResults2(results_file+'_fluid_modes',fluid_nodes,fluid_elements,4,[[eigen_vector_F_list,'nodal',1,'pressure']])
-    print ("time for computing the fluid modes:",toc-tic)
+    print ("time for computing the fluid modes: {}".format(toc-tic))
 
 
 VK_diag_nn = eigen_values_F

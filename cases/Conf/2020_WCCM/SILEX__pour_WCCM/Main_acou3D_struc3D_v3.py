@@ -150,7 +150,7 @@ LevelSet_gradient=(lx3-fluid_nodes[:,0])/(np.sqrt((fluid_nodes[:,0]-lx3)**2+(flu
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute level set:",toc-tic)
+    print ("time to compute level set: {}".format(toc-tic))
 
 if (flag_write_gmsh_results==1) and (rank==0):
     silex_lib_gmsh.WriteResults2(results_file+'_LS_signed_distance',fluid_nodes,fluid_elements1,4,[[[LevelSet],'nodal',1,'Level set from analytics'],[[LevelSet_from_Mesh],'nodal',1,'Level set from mesh'],[[LevelSet_gradient],'nodal',1,'Level set gradient from analytics']])
@@ -188,7 +188,7 @@ EnrichedElements0=EnrichedElements0-1
 EnrichedElements=tmp[EnrichedElements0]
 toc = time.process_time()
 if rank==0:
-    print ("time to find enriched elements:",toc-tic)
+    print ("time to find enriched elements: {}".format(toc-tic))
 
 tic = time.process_time()
 
@@ -231,7 +231,7 @@ SolvedDofA=Enrichednodes-1
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute Heaviside enrichment:",toc-tic)
+    print ("time to compute Heaviside enrichment: {}".format(toc-tic))
 
 ##################################################################
 # Construct the whole system

@@ -96,7 +96,7 @@ IdNodesFixed_rotz=IdnodeS5
 
 
 toc = time.process_time()
-print("time for the user part:",toc-tic)
+print("time for the user part: {}".format(toc-tic))
 
 #############################################################################
 #      EXPERT PART
@@ -148,7 +148,7 @@ Ik3,Jk3,Vk3,Vm3=silex_lib_elt.stiffnessmatrix(nodes,elementsS3,[Young,nu,thickne
 Ik4,Jk4,Vk4,Vm4=silex_lib_elt.stiffnessmatrix(nodes,elementsS4,[Young,nu,thickness4,rho])
 Ik5,Jk5,Vk5,Vm5=silex_lib_elt.stiffnessmatrix(nodes,elementsS5,[Young,nu,thickness5,rho])
 toc = time.process_time()
-print("time to compute the stiffness matrix / FORTRAN:",toc-tic)
+print("time to compute the stiffness matrix / FORTRAN: {}".format(toc-tic))
 
 K1=scipy.sparse.csc_matrix( (Vk1,(Ik1,Jk1)), shape=(ndof,ndof) ,dtype=float)
 K2=scipy.sparse.csc_matrix( (Vk2,(Ik2,Jk2)), shape=(ndof,ndof) ,dtype=float)
@@ -189,7 +189,7 @@ for i in range(eigen_values_S.shape[0]):
 
 toc = time.process_time()
 print ("structure eigen frequencies : ",freq_eigv_S)
-print ("time for computing the structure modes:",toc-tic)
+print ("time for computing the structure modes: {}".format(toc-tic))
 #############################################################################
 #         Write results to gmsh format
 #############################################################################

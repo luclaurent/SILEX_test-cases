@@ -186,7 +186,7 @@ F = np.zeros(ndof,dtype=mytype)
 frequencies=np.linspace(0,500,500)
 
 toc = time.process_time()
-print("time for the user part:",toc-tic)
+print("time for the user part: {}".format(toc-tic))
 
 #############################################################################
 #      EXPERT PART
@@ -263,7 +263,7 @@ if flag_damping==2: # beta M
     D = alphaV*K2+betaV*M2
 
 toc = time.process_time()
-print("time to compute the stiffness and mass matrix :",toc-tic)
+print("time to compute the stiffness and mass matrix : {}".format(toc-tic))
 
 #############################################################################
 #       Eigen value problem
@@ -288,7 +288,7 @@ if 1==0:
 
     toc = time.process_time()
     print ("structure eigen frequencies : ",freq_eigv_S)
-    print ("time for computing the structure modes:",toc-tic)
+    print ("time for computing the structure modes: {}".format(toc-tic))
     silex_lib_gmsh.WriteResults2(ResultsFileName+'_structure_modes',nodes,elements,5,[[eigen_vector_S_list,'nodal',3,'modes']])
 
 #############################################################################

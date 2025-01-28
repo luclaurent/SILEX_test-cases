@@ -298,7 +298,7 @@ if (flag_write_gmsh_results==1) and (rank==0):
 
 toc = time.process_time()
 if rank==0:
-    print ("time for computing the fluid modes:",toc-tic)
+    print ("time for computing the fluid modes: {}".format(toc-tic))
 
 
 
@@ -353,7 +353,7 @@ Psi_IB=scipy.sparse.csc_matrix(Psi_IB)
 toc = time.process_time()
 
 if rank==0:
-    print ("time to compute PSI_FB:",toc-tic)
+    print ("time to compute PSI_FB: {}".format(toc-tic))
 
 ##if rank==0:
 ##    eigen_vector_I_list=[]
@@ -390,7 +390,7 @@ Khat_BB = KFF[SolvedDofB,:][:,SolvedDofB]+Psi_IB.T*KFF[SolvedDofI,:][:,SolvedDof
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute Khat_hat:",toc-tic)
+    print ("time to compute Khat_hat: {}".format(toc-tic))
 
 tic = time.process_time()
 
@@ -399,7 +399,7 @@ Mstar_IB = MFF[SolvedDofI,:][:,SolvedDofI]*Psi_IB+MFF[SolvedDofI,:][:,SolvedDofB
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute Mstar:",toc-tic)
+    print ("time to compute Mstar: {}".format(toc-tic))
 
 tic = time.process_time()
 
@@ -414,7 +414,7 @@ Mhat_BB = MFF[SolvedDofB,:][:,SolvedDofB]+scipy.sparse.csc_matrix((Psi_IB.T).tod
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute Mhat:",toc-tic)
+    print ("time to compute Mhat: {}".format(toc-tic))
 
 #CmP=PhiFm.T*CPF[SolvedDofP,:][:,SolvedDofF].T
 #CAP=Psi_FA.T*CPF[SolvedDofP,:][:,SolvedDofF].T

@@ -165,7 +165,7 @@ frequencies=np.linspace(10,500,500)
 flag_damping=0
 
 toc = time.process_time()
-print("time for the user part:",toc-tic)
+print("time for the user part: {}".format(toc-tic))
 
 
 #############################################################################
@@ -200,7 +200,7 @@ Ik3,Jk3,Vk3,Vm3=silex_lib_elt.stiffnessmatrix(nodes,elementV12,[1,1,rho3])
 M3 = scipy.sparse.csc_matrix( (Vm3,(Ik3,Jk3)), shape=(ndof,ndof) )
 
 toc = time.process_time()
-print("time to compute the stiffness and mass matrix :",toc-tic)
+print("time to compute the stiffness and mass matrix : {}".format(toc-tic))
 
 # Compute Stiffness matrix of the SUPER-BEAM-ELEMENTS
 Young=2.0*0.1634e6*2*(1+0.45)
@@ -313,7 +313,7 @@ if 1==0:
 
     toc = time.process_time()
     print ("structure eigen frequencies : ",freq_eigv_S)
-    print ("time for computing the structure modes:",toc-tic)
+    print ("time for computing the structure modes: {}".format(toc-tic))
     silex_lib_gmsh.WriteResults2(ResultsFileName+'_structure_modes',nodes,elements,5,[[eigen_vector_S_list,'nodal',3,'modes']])
 
 #############################################################################

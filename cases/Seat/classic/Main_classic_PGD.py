@@ -139,7 +139,7 @@ struc_elements=silex_lib_xfem_acou_tet4.changestructureconnectivity(struc_node_i
 toc = time.process_time()
 if rank==0:
     print ("nnodes for structure=",struc_nnodes)
-    print ("time for the reading data part:",toc-tic)
+    print ("time for the reading data part: {}".format(toc-tic))
     silex_lib_gmsh.WriteResults2(results_file+'_struc_mesh',struc_nodes,struc_elements,2)
     silex_lib_gmsh.WriteResults2(results_file+'_struc_boun_mesh',fluid_nodes,struc_boun,1)
 
@@ -153,7 +153,7 @@ LevelSet,LevelSetDist = silex_lib_xfem_acou_tet4.computelevelset(fluid_nodes,str
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute level set:",toc-tic)
+    print ("time to compute level set: {}".format(toc-tic))
     silex_lib_gmsh.WriteResults2(results_file+'_signed_distance',fluid_nodes,fluid_elements,4,[[[LevelSet],'nodal',1,'Level set']])
 
 
@@ -257,7 +257,7 @@ MSS = scipy.sparse.csc_matrix( (Vms,(IIks,JJks)), shape=(struc_ndof,struc_ndof) 
 
 toc = time.process_time()
 if rank==0:
-    print ("time for computing the structure:",toc-tic)
+    print ("time for computing the structure: {}".format(toc-tic))
 
 ##################################################################
 # Compute coupling terms on interface
@@ -270,7 +270,7 @@ CSF=scipy.sparse.csc_matrix( (Vc,(IIc,JJc)), shape=(struc_ndof,fluid_ndof) )
 
 toc = time.process_time()
 if rank==0:
-    print ("time for computing the coupling:",toc-tic)
+    print ("time for computing the coupling: {}".format(toc-tic))
 
 
 ##################################################################

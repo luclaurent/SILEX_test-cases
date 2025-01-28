@@ -306,7 +306,7 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
 
     toc = time.process_time()
     if rank==0:
-        print ("time for computing the fluid modes:",toc-tic)
+        print ("time for computing the fluid modes: {}".format(toc-tic))
 
 
 
@@ -361,7 +361,7 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
     toc = time.process_time()
 
     if rank==0:
-        print ("time to compute PSI_FB:",toc-tic)
+        print ("time to compute PSI_FB: {}".format(toc-tic))
     ##Mhat_BA = scipy.sparse.csc_matrix((Psi_IB.T).todense()*Mstar_IA.todense())+MFF[SolvedDofB,:][:,SolvedDofI]*Psi_IA
 
     if rank==0:
@@ -403,7 +403,7 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
 
     toc = time.process_time()
     if rank==0:
-        print ("time to compute Khat_hat:",toc-tic)
+        print ("time to compute Khat_hat: {}".format(toc-tic))
 
     tic = time.process_time()
 
@@ -412,7 +412,7 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
 
     toc = time.process_time()
     if rank==0:
-        print ("time to compute Mstar:",toc-tic)
+        print ("time to compute Mstar: {}".format(toc-tic))
 
     tic = time.process_time()
 
@@ -427,7 +427,7 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
 
     toc = time.process_time()
     if rank==0:
-        print ("time to compute Mhat:",toc-tic)
+        print ("time to compute Mhat: {}".format(toc-tic))
 
     #CmP=PhiFm.T*CPF[SolvedDofP,:][:,SolvedDofF].T
     #CAP=Psi_FA.T*CPF[SolvedDofP,:][:,SolvedDofF].T

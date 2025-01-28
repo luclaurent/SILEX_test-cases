@@ -77,7 +77,7 @@ forcex=10000.0
 F=silex_lib_elt.forceonline(nodes,elementsS2,[forcex/100.0,0.0,forcez/100.0,forcex/100.0,0.0,forcez/100.0],[1000.0,0.0,0.0,1000.0,100.0,0.0])
 
 toc = time.process_time()
-print("time for the user part:",toc-tic)
+print("time for the user part: {}".format(toc-tic))
 
 #############################################################################
 #      EXPERT PART
@@ -114,7 +114,7 @@ tic = time.process_time()
 #print (silex_lib_elt.stiffnessmatrix.__doc__)
 Ik,Jk,Vk,Vm=silex_lib_elt.stiffnessmatrix(nodes,elements,[Young,nu,thickness,7000.0])
 toc = time.process_time()
-print("time to compute the stiffness matrix / FORTRAN:",toc-tic)
+print("time to compute the stiffness matrix / FORTRAN: {}".format(toc-tic))
 
 K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
 
@@ -127,7 +127,7 @@ tic = time.process_time()
 #Q[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 toc = time.process_time()
-print("time to solve the problem:",toc-tic)
+print("time to solve the problem: {}".format(toc-tic))
 
 #############################################################################
 #       compute smooth stress and error in elements
@@ -148,7 +148,7 @@ DirPrinMin1  = output[8]
 DirPrinMin2  = output[9]
 
 toc = time.process_time()
-print("time to compute stres and error:",toc-tic)
+print("time to compute stres and error: {}".format(toc-tic))
 #print("The global error is:",ErrorGlobal)
 print("Total time for the computational part:",toc-tic0)
 
@@ -219,7 +219,7 @@ if flag_write_fields==1:
 silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_write)
 
 toc = time.process_time()
-print("time to write results: ",toc-tic)
+print("time to write results:  {}".format(toc-tic))
 print("Analytic displacement along x: ", forcex*1000.0/Young/(100.0*thickness)  )
 print("Analytic displacement along z: ", forcez*1000.0**3/3.0/Young/(100.0*thickness**3/12.0)  )
 print("Analytic stress xx for traction : ", forcex/100.0/thickness  )

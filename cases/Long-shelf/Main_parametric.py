@@ -95,7 +95,7 @@ for F1x in choice:
                                                                 case.append(F)
 
 toc = time.process_time()
-print ("time for the parametric study:",toc-tic)
+print ("time for the parametric study: {}".format(toc-tic))
 
 f=open('Results_parametric','w')
 pickle.dump([VM,case], f)

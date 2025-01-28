@@ -96,7 +96,7 @@ while (ErrorGlobal>ErrorGlobalMaxi):
     F=silex_lib_elt.forceonline(nodes,elementsS2,[0.0,10.0,0.0,10.0],[0.0,200.0,100.0,200.0])
 
     toc = time.process_time()
-    print("time for the reading data part:",toc-tic)
+    print("time for the reading data part: {}".format(toc-tic))
 
     tic0 = time.process_time()
     #############################################################################
@@ -130,7 +130,7 @@ while (ErrorGlobal>ErrorGlobalMaxi):
     K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) )
 
     toc = time.process_time()
-    print("time to compute the stiffness matrix:",toc-tic)
+    print("time to compute the stiffness matrix: {}".format(toc-tic))
 
     #############################################################################
     #       Solve the problem
@@ -140,7 +140,7 @@ while (ErrorGlobal>ErrorGlobalMaxi):
     #Q[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
     Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
     toc = time.process_time()
-    print("time to solve the problem:",toc-tic)
+    print("time to solve the problem: {}".format(toc-tic))
 
     #############################################################################
     #       compute stress, smooth stress, strain and error
@@ -150,7 +150,7 @@ while (ErrorGlobal>ErrorGlobalMaxi):
     SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu,thickness],Q)
 
     toc = time.process_time()
-    print("time to compute stresses:",toc-tic)
+    print("time to compute stresses: {}".format(toc-tic))
     print("The global error is:",ErrorGlobal)
 
     #Elt_max_length=Elt_max_length/1.2
@@ -250,7 +250,7 @@ while (ErrorGlobal>ErrorGlobalMaxi):
 
 
 toc = time.process_time()
-print("time to write results:",toc-tic)
+print("time to write results: {}".format(toc-tic))
 print("----- END -----")
 
 

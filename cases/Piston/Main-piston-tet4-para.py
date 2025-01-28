@@ -81,7 +81,7 @@ F = silex_lib_elt.forceonsurface(nodes,elementsS3,press,direction)
 
 
 toc = time.process_time()
-print ("time for the user part:",toc-tic)
+print ("time for the user part: {}".format(toc-tic))
 
 #############################################################################
 #      EXPERT PART
@@ -114,7 +114,7 @@ Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(nodes,elements,[Young,nu])
 toc = time.process_time()
 
 K=scipy.sparse.csr_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
-print ("time to compute the stiffness matrix / FORTRAN:",toc-tic)
+print ("time to compute the stiffness matrix / FORTRAN: {}".format(toc-tic))
 
 #############################################################################
 #       Solve the problem
@@ -126,7 +126,7 @@ tic = time.process_time()
 if flag_parallel==0:
     Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
     toc = time.process_time()
-    print ("time to solve the problem:",toc-tic)
+    print ("time to solve the problem: {}".format(toc-tic))
 
 if flag_parallel==1:
     ctx = mumps.DMumpsContext(sym=0, par=1)
@@ -145,7 +145,7 @@ if flag_parallel==1:
     if ctx.myid == 0:
         Q[np.ix_(SolvedDofs)]=qq
         toc = time.process_time()
-        print("time to solve the problem / multi-processor",toc-tic)
+        print("time to solve the problem / multi-processor {}".format(toc-tic))
     ctx.destroy()
 
 #############################################################################
@@ -156,7 +156,7 @@ tic = time.process_time()
 SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu],Q)
 
 toc = time.process_time()
-print ("time to compute stres and error:",toc-tic)
+print ("time to compute stres and error: {}".format(toc-tic))
 print ("The global error is:",ErrorGlobal)
 print ("Total time for the computational part:",toc-tic0)
 
@@ -220,7 +220,7 @@ if flag_write_fields==1:
 silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_write)
 
 toc = time.process_time()
-print ("time to write results:",toc-tic)
+print ("time to write results: {}".format(toc-tic))
 print ("----- END -----")
 
 

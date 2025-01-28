@@ -120,7 +120,7 @@ struc_elements=silex_lib_xfem_acou_tet4.changestructureconnectivity(struc_node_i
 toc = time.process_time()
 if rank==0:
     print ("nnodes for structure=",struc_nnodes)
-    print ("time for the reading data part:",toc-tic)
+    print ("time for the reading data part: {}".format(toc-tic))
     silex_lib_gmsh.WriteResults2(results_file+'_struc_mesh',struc_nodes,struc_elements,2)
     #silex_lib_gmsh.WriteResults2(results_file+'_struc_boun_mesh',fluid_nodes,struc_boun,1)
 
@@ -133,7 +133,7 @@ tic = time.process_time()
 LevelSet,LevelSetDist = silex_lib_xfem_acou_tet4.computelevelset(fluid_nodes,struc_nodes,struc_elements)
 
 if rank==0:
-    print ("time to compute level set:",toc-tic)
+    print ("time to compute level set: {}".format(toc-tic))
     silex_lib_gmsh.WriteResults2(results_file+'_signed_distance',fluid_nodes,fluid_elements,4,[[[LevelSet],'nodal',1,'Level set']])
 
 
@@ -229,7 +229,7 @@ MSS = scipy.sparse.csc_matrix( (Vms,(IIks,JJks)), shape=(struc_ndof,struc_ndof) 
 
 toc = time.process_time()
 if rank==0:
-    print ("time for computing the structure:",toc-tic)
+    print ("time for computing the structure: {}".format(toc-tic))
 
 ##################################################################
 # Compute coupling terms on interface
@@ -242,7 +242,7 @@ CSF=scipy.sparse.csc_matrix( (Vc,(IIc,JJc)), shape=(struc_ndof,fluid_ndof) )
 
 toc = time.process_time()
 if rank==0:
-    print ("time for computing the coupling:",toc-tic)
+    print ("time for computing the coupling: {}".format(toc-tic))
 
 
 ##################################################################
@@ -262,7 +262,7 @@ Static_mode_S = mumps.spsolve( KSS[SolvedDofS,:][:,SolvedDofS] , FS[SolvedDofS] 
 
 toc = time.process_time()
 if rank==0:
-    print ("time for computing the structure static mode:",toc-tic)
+    print ("time for computing the structure static mode: {}".format(toc-tic))
 
 ##################################################################
 # Orthogonalisation of the static mode
@@ -288,7 +288,7 @@ for i in range(nb_mode_S):
 
 toc = time.process_time()
 if rank==0:
-    print ("time for orthogonalization of the static mode:",toc-tic)
+    print ("time for orthogonalization of the static mode: {}".format(toc-tic))
 
 ##################################################################
 # Build and save the Structure Basis
@@ -313,7 +313,7 @@ for i in range(PSn.shape[1]):
 toc = time.process_time()
 if rank==0:
     print ("structure eigen frequencies : ",freq_eigv_S)
-    print ("time for computing the structure modes:",toc-tic)
+    print ("time for computing the structure modes: {}".format(toc-tic))
     silex_lib_gmsh.WriteResults2(results_file+'_structure_modes',struc_nodes,struc_elements,2,[[eigen_vector_S_list,'nodal',3,'modes']])
 
 ##################################################################
@@ -342,7 +342,7 @@ toc = time.process_time()
 if rank==0:
     print ("fluid eigen frequencies : ",freq_eigv_F)
     silex_lib_gmsh.WriteResults2(results_file+'_fluid_modes',fluid_nodes,fluid_elements,4,[[eigen_vector_F_list,'nodal',1,'pressure']])
-    print ("time for computing the fluid modes:",toc-tic)
+    print ("time for computing the fluid modes: {}".format(toc-tic))
 
 
 ##################################################################

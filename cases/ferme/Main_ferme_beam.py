@@ -166,4 +166,4 @@ fields_to_write=[ [disp,'nodal',2,'displacement'],
 # write the mesh and the results in a gmsh-format file
 silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_write)
 toc=time.process_time()
-print("Time for total computation",toc-tic)
+print("Time for total computation {}".format(toc-tic))

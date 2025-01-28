@@ -130,7 +130,7 @@ for x_pos_struc_ini in [8200,8201,8202]:
         silex_lib_gmsh.WriteResults(results_file+'_level_set',fluid_nodes,fluid_elements,2,[[LevelSet,'nodal',1,'Level set']])
 
     toc = time.process_time()
-    print("time to compute level set:",toc-tic)
+    print("time to compute level set: {}".format(toc-tic))
 
 
     ##################################################################
@@ -148,7 +148,7 @@ for x_pos_struc_ini in [8200,8201,8202]:
     EnrichedElements=np.unique(EnrichedElements[list(range(NbEnrichedElements))])-1
 
     toc = time.process_time()
-    print("time to find surface enriched elements:",toc-tic)
+    print("time to find surface enriched elements: {}".format(toc-tic))
 
 
     tic = time.process_time()
@@ -159,7 +159,7 @@ for x_pos_struc_ini in [8200,8201,8202]:
     #EnrichedElements=np.setdiff1d(EnrichedElements,EdgeEnrichedElements)
 
     toc = time.process_time()
-    print("time to find edge enriched elements:",toc-tic)
+    print("time to find edge enriched elements: {}".format(toc-tic))
 
     if (flag_write_gmsh_results==1) and (rank==0):
         silex_lib_gmsh.WriteResults(results_file+'_enriched_elements',fluid_nodes,fluid_elements[EnrichedElements],2)
@@ -180,7 +180,7 @@ for x_pos_struc_ini in [8200,8201,8202]:
     #SolvedDofF=range(fluid_ndof)
 
     toc = time.process_time()
-    print("time to compute fluid matrices:",toc-tic)
+    print("time to compute fluid matrices: {}".format(toc-tic))
 
     ##################################################################
     # Compute enrichment: Heaviside + Edge
@@ -223,7 +223,7 @@ for x_pos_struc_ini in [8200,8201,8202]:
     MAF = scipy.sparse.csc_matrix( (Vafm,(IIaf,JJaf)), shape=(fluid_ndof,fluid_ndof) )
 
     toc = time.process_time()
-    print("time to compute Heaviside enrichment:",toc-tic)
+    print("time to compute Heaviside enrichment: {}".format(toc-tic))
 
     #Enrichednodes = np.unique(fluid_elements[np.hstack(([HeavisideEnrichedElements,EdgeEnrichedElements]))])
     #Enrichednodes = np.unique(fluid_elements[np.hstack(([EnrichedElements,PositiveLStgtElements,EdgeEnrichedElementsInAllMesh]))])

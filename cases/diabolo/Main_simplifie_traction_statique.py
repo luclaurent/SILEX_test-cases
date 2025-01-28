@@ -217,7 +217,7 @@ tic = time.process_time()
 #Q[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 Qprime[SolvedDofsPrime] = mumps.spsolve(Kprime[SolvedDofsPrime,:][:,SolvedDofsPrime],Fprime[SolvedDofsPrime])
 toc = time.process_time()
-print("time to solve the problem:",toc-tic)
+print("time to solve the problem: {}".format(toc-tic))
 
 Q=R*Qprime
 #############################################################################
@@ -239,7 +239,7 @@ if flag_write_fields==0:
 silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,5,fields_to_write)
 
 toc = time.process_time()
-print("time to write results:",toc-tic)
+print("time to write results: {}".format(toc-tic))
 print("----- END -----")
 
 

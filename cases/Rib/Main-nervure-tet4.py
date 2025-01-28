@@ -88,7 +88,7 @@ F = silex_lib_elt.forceonsurface(nodes,elementsS2,press,direction)
 
 
 toc = time.process_time()
-print ("time for the user part:",toc-tic)
+print ("time for the user part: {}".format(toc-tic))
 
 #############################################################################
 #      EXPERT PART
@@ -122,7 +122,7 @@ Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(nodes,elements,[Young,nu])
 toc = time.process_time()
 
 K=scipy.sparse.csr_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
-print ("time to compute the stiffness matrix / FORTRAN:",toc-tic)
+print ("time to compute the stiffness matrix / FORTRAN: {}".format(toc-tic))
 
 K=scipy.sparse.csc_matrix(R4.T*R3.T*K*R3*R4)
 #############################################################################
@@ -133,7 +133,7 @@ tic = time.process_time()
 #Q[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs], use_umfpack=True)
 Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 toc = time.process_time()
-print ("time to solve the problem:",toc-tic)
+print ("time to solve the problem: {}".format(toc-tic))
 Q=R3*R4*Q
 #############################################################################
 #       compute smooth stress and error in elements
@@ -143,7 +143,7 @@ tic = time.process_time()
 SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu],Q)
 
 toc = time.process_time()
-print ("time to compute stress and error:",toc-tic)
+print ("time to compute stress and error: {}".format(toc-tic))
 print ("The global error is:",ErrorGlobal)
 print ("Total time for the computational part:",toc-tic0)
 
@@ -214,7 +214,7 @@ silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_writ
 silex_lib_gmsh.WriteResults(ResultsFileName+'Surf_Model',nodes,elementsS5,2,fields_to_write)
 
 toc = time.process_time()
-print ("time to write results:",toc-tic)
+print ("time to write results: {}".format(toc-tic))
 print ("----- END -----")
 
 

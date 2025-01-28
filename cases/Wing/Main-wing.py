@@ -124,7 +124,7 @@ F = silex_lib_elt.forceonsurface(nodes,elementsS5,press,direction)
 
 
 toc = time.process_time()
-print("time for the user part:",toc-tic)
+print("time for the user part: {}".format(toc-tic))
 
 #############################################################################
 #      EXPERT PART
@@ -178,7 +178,7 @@ Ik5,Jk5,Vk5,Vm5=silex_lib_elt.stiffnessmatrix(nodes,elementsS5,[Young5,nu5,thick
 Ik6,Jk6,Vk6,Vm6=silex_lib_elt.stiffnessmatrix(nodes,elementsS6,[Young6,nu6,thickness6,1000.0])
 Ik7,Jk7,Vk7,Vm7=silex_lib_elt.stiffnessmatrix(nodes,elementsS7,[Young7,nu7,thickness7,1000.0])
 toc = time.process_time()
-print("time to compute the stiffness matrix / FORTRAN:",toc-tic)
+print("time to compute the stiffness matrix / FORTRAN: {}".format(toc-tic))
 
 K1=scipy.sparse.csc_matrix( (Vk1,(Ik1,Jk1)), shape=(ndof,ndof) ,dtype=float)
 K2=scipy.sparse.csc_matrix( (Vk2,(Ik2,Jk2)), shape=(ndof,ndof) ,dtype=float)
@@ -199,7 +199,7 @@ tic = time.process_time()
 #Q[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 toc = time.process_time()
-print("time to solve the problem:",toc-tic)
+print("time to solve the problem: {}".format(toc-tic))
 
 #############################################################################
 #       compute smooth stress and error in elements
@@ -209,7 +209,7 @@ tic = time.process_time()
 SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu,thickness,7000.0],Q)
 
 toc = time.process_time()
-print("time to compute stres and error:",toc-tic)
+print("time to compute stres and error: {}".format(toc-tic))
 #logger.info("The global error is:",ErrorGlobal
 print("Total time for the computational part:",toc-tic0)
 
@@ -268,7 +268,7 @@ if flag_write_fields==1:
 silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_write)
 
 toc = time.process_time()
-print("time to write results:",toc-tic)
+print("time to write results: {}".format(toc-tic))
 print("----- END -----")
 
 
