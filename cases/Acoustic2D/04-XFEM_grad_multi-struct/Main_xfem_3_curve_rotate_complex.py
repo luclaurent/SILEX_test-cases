@@ -432,7 +432,6 @@ def RunPb(
     # Compute gradients with respect to parameters
     ##################################################################
 
-    
     # gradient wrt Xc
     IIf_X, JJf_X, Vfak_gradient_X, Vfam_gradient_X, _ = objXFEM.getGradientMatrices(
         fluid_nodes,

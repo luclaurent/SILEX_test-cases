@@ -4,6 +4,9 @@ import time
 import os
 import pylab as pl
 import pickle
+from pathlib import Path
+
+cwd = Path(__file__).resolve().parent
 
 ##f=open('xfem_3_62000_results.frf','rb')
 ##frf_1=pickle.load(f)
@@ -16,17 +19,17 @@ import pickle
 ##f=open('xfem_3_62002_results.frf','rb')
 ##frf_3=pickle.load(f)
 ##f.close()
-f=open('xfem_3_6199_results.frf','rb')
-frf_1=pickle.load(f)
-f.close()
+with open(cwd/'xfem_3_6199_results.frf','rb') as f:
+    frf_1=pickle.load(f)
 
-f=open('xfem_3_6200_results.frf','rb')
-frf_2=pickle.load(f)
-f.close()
 
-f=open('xfem_3_6201_results.frf','rb')
-frf_3=pickle.load(f)
-f.close()
+with open(cwd/'xfem_3_6200_results.frf','rb') as f:
+    frf_2=pickle.load(f)
+
+
+with open(cwd/'xfem_3_6201_results.frf','rb') as f:
+    frf_3=pickle.load(f)
+
 
 #id_node=7
 #id_freq=20

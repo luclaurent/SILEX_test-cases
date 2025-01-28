@@ -52,12 +52,14 @@ logger = logger.bind(rank=rank)
 logger.info("START")
 
 
-
 class comm_mumps_one_proc:
     rank = 0
+
     def py2f(self):
         return 0
-mycomm=comm_mumps_one_proc()
+
+
+mycomm = comm_mumps_one_proc()
 
 ###########################################################
 # To run it in parallel for several frequencies:
@@ -87,33 +89,33 @@ cwd = Path(__file__).resolve().parent
 ##############################################################
 
 # air
-celerity=340.0
-rho=1.2
+celerity = 340.0
+rho = 1.2
 
-freq_ini     = 100.0
-freq_end     = 500.0
-nb_freq_step_per_proc=400 # 50 pour 8 proc.
+freq_ini = 100.0
+freq_end = 500.0
+nb_freq_step_per_proc = 400  # 50 pour 8 proc.
 
-nproc=comm.Get_size()
+nproc = comm.Get_size()
 rank = comm.Get_rank()
 
-nb_freq_step = nb_freq_step_per_proc*nproc
-deltafreq=(freq_end-freq_ini)/(nb_freq_step-1)
+nb_freq_step = nb_freq_step_per_proc * nproc
+deltafreq = (freq_end - freq_ini) / (nb_freq_step - 1)
 
-flag_write_gmsh_results=1
+flag_write_gmsh_results = 1
 
-flag_edge_enrichment=0
-#flag_edge_enrichment=1
+flag_edge_enrichment = 0
+# flag_edge_enrichment=1
 
-#freq_comparaison = 210.0
+# freq_comparaison = 210.0
 
-for x_pos_struc_ini in [6199,6200,6201]:
-    h_struc=1.0
+for x_pos_struc_ini in [6199, 6200, 6201]:
+    h_struc = 1.0
 
-    file_extension=str(x_pos_struc_ini)[0:5]
-    results_file=results_file_ini+file_extension
+    file_extension = str(x_pos_struc_ini)[0:5]
+    results_file = results_file_ini + file_extension
 
-    x_pos_struc=x_pos_struc_ini/10000
+    x_pos_struc = x_pos_struc_ini / 10000
 
     ##############################################################
     # Load fluid mesh
@@ -121,7 +123,6 @@ for x_pos_struc_ini in [6199,6200,6201]:
 
     tic = time.process_time()
 
-    
     # start reading mesh
     mesh = msh.mshReader(cwd / (mesh_file + "_fluid.msh"))
 
@@ -158,21 +159,19 @@ for x_pos_struc_ini in [6199,6200,6201]:
     logger.info("nelem for fluid= {}".format(fluid_nelem))
     logger.info("nelem for control volume= {}".format(fluid_elements5.shape[0]))
 
-
-
     ##################################################################
     # compute level set
     ##################################################################
 
     tic = time.process_time()
 
-    LevelSet=fluid_nodes[:,0]-x_pos_struc
-    LevelSetTangent=fluid_nodes[:,1]-h_struc
+    LevelSet = fluid_nodes[:, 0] - x_pos_struc
+    LevelSetTangent = fluid_nodes[:, 1] - h_struc
 
     # level set gradient with respect to parameters
-    LevelSet_gradient=-np.ones(fluid_nnodes)
+    LevelSet_gradient = -np.ones(fluid_nnodes)
 
-    if (flag_write_gmsh_results==1) and (rank==0):
+    if (flag_write_gmsh_results == 1) and (rank == 0):
         msh2.mshWriter(
             cwd / (results_file + "_level_sets.msh"),
             fluid_nodes,
@@ -197,15 +196,16 @@ for x_pos_struc_ini in [6199,6200,6201]:
     toc = time.process_time()
     logger.info("time to compute level set: {}".format(toc - tic))
 
-
     ##################################################################
     # Get enriched nodes and elements
     ##################################################################
     tic = time.process_time()
 
-    struc_nodes=np.array([[x_pos_struc,0.0],[x_pos_struc,h_struc/2.0],[x_pos_struc,h_struc]])
-    struc_elements=np.array([[1,2],[2,3]])
-    struc_boun=np.array([3])
+    struc_nodes = np.array(
+        [[x_pos_struc, 0.0], [x_pos_struc, h_struc / 2.0], [x_pos_struc, h_struc]]
+    )
+    struc_elements = np.array([[1, 2], [2, 3]])
+    struc_boun = np.array([3])
 
     msh2.mshWriter(
         cwd / (results_file + "_struc_mesh.msh"),
@@ -218,7 +218,7 @@ for x_pos_struc_ini in [6199,6200,6201]:
     toc = time.process_time()
     logger.info("time to find surface enriched elements: {}".format(toc - tic))
 
-    if (flag_write_gmsh_results==1) and (rank==0):
+    if (flag_write_gmsh_results == 1) and (rank == 0):
         msh2.mshWriter(
             cwd / (results_file + "_enriched_elements.msh"),
             fluid_nodes,
@@ -331,15 +331,19 @@ for x_pos_struc_ini in [6199,6200,6201]:
     # Construct the whole system
     ##################################################################
 
-    K=scipy.sparse.bmat( [[KFF[SolvedDofF,:][:,SolvedDofF],KAF[SolvedDofF,:][:,SolvedDofA]],
-                                    [KAF[SolvedDofA,:][:,SolvedDofF],KAA[SolvedDofA,:][:,SolvedDofA]]
-                                    ] )
+    K = scipy.sparse.bmat(
+        [
+            [KFF[SolvedDofF, :][:, SolvedDofF], KAF[SolvedDofF, :][:, SolvedDofA]],
+            [KAF[SolvedDofA, :][:, SolvedDofF], KAA[SolvedDofA, :][:, SolvedDofA]],
+        ]
+    )
 
-
-
-    M=scipy.sparse.bmat( [[MFF[SolvedDofF,:][:,SolvedDofF],MAF[SolvedDofF,:][:,SolvedDofA]],
-                                    [MAF[SolvedDofA,:][:,SolvedDofF],MAA[SolvedDofA,:][:,SolvedDofA]]
-                                    ] )
+    M = scipy.sparse.bmat(
+        [
+            [MFF[SolvedDofF, :][:, SolvedDofF], MAF[SolvedDofF, :][:, SolvedDofA]],
+            [MAF[SolvedDofA, :][:, SolvedDofF], MAA[SolvedDofA, :][:, SolvedDofA]],
+        ]
+    )
 
     #################################################################
     # Compute gradients with respect to parameters
@@ -372,70 +376,83 @@ for x_pos_struc_ini in [6199,6200,6201]:
             f,
         )
 
-    dK=scipy.sparse.bmat( [[None,dKFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
-                                     [dKFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]
-                                    ] )
+    dK = scipy.sparse.bmat(
+        [
+            [None, dKFA_dtheta[SolvedDofF, :][:, SolvedDofA]],
+            [dKFA_dtheta[SolvedDofA, :][:, SolvedDofF], None],
+        ]
+    )
 
-    dM=scipy.sparse.bmat( [[None,dMFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
-                                     [dMFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]
-                                    ] )
-
+    dM = scipy.sparse.bmat(
+        [
+            [None, dMFA_dtheta[SolvedDofF, :][:, SolvedDofA]],
+            [dMFA_dtheta[SolvedDofA, :][:, SolvedDofF], None],
+        ]
+    )
 
     ##############################################################
     # FRF computation of the FSI problem
     ##############################################################
 
-    Flag_frf_analysis=1
+    Flag_frf_analysis = 1
     FF = np.zeros(fluid_ndof)
-    frequencies=[]
-    frf=[]
-    frfgradient=[]
+    frequencies = []
+    frf = []
+    frfgradient = []
 
-    if (Flag_frf_analysis==1):
+    if Flag_frf_analysis == 1:
         logger.info("time at the beginning of the FRF: {}".format(time.ctime()))
 
-        press_save=[]
-        dpress_save=[]
-        disp_save=[]
+        press_save = []
+        dpress_save = []
+        disp_save = []
 
         for i in range(nb_freq_step_per_proc):
-
-            freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
+            freq = freq_ini + i * nproc * deltafreq + rank * deltafreq
             frequencies.append(freq)
-            omega=2*np.pi*freq
-            logger.info("proc number",rank,"frequency=",freq)
+            omega = 2 * np.pi * freq
+            logger.info("proc number", rank, "frequency=", freq)
 
-            FF[SolvedDofF]=-(KFF[SolvedDofF,:][:,IdnodeS2-1]-(omega**2)*MFF[SolvedDofF,:][:,IdnodeS2-1])*(np.ones((len(IdnodeS2))))
+            FF[SolvedDofF] = -(
+                KFF[SolvedDofF, :][:, IdnodeS2 - 1]
+                - (omega**2) * MFF[SolvedDofF, :][:, IdnodeS2 - 1]
+            ) * (np.ones((len(IdnodeS2))))
             FA = np.zeros(fluid_ndof)
-            F  = FF[SolvedDofF]
-            F  = np.concatenate((F,FA[SolvedDofA]))
-            #F  = scipy.sparse.csc_matrix(F)
+            F = FF[SolvedDofF]
+            F = np.concatenate((F, FA[SolvedDofA]))
+            # F  = scipy.sparse.csc_matrix(F)
 
-            #sol = mumps.spsolve(scipy.sparse.coo_matrix(K-(omega**2)*M,dtype='float'), F, comm=mycomm )
-            sol = scipy.sparse.linalg.spsolve(scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='float'), F)
-            
-            #eigen_values_small,eigen_vectors= scipy.sparse.linalg.eigsh(K-(omega**2)*M,1,sigma=0,which='SM')
-            #eigen_values_large,eigen_vectors= scipy.sparse.linalg.eigsh(K-(omega**2)*M,1,sigma=0,which='LM')
+            # sol = mumps.spsolve(scipy.sparse.coo_matrix(K-(omega**2)*M,dtype='float'), F, comm=mycomm )
+            sol = scipy.sparse.linalg.spsolve(
+                scipy.sparse.csc_matrix(K - (omega**2) * M, dtype="float"), F
+            )
 
+            # eigen_values_small,eigen_vectors= scipy.sparse.linalg.eigsh(K-(omega**2)*M,1,sigma=0,which='SM')
+            # eigen_values_large,eigen_vectors= scipy.sparse.linalg.eigsh(K-(omega**2)*M,1,sigma=0,which='LM')
 
-            #eigen_values_small,eigen_vectors= scipy.linalg.eig((K-(omega**2)*M).todense(),1,sigma=0,which='SM')
-            #eigen_values_large,eigen_vectors= scipy.linalg.eig(K-(omega**2)*M,1,sigma=0,which='LM')
+            # eigen_values_small,eigen_vectors= scipy.linalg.eig((K-(omega**2)*M).todense(),1,sigma=0,which='SM')
+            # eigen_values_large,eigen_vectors= scipy.linalg.eig(K-(omega**2)*M,1,sigma=0,which='LM')
 
-            
-            #stop
-            tmp=-(dK-(omega**2)*dM)*sol
+            # stop
+            tmp = -(dK - (omega**2) * dM) * sol
 
-            #Dsol_Dtheta = mumps.spsolve(  scipy.sparse.coo_matrix(K-(omega**2)*M,dtype='float')  , tmp , comm=mycomm )
-            Dsol_Dtheta = scipy.sparse.linalg.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='float')  , tmp )
+            # Dsol_Dtheta = mumps.spsolve(  scipy.sparse.coo_matrix(K-(omega**2)*M,dtype='float')  , tmp , comm=mycomm )
+            Dsol_Dtheta = scipy.sparse.linalg.spsolve(
+                scipy.sparse.csc_matrix(K - (omega**2) * M, dtype="float"), tmp
+            )
 
             press = np.zeros(fluid_ndof)
-            press[IdnodeS2-1] = np.ones(len(IdnodeS2))
-            press[SolvedDofF]=sol[list(range(len(SolvedDofF)))]
-            enrichment=np.zeros(fluid_nnodes)
-            enrichment[SolvedDofA]=sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
-            CorrectedPressure=press
-            CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA]+enrichment[SolvedDofA]*np.sign(LevelSet[SolvedDofA])
-            #frf.append(silex_acou_lib_tri3.computequadratiquepressure(fluid_elements,fluid_nodes,CorrectedPressure))
+            press[IdnodeS2 - 1] = np.ones(len(IdnodeS2))
+            press[SolvedDofF] = sol[list(range(len(SolvedDofF)))]
+            enrichment = np.zeros(fluid_nnodes)
+            enrichment[SolvedDofA] = sol[
+                list(range(len(SolvedDofF), len(SolvedDofF) + len(SolvedDofA)))
+            ]
+            CorrectedPressure = press
+            CorrectedPressure[SolvedDofA] = CorrectedPressure[SolvedDofA] + enrichment[
+                SolvedDofA
+            ] * np.sign(LevelSet[SolvedDofA])
+            # frf.append(silex_acou_lib_tri3.computequadratiquepressure(fluid_elements,fluid_nodes,CorrectedPressure))
             frf.append(
                 objXFEM.getQuadraticPressure(
                     fluid_nodes,
@@ -447,16 +464,18 @@ for x_pos_struc_ini in [6199,6200,6201]:
                     flag_edge_enrichment,
                 )
             )
-            #frf[i]=xvibacoufo.computexfemcomplexquadratiquepressure(fluid_elements,fluid_nodes,CorrectedPressure+0j,0.0*enrichment+0j,LevelSet,LevelSetTangent)
-            #press_save.append(CorrectedPressure.copy())
+            # frf[i]=xvibacoufo.computexfemcomplexquadratiquepressure(fluid_elements,fluid_nodes,CorrectedPressure+0j,0.0*enrichment+0j,LevelSet,LevelSetTangent)
+            # press_save.append(CorrectedPressure.copy())
             press_save.append(press.copy())
 
-            Dpress_Dtheta = np.zeros(fluid_ndof,dtype=float)
+            Dpress_Dtheta = np.zeros(fluid_ndof, dtype=float)
             Dpress_Dtheta[SolvedDofF] = Dsol_Dtheta[list(range(len(SolvedDofF)))]
-            Denrichment_Dtheta = np.zeros(fluid_ndof,dtype=float)
-            Denrichment_Dtheta[SolvedDofA]= Dsol_Dtheta[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
-            #DCorrectedPressure_Dtheta=np.array(Dpress_Dtheta)
-            #DCorrectedPressure_Dtheta[SolvedDofA]=DCorrectedPressure_Dtheta[SolvedDofA].T+np.array(Denrichment_Dtheta[SolvedDofA]*np.sign(LevelSet[SolvedDofA]).T)
+            Denrichment_Dtheta = np.zeros(fluid_ndof, dtype=float)
+            Denrichment_Dtheta[SolvedDofA] = Dsol_Dtheta[
+                list(range(len(SolvedDofF), len(SolvedDofF) + len(SolvedDofA)))
+            ]
+            # DCorrectedPressure_Dtheta=np.array(Dpress_Dtheta)
+            # DCorrectedPressure_Dtheta[SolvedDofA]=DCorrectedPressure_Dtheta[SolvedDofA].T+np.array(Denrichment_Dtheta[SolvedDofA]*np.sign(LevelSet[SolvedDofA]).T)
             frfgradient.append(
                 objXFEM.getGradientQuadraticPressure(
                     fluid_nodes,
@@ -468,15 +487,15 @@ for x_pos_struc_ini in [6199,6200,6201]:
                     LevelSet,
                     LevelSetTangent,
                     flag_edge_enrichment,
-                ))
+                )
+            )
             dpress_save.append(Dpress_Dtheta.copy())
-        
 
         logger.info("time at the end of the FRF: {}".format(time.ctime()))
-        frfsave=[frequencies,frf,frfgradient]
-        if rank>0:
+        frfsave = [frequencies, frf, frfgradient]
+        if rank > 0:
             comm.send(frfsave, dest=0, tag=11)
-        if (flag_write_gmsh_results==1) and (rank==0):
+        if (flag_write_gmsh_results == 1) and (rank == 0):
             msh2.mshWriter(
                 cwd / (results_file + "_results_fluid_frf.msh"),
                 fluid_nodes,
@@ -501,25 +520,31 @@ for x_pos_struc_ini in [6199,6200,6201]:
             )
 
         # save the FRF problem
-        Allfrequencies=np.zeros(nb_freq_step)
-        Allfrf=np.zeros(nb_freq_step)
-        Allfrfgradient=np.zeros(nb_freq_step)
-        k=0
-        if rank==0:
+        Allfrequencies = np.zeros(nb_freq_step)
+        Allfrf = np.zeros(nb_freq_step)
+        Allfrfgradient = np.zeros(nb_freq_step)
+        k = 0
+        if rank == 0:
             for i in range(nproc):
-                if rank >0:
+                if rank > 0:
                     data = comm.recv(source=i, tag=11)
                 else:
-                    data=frfsave
+                    data = frfsave
                 for j in range(len(data[0])):
-                    Allfrequencies[k]=data[0][j]
-                    Allfrf[k]=data[1][j]
-                    Allfrfgradient[k]=data[2][j]
-                    k=k+1
+                    Allfrequencies[k] = data[0][j]
+                    Allfrf[k] = data[1][j]
+                    Allfrfgradient[k] = data[2][j]
+                    k = k + 1
 
-            Allfrequencies, Allfrf,Allfrfgradient = zip(*sorted(zip(Allfrequencies, Allfrf,Allfrfgradient)))
-            Allfrfsave=[np.array(list(Allfrequencies)),np.array(list(Allfrf)),np.array(list(Allfrfgradient)),press_save,dpress_save]
+            Allfrequencies, Allfrf, Allfrfgradient = zip(
+                *sorted(zip(Allfrequencies, Allfrf, Allfrfgradient))
+            )
+            Allfrfsave = [
+                np.array(list(Allfrequencies)),
+                np.array(list(Allfrf)),
+                np.array(list(Allfrfgradient)),
+                press_save,
+                dpress_save,
+            ]
             with open(cwd / (results_file + "_results.frf"), "wb") as f:
                 pickle.dump(Allfrfsave, f)
-
-
