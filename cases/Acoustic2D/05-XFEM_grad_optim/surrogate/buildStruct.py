@@ -1,4 +1,4 @@
-import scipy
+import numpy as np
 
 ### Build levelset of the structure and gradients of it
 
