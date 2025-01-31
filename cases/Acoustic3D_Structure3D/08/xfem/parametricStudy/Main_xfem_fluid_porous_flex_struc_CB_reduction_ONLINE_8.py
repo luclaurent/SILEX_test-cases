@@ -795,7 +795,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
     frf=[]
 
     if (Flag_frf_analysis==1):
-        print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime()))
+        print ("Proc. {} / time at the beginning of the FRF: {}".format(rank, time.ctime()))
 
         if rank==0:
             print('nb of total dofs: ',nb_mode_F+len(SolvedDofB)+len(SolvedDofA)+len(SolvedDofP)+nb_mode_S,)
@@ -812,7 +812,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
             frequencies.append(freq)
             omega=2*np.pi*freq
 
-            print ("proc number",rank,"frequency=",freq)
+            print ("proc number {} - frequency={}".format(rank,freq))
 
             tic = time.process_time()
             IIp,JJp,Vppk,Vppm=silex_lib_porous_tet4_fortran.stiffnessmassmatrix(fluid_nodes2,fluid_elements2,porous_material_prop,omega)
@@ -874,7 +874,7 @@ def RunPb(nbModesFluid,nbModesSolid,freqMin,freqMax,nbStep,nbProc,rank,comm):
                 print ("Proc. ",rank,"Send data")
                 comm.send(frfsave, dest=0, tag=11)
 
-        print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime()))
+        print ("Proc. {} / time at the end of the FRF: {}".format(rank, time.ctime()))
 
         if (flag_write_gmsh_results==1) and (rank==0):
             print ("Write results")

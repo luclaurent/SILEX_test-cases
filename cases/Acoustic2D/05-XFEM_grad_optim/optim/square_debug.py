@@ -313,7 +313,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,caseDefine):
             #freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
             frequencies.append(freq)
             omega=2*np.pi*freq
-            print("proc number",rank,"frequency=",freq)
+            print("proc number {} - frequency={}".format(rank,freq))
 
             FF[SolvedDofF]=-(KFF[SolvedDofF,:][:,IdnodeS2-1]-(omega**2)*MFF[SolvedDofF,:][:,IdnodeS2-1])*(np.ones((len(IdnodeS2))))
             FA = np.zeros(fluid_ndof)

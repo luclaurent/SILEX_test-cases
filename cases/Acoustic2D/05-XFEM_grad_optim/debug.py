@@ -297,7 +297,7 @@ for x_pos_struc_ini in [5050]:#[6199,6200,6201]:
             freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
             frequencies.append(freq)
             omega=2*np.pi*freq
-            print("proc number",rank,"frequency=",freq,end='')
+            print("proc number {} - frequency={}".format(rank,freq),end='')
 
             FF[SolvedDofF]=-(KFF[SolvedDofF,:][:,IdnodeS2-1]-(omega**2)*MFF[SolvedDofF,:][:,IdnodeS2-1])*(np.ones((len(IdnodeS2))))
             FA = np.zeros(fluid_ndof)

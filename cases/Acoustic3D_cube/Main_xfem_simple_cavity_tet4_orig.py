@@ -317,7 +317,7 @@ frf=[]
 frfgradient=[]
 
 if (Flag_frf_analysis==1):
-    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime()))
+    print ("Proc. {} / time at the beginning of the FRF: {}".format(rank, time.ctime()))
 
     if rank==0:
         print('nb of total dofs: ',len(SolvedDofF)+len(SolvedDofA))
@@ -333,7 +333,7 @@ if (Flag_frf_analysis==1):
         omega=2*np.pi*freq
         #print('omega = ',omega)
 
-        print ("proc number",rank,"frequency=",freq)
+        print ("proc number {} - frequency={}".format(rank,freq))
 
         tic = time.process_time()        
         
@@ -361,7 +361,7 @@ if (Flag_frf_analysis==1):
 
     frfsave=[np.array(frequencies),np.array(frf)]
 
-    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime()))
+    print ("Proc. {} / time at the end of the FRF: {}".format(rank, time.ctime()))
 
     if (flag_write_gmsh_results==1) and (rank==0):
         silex_lib_gmsh.WriteResults2(str(cwd /(results_file+str(rank)+'_results_fluid_frf')),fluid_nodes,fluid_elements1,4,[[press_save,'nodal',1,'pressure']])

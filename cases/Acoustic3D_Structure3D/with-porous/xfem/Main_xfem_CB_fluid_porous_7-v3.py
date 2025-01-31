@@ -696,7 +696,7 @@ frequencies=[]
 frf=[]
 
 if (Flag_frf_analysis==1):
-    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime()))
+    print ("Proc. {} / time at the beginning of the FRF: {}".format(rank, time.ctime()))
 
     press_save=[]
     disp_save=[]
@@ -707,7 +707,7 @@ if (Flag_frf_analysis==1):
         frequencies.append(freq)
         omega=2*np.pi*freq
 
-        print ("proc number",rank,"frequency=",freq)
+        print ("proc number {} - frequency={}".format(rank,freq))
 
         tic = time.process_time()
         IIp,JJp,Vppk,Vppm=silex_lib_porous_tet4_fortran.stiffnessmassmatrix(fluid_nodes2,fluid_elements2,porous_material_prop,omega)
@@ -768,7 +768,7 @@ if (Flag_frf_analysis==1):
         silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',fluid_nodes1,fluid_elements1,4,[[press_save,'nodal',1,'pressure']])
         silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_struct_frf',struc_nodes,struc_elements,2,[[disp_save,'nodal',3,'displacement']])
 
-    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime()))
+    print ("Proc. {} / time at the end of the FRF: {}".format(rank, time.ctime()))
 
     # Save the FRF problem
     Allfrequencies=np.zeros(nb_freq_step)

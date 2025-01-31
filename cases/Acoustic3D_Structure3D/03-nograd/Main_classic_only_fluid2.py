@@ -1,32 +1,76 @@
 import string
 import time
+import numpy as np
 import scipy
 import scipy.sparse
 import scipy.sparse.linalg
+import scipy.io
+import getopt
+from pathlib import Path
+from loguru import logger
 
-#import os
 import pylab as pl
 import pickle
 
+
+import pymumps
+
 import sys
-sys.path.append('../../../librairies')
+from meshRW import msh, msh2
+from SILEXlib import silex_lib_fem, silex_lib_xfem
+from SILEXlib import MeshField
 
-import silex_lib_xfem_acou_tet4
-import silex_lib_dkt_fortran
-import silex_lib_gmsh
+# load classes
+acousticsFEM = silex_lib_fem.LinearAcousticsTET4()
+acousticsXFEM = silex_lib_xfem.LinearAcousticsTET4()
+structureFEM = silex_lib_fem.DKT()
 
-import mumps
 
 from mpi4py import MPI
+
 comm = MPI.COMM_WORLD
-nproc=comm.Get_size()
+
+nproc = comm.Get_size()
 rank = comm.Get_rank()
+log_format = (
+    "<cyan> R{extra[rank]}</cyan> |"
+    "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+    "<level>{level: <8}</level> | "
+    "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
+    "<level>{message}</level>"
+)
+
+logger.remove()
+logger.configure(extra={"rank": 0})  # Default values
+logger.add(
+    sys.stdout,
+    level="DEBUG",
+    format=log_format,
+    colorize=True,
+    backtrace=True,
+    diagnose=True,
+)
+logger = logger.bind(rank=rank)
+
+# mpirun -np 2 python Main_xfem.py
+logger.info("START")
+
+
+def mpiInfo():
+    comm = MPI.COMM_WORLD
+    nproc = comm.Get_size()
+    rank = comm.Get_rank()
+    return nproc, rank, comm
+
 
 class comm_mumps_one_proc:
     rank = 0
+
     def py2f(self):
         return 0
-mycomm=comm_mumps_one_proc()
+
+
+mycomm = comm_mumps_one_proc()
 
 # To run it in parallel for several frequencies:
 # export OPENBLAS_NUM_THREADS=1
@@ -129,7 +173,7 @@ frequencies=[]
 frf=[]
 
 if (Flag_frf_analysis==1):
-    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime()))
+    print ("Proc. {} / time at the beginning of the FRF: {}".format(rank, time.ctime()))
 
     press_save=[]
     disp_save=[]
@@ -141,7 +185,7 @@ if (Flag_frf_analysis==1):
         frequencies.append(freq)
         omega=2*np.pi*freq
 
-        print ("proc number",rank,"frequency=",freq)
+        print ("proc number {} - frequency={}".format(rank,freq))
 
         F=np.array(omega**2*P , dtype='c16')
         #F=np.array(P , dtype='c16')
@@ -167,7 +211,7 @@ if (Flag_frf_analysis==1):
     if rank==0:
         silex_lib_gmsh.WriteResults2(results_file+'_results_fluid_frf',fluid_nodes,fluid_elements,4,[[press_save,'nodal',1,'pressure']])
 
-    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime()))
+    print ("Proc. {} / time at the end of the FRF: {}".format(rank, time.ctime()))
 
     # save the FRF problem
     Allfrequencies=np.zeros(nb_freq_step)

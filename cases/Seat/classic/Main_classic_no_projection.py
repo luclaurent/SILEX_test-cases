@@ -323,7 +323,7 @@ frequencies=[]
 frf=[]
 
 if (Flag_frf_analysis==1):
-    print ("Proc. ",rank," / time at the beginning of the FRF: {}".format(time.ctime()))
+    print ("Proc. {} / time at the beginning of the FRF: {}".format(rank, time.ctime()))
 
     press_save=[]
     disp_save=[]
@@ -338,7 +338,7 @@ if (Flag_frf_analysis==1):
         frequencies.append(freq)
         omega=2*np.pi*freq
 
-        print ("proc number",rank,"frequency=",freq)
+        print ("proc number {} - frequency={}".format(rank,freq))
 
         #sol = scipy.sparse.linalg.spsolve(K-(omega*omega)*M, F.T)
         #sol = mumps.spsolve( scipy.sparse.csc_matrix(K-(omega*omega)*M,dtype='d') , np.array(F.todense() , dtype='d'), comm=comm_mumps_one_proc()).T
@@ -366,7 +366,7 @@ if (Flag_frf_analysis==1):
         silex_lib_gmsh.WriteResults2(results_file+'_results_fluid_frf',fluid_nodes,fluid_elements,4,[[press_save,'nodal',1,'pressure']])
         silex_lib_gmsh.WriteResults2(results_file+'_results_struct_frf',struc_nodes,struc_elements,2,[[disp_save,'nodal',3,'displacement']])
 
-    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime()))
+    print ("Proc. {} / time at the end of the FRF: {}".format(rank, time.ctime()))
 
     # Plot the FRF problem
     #f=open(results_file+'_results_no_damping.frf','wb')

@@ -671,7 +671,7 @@ if (Flag_frf_analysis==1):
         freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
         frequencies.append(freq)
         omega=2*np.pi*freq
-        print ("proc number",rank,"frequency=",freq)
+        print ("proc number {} - frequency={}".format(rank,freq))
 
         #sol = scipy.sparse.linalg.spsolve(K-(omega*omega)*M+omega*D*1j, F)
         #sol = scipy.linalg.solve(np.array((K-(omega*omega)*M+omega*D*1j).todense()),np.array(F.todense()))
@@ -699,7 +699,7 @@ if (Flag_frf_analysis==1):
             disp_save.append(disp)
             press_save.append(CorrectedPressure.real)
 
-    print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime()))
+    print ("Proc. {} / time at the end of the FRF: {}".format(rank, time.ctime()))
     frfsave=[frequencies,frf]
     comm.send(frfsave, dest=0, tag=11)
 

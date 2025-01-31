@@ -323,13 +323,13 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
             frequencies.append(freq)
             omega=2*np.pi*freq
 
-            print ("proc number",rank,"frequency=",freq)
+            print ("proc number {} - frequency={}".format(rank,freq))
 
             IIp,JJp,Vppk,Vppm=silex_lib_porous_tet4_fortran.stiffnessmassmatrix(fluid_nodes2,fluid_elements2,porous_material_prop,omega)
             KPP=scipy.sparse.csc_matrix( (Vppk,(IIp,JJp)), shape=(fluid_ndof2,fluid_ndof2) )
             MPP=scipy.sparse.csc_matrix( (Vppm,(IIp,JJp)), shape=(fluid_ndof2,fluid_ndof2) )
 
-            print ("proc number",rank,"frequency=",freq,"Build K and M")
+            print ("proc number {} - frequency={}".format(rank,freq),"Build K and M")
             K=scipy.sparse.bmat( [ [KFF[SolvedDofF,:][:,SolvedDofF],-CPF[SolvedDofP,:][:,SolvedDofF].T],
                                              [None,KPP[SolvedDofP,:][:,SolvedDofP]] ] )
             M=scipy.sparse.bmat( [ [MFF[SolvedDofF,:][:,SolvedDofF],None],
@@ -338,22 +338,22 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
     ##                                         [None,KPP[SolvedDofP,:][:,SolvedDofP]] ] )
     ##        M=scipy.sparse.bmat( [ [MFF[SolvedDofF,:][:,SolvedDofF],None],
     ##                                         [None,MPP[SolvedDofP,:][:,SolvedDofP]] ] )
-            print ("proc number",rank,"frequency=",freq,"Build F")
+            print ("proc number {} - frequency={}".format(rank,freq),"Build F")
             F=np.array(omega**2*UF[SolvedDof] , dtype='c16')
 
-            print ("proc number",rank,"frequency=",freq,"Solve")
+            print ("proc number {} - frequency={}".format(rank,freq),"Solve")
             #sol=scipy.sparse.linalg.spsolve( scipy.sparse.csc_matrix(K-(omega*omega)*M,dtype=complex) , np.array(F , dtype=complex) )
             sol = mumps.spsolve( scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='c16') , F , comm=mycomm )
             #sol = mumps.spsolve( scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='float') , F , comm=mycomm )
             press1 = np.zeros((fluid_ndof1),dtype=complex)
             press1[SolvedDofF]=sol[list(range(len(SolvedDofF)))]
-            print ("proc number",rank,"frequency=",freq,"Append FRF")
+            print ("proc number {} - frequency={}".format(rank,freq),"Append FRF")
             frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes1,press1))
 
             if rank==0:
                 press_save.append(press1.real)
 
-            print ("proc number",rank,"frequency=",freq,"END compute")
+            print ("proc number {} - frequency={}".format(rank,freq),"END compute")
 
         print ("Save FRF")
         frfsave=[frequencies,frf]
@@ -367,7 +367,7 @@ def RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm):
             print ("Write results")
             silex_lib_gmsh.WriteResults2(results_file+'_results_fluid_frf',fluid_nodes1,fluid_elements1,4,[[press_save,'nodal',1,'pressure']])
 
-        print ("Proc. ",rank," / time at the end of the FRF: {}".format(time.ctime()))
+        print ("Proc. {} / time at the end of the FRF: {}".format(rank, time.ctime()))
 
         # save the FRF problem
         Allfrequencies=np.zeros(nbStep)
