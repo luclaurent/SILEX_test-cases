@@ -259,7 +259,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     toc = time.process_time()
     if rank == 0:
-        print("time to compute level set:", toc-tic)
+        print("time to compute level set: {}".format(toc-tic))
 
     if (flag_write_gmsh_results == 1) and (rank == 0):
         # silex_lib_gmsh.WriteResults2(
@@ -314,7 +314,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     toc = time.process_time()
     if rank == 0:
-        print("time to find enriched elements:", toc-tic)
+        print("time to find enriched elements: {}".format(toc-tic))
 
     tic = time.process_time()
 
@@ -367,7 +367,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     toc = time.process_time()
     if rank == 0:
-        print("time to compute Heaviside enrichment:", toc-tic)
+        print("time to compute Heaviside enrichment: {}".format(toc-tic))
 
     ##################################################################
     # Construct the whole system
@@ -427,7 +427,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         frfgradient.append([])
 
     if (Flag_frf_analysis == 1):
-        print("Proc. ", rank, " / time at the beginning of the FRF:", time.ctime())
+        print("Proc. {} / time at the beginning of the FRF: {}".format(rank, time.ctime()))
         time0_frf=time.process_time()
 
         if rank == 0:
@@ -456,7 +456,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             frequencies.append(freq)
             omega = 2*np.pi*freq
 
-            print("Freq. step ",it,"/",itmax," proc number", rank, "frequency=", freq)
+            print("Freq. step  {}/{} - proc number {} - frequency= {}".format(it, itmax, rank, freq))
 
             tic = time.process_time()
 
@@ -546,7 +546,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             comm.send(frfsave, dest=0, tag=11)
 
         time1_frf=time.process_time()
-        print("Proc. ", rank, " / time at the end of the FRF:", time.ctime())
+        print("Proc. {} / time at the end of the FRF: {}".format(rank,time.ctime()))
         print("Time for FRF: ", time1_frf-time0_frf)
         print("Mean time for one freq. step: ", (time1_frf-time0_frf)/nbStep)
 

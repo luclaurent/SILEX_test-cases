@@ -6,6 +6,7 @@ from loguru import logger
 import scipy
 import scipy.sparse
 import scipy.sparse.linalg
+import gmsh
 
 import pylab as pl
 import pickle
@@ -14,7 +15,7 @@ import pickle
 
 import sys
 from meshRW import msh, msh2
-from SILEXlib import silex_lib_fem, silex_lib_xfem
+from SILEXlib import silex_lib_fem, silex_lib_xfem,silex_lib_tri3
 from SILEXlib import MeshField
 
 # load classes
@@ -48,23 +49,43 @@ results_file = "xfem_1"
 celerity = 340.0
 rho = 1.2
 
-freq_ini = 500.0
+freq_ini = 10.0
+freq_end = 1000.0
+nbfreq = 1000
 
 flag_write_gmsh_results = 1
 
 flag_edge_enrichment = 0
-# flag_edge_enrichment=1
+flag_edge_enrichment=1
+
+dirichlet = False
 
 # freq_comparaison = 210.0
 
+
+# remesh
+cwd = Path(__file__).resolve().parent
+if rank == 0:
+    gmsh.initialize()
+    gmsh.open(str(cwd / (mesh_file + "_fluid.geo")))
+    gmsh.model.mesh.generate(2)
+    gmsh.model.mesh.refine()
+    gmsh.model.mesh.refine()
+    gmsh.model.mesh.refine()
+    gmsh.model.mesh.refine()
+    gmsh.model.mesh.refine()
+    # gmsh.model.mesh.refine()
+    # gmsh.model.mesh.refine()
+    gmsh.option.setNumber("Mesh.MshFileVersion",2.2)  
+    gmsh.write(str(cwd / (mesh_file + "_fluid.msh")))
+
+comm.Barrier()
 
 ##############################################################
 # Load fluid mesh
 ##############################################################
 
 tic = time.process_time()
-
-cwd = Path(__file__).resolve().parent
 
 # start reading mesh
 mesh = msh.mshReader(cwd / (mesh_file + "_fluid.msh"))
@@ -101,7 +122,7 @@ logger.info("nelem for fluid=", fluid_nelem)
 
 tic = time.process_time()
 
-LevelSet = fluid_nodes[:, 0] - 0.8
+LevelSet = fluid_nodes[:, 0] - 0.75
 LevelSetTangent = fluid_nodes[:, 1] - 1.5
 
 if (flag_write_gmsh_results == 1) and (rank == 0):
@@ -136,15 +157,16 @@ logger.info("time to compute level set: {}".format(toc - tic))
 ##################################################################
 tic = time.process_time()
 
-struc_nodes = np.array([[0.8, 0.0], [0.8, 0.3], [0.8, 1.5]])
+struc_nodes = np.array([[0.75, 0.0], [0.75, 0.3], [0.75, 1.5]])
 struc_elements = np.array([[1, 2], [2, 3]])
 struc_boun = np.array([3])
 
-msh2.mshWriter(
-    cwd / (results_file + "_struc_mesh.msh"),
-    struc_nodes,
-    {"type": "LIN2", "connectivity": struc_elements},
-)
+if rank ==0:
+    msh2.mshWriter(
+        cwd / (results_file + "_struc_mesh.msh"),
+        struc_nodes,
+        {"type": "LIN2", "connectivity": struc_elements},
+    )
 
 EnrichedElements = objXFEM.getEnrichedElements(
     fluid_nodes, fluid_elements, struc_nodes, struc_elements
@@ -187,8 +209,10 @@ IIf, JJf, Vffk, Vffm = objFEM.getMatrices(fluid_nodes, fluid_elements, [celerity
 KFF = scipy.sparse.csc_matrix((Vffk, (IIf, JJf)), shape=(fluid_ndof, fluid_ndof))
 MFF = scipy.sparse.csc_matrix((Vffm, (IIf, JJf)), shape=(fluid_ndof, fluid_ndof))
 
-SolvedDofF = np.setdiff1d(list(range(fluid_ndof)), IdnodeS2 - 1)
-# SolvedDofF=range(fluid_ndof)
+if dirichlet:
+    SolvedDofF = np.setdiff1d(list(range(fluid_ndof)), IdnodeS2 - 1)
+else:
+    SolvedDofF = range(fluid_ndof)
 
 toc = time.process_time()
 logger.info("time to compute fluid matrices: {}".format(toc - tic))
@@ -272,11 +296,12 @@ Enrichednodes = np.unique(fluid_elements[EnrichedElements])
 # Enrichednodes = np.unique(fluid_elements)
 SolvedDofA = Enrichednodes - 1
 
-msh2.mshWriter(
-    cwd / (results_file + "_EnrichedElements.msh"),
-    fluid_nodes,
-    {"type": "TRI3", "connectivity": fluid_elements[EnrichedElements.flatten()]},
-)
+if rank ==0:
+    msh2.mshWriter(
+        cwd / (results_file + "_EnrichedElements.msh"),
+        fluid_nodes,
+        {"type": "TRI3", "connectivity": fluid_elements[EnrichedElements.flatten()]},
+    )
 
 #################################################################
 # Construct the whole system
@@ -302,72 +327,145 @@ M = scipy.sparse.bmat(
 ##############################################################
 
 FF = np.zeros(fluid_ndof)
+solvFRF = list()
+solvPRESS = list()
+solvENRICH = list()
 
-freq = freq_ini
-omega = 2 * np.pi * freq
+freqlist = np.linspace(freq_ini, freq_end, nbfreq)
 
-FF[SolvedDofF] = -(
-    KFF[SolvedDofF, :][:, IdnodeS2 - 1]
-    - (omega * omega) * MFF[SolvedDofF, :][:, IdnodeS2 - 1]
-) * (np.zeros((len(IdnodeS2))) + 1.0)
-FA = np.zeros(fluid_ndof)
-F = FF[SolvedDofF]
-F = np.concatenate((F, FA[SolvedDofA]))
+chunks = [[] for _ in range(nproc)]
+for i, chunk in enumerate(freqlist):
+    chunks[i % nproc].append(chunk)
+# Divide the data among processes
+freqlistMPI = comm.scatter(chunks, root=0)
 
-sol = scipy.sparse.linalg.spsolve(K - (omega * omega) * M, F)
+for freq in freqlistMPI:
+    omega = 2 * np.pi * freq
 
-press = np.zeros(fluid_ndof)
-press[SolvedDofF] = sol[list(range(len(SolvedDofF)))]
-enrichment = np.zeros(fluid_nnodes)
-enrichment[SolvedDofA] = sol[
-    list(range(len(SolvedDofF), len(SolvedDofF) + len(SolvedDofA)))
-]
-CorrectedPressure = press.copy()
-CorrectedPressure[np.ix_(SolvedDofA)] = CorrectedPressure[SolvedDofA] + \
-                                        enrichment[SolvedDofA] * np.sign(LevelSet[SolvedDofA])
-# quadratic_pressure=silex_lib_tri3_acou.computequadratiquepressure(fluid_elements,fluid_nodes,CorrectedPressure)
-quadratic_pressure = objXFEM.getQuadraticPressure(
-    fluid_nodes,
-    fluid_elements,
-    press,
-    enrichment,
-    LevelSet,
-    LevelSetTangent,
-    flag_edge_enrichment,
-)
-
-# prepare final data
-objMesh = MeshField.MeshField(fluid_nodes, fluid_elements, LevelSet, LevelSetTangent)
-objMesh.addField(press,enrichment)
-# extract final data
-data = objMesh.getData(['nodes','mesh','levelset','levelset_tangent','fields'])
+    if dirichlet:    
+        press[IdnodeS2-1] = np.ones(len(IdnodeS2))
+        FF[SolvedDofF] = -(
+        KFF[np.ix_(SolvedDofF,IdnodeS2-1)]
+        - (omega * omega) * MFF[np.ix_(SolvedDofF,IdnodeS2-1)]
+        ) * press[IdnodeS2-1]
+    else:
+        UF = 1e-3
+        forceSurf = np.array([UF,0,UF,0 ])*omega**2
+        ptsbnd = [fluid_nodes[IdnodeS2-1,0].min(),
+                fluid_nodes[IdnodeS2-1,1].min(),
+                fluid_nodes[IdnodeS2-1,0].max(),
+                fluid_nodes[IdnodeS2-1,1].max()]
+        FF= silex_lib_tri3.forceonline(fluid_nodes,fluid_elements_boun,forceSurf,ptsbnd)
+        FF = FF[::2]
 
 
-if (flag_write_gmsh_results == 1) and (rank == 0):
+    FA = np.zeros(fluid_ndof)
+    F = FF[SolvedDofF]
+    F = np.concatenate((F, FA[SolvedDofA]))
+
+    sol = scipy.sparse.linalg.spsolve(K - (omega * omega) * M, F)
+
+    press = np.zeros(fluid_ndof)
+    press[IdnodeS2-1] = np.ones(len(IdnodeS2))
+    press[SolvedDofF] = sol[list(range(len(SolvedDofF)))]
+    enrichment = np.zeros(fluid_nnodes)
+    enrichment[SolvedDofA] = sol[
+        list(range(len(SolvedDofF), len(SolvedDofF) + len(SolvedDofA)))
+    ]
+    CorrectedPressure = press.copy()
+    CorrectedPressure[np.ix_(SolvedDofA)] = CorrectedPressure[SolvedDofA] + \
+                                            enrichment[SolvedDofA] * np.sign(LevelSet[SolvedDofA])
+    solvPRESS.append(press)
+    solvENRICH.append(enrichment)
+    # quadratic_pressure=silex_lib_tri3_acou.computequadratiquepressure(fluid_elements,fluid_nodes,CorrectedPressure)
+    quadratic_pressure = objXFEM.getQuadraticPressure(
+        fluid_nodes,
+        fluid_elements,
+        press,
+        enrichment,
+        LevelSet,
+        LevelSetTangent,
+        flag_edge_enrichment,
+    )
+    solvFRF.append(quadratic_pressure)
+
+comm.Barrier()
+# Send the results back to the master processes
+newData = comm.gather(solvFRF,root=0)
+newDataPRESS = comm.gather(solvPRESS,root=0)
+newDataENRICH = comm.gather(solvENRICH,root=0)
+
+comm.Barrier()
+
+
+
+if rank ==0:
+    freqListFinal = np.concatenate(chunks)
+    IXsort = np.argsort(freqListFinal)
+    freqListFinal = freqListFinal[IXsort]
+    quadpressure = np.concatenate(newData)
+    quadpressure = quadpressure[IXsort] 
+    solpressure = np.concatenate(newDataPRESS)
+    solpressure = solpressure[IXsort]
+    solenrich = np.concatenate(newDataENRICH)
+    solenrich = solenrich[IXsort]
+
+    data ={"freq": freqListFinal, "mag": quadpressure, "nbnodes": fluid_nnodes, "nelem": fluid_nelem}
+    with open("solvFRF"+str(fluid_nnodes).zfill(6)+".pkl", "wb") as f:
+        pickle.dump(data, f)
+
+
+    # prepare final data
+    objMesh = MeshField.MeshField(fluid_nodes, fluid_elements, LevelSet, LevelSetTangent)
+    objMesh.addField(np.array(solpressure).transpose(),np.array(solenrich).transpose())
+    # extract final data
+    data = objMesh.getData(['nodes','mesh','levelset','levelset_tangent','fields'])
     msh2.mshWriter(
-        cwd / (results_file + "_results_fluid_frf.msh"),
-        data['nodes'],
-        [{"type": "TRI3", "connectivity": data['TRI3']},
-         {"type": "QUA4", "connectivity": data['QUA4']}],
+            cwd / (results_file + "_results_fluid_frf_along.msh"),
+            data['nodes'],
+            [{"type": "TRI3", "connectivity": data['TRI3']},
+            {"type": "QUA4", "connectivity": data['QUA4']}],
+            fields={
+                "data": data['fields'],
+                "type": "nodal",
+                "nbsteps": nbfreq,
+                "name": "pressure",
+            },
+            append=True,
+        )
+
+    # prepare final data
+    objMesh = MeshField.MeshField(fluid_nodes, fluid_elements, LevelSet, LevelSetTangent)
+    objMesh.addField(press,enrichment)
+    # extract final data
+    data = objMesh.getData(['nodes','mesh','levelset','levelset_tangent','fields'])
+
+
+    if (flag_write_gmsh_results == 1) and (rank == 0):
+        msh2.mshWriter(
+            cwd / (results_file + "_results_fluid_frf.msh"),
+            data['nodes'],
+            [{"type": "TRI3", "connectivity": data['TRI3']},
+            {"type": "QUA4", "connectivity": data['QUA4']}],
+            fields={
+                "data": data['fields'],
+                "type": "nodal",
+                "dim": 1,
+                "name": "pressure",
+            },
+            append=True,
+        )
+        msh2.mshWriter(
+        cwd / (results_file + "_results_fluid_frf_raw.msh"),
+        fluid_nodes,
+        [{"type": "TRI3", "connectivity": fluid_elements}],
         fields={
-            "data": data['fields'],
+            "data": CorrectedPressure,
             "type": "nodal",
             "dim": 1,
             "name": "pressure",
         },
         append=True,
-    )
-    msh2.mshWriter(
-    cwd / (results_file + "_results_fluid_frf_raw.msh"),
-    fluid_nodes,
-    [{"type": "TRI3", "connectivity": fluid_elements}],
-    fields={
-        "data": CorrectedPressure,
-        "type": "nodal",
-        "dim": 1,
-        "name": "pressure",
-    },
-    append=True,
-    )
+        )
 
-print('')
+    print('')

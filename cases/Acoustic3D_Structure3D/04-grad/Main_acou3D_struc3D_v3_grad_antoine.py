@@ -256,7 +256,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     toc = time.process_time()
     if rank == 0:
-        print("time to compute level set:", toc-tic)
+        print("time to compute level set: {}".format(toc-tic))
 
     if (flag_write_gmsh_results == 1) and (rank == 0):
         #silex_lib_gmsh.WriteResults2(
@@ -288,12 +288,12 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     tmp = []
     for i in LSEnrichednodes:
         for j in range(4):
-            tmpp = scipy.where(fluid_elements1[:, j] == i)[0]
+            tmpp = np.where(fluid_elements1[:, j] == i)[0]
             for k in range(len(tmpp)):
                 tmp.append(tmpp[k])
-    # tmp.append(scipy.where(fluid_elements1[:,1]==i))
-    # tmp.append(scipy.where(fluid_elements1[:,2]==i))
-    # tmp.append(scipy.where(fluid_elements1[:,3]==i))
+    # tmp.append(np.where(fluid_elements1[:,1]==i))
+    # tmp.append(np.where(fluid_elements1[:,2]==i))
+    # tmp.append(np.where(fluid_elements1[:,3]==i))
 
     tmp = np.unique(np.array(tmp))
     # tmp1,elttest0,tmp2=scipy.intersect1d(fluid_elements1[:,0],LSEnrichednodes,return_indices=True)
@@ -311,7 +311,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     toc = time.process_time()
     if rank == 0:
-        print("time to find enriched elements:", toc-tic)
+        print("time to find enriched elements: {}".format(toc-tic))
 
     tic = time.process_time()
 
@@ -364,7 +364,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     toc = time.process_time()
     if rank == 0:
-        print("time to compute Heaviside enrichment:", toc-tic)
+        print("time to compute Heaviside enrichment: {}".format(toc-tic))
 
     ##################################################################
     # Construct the whole system
@@ -424,7 +424,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         frfgradient.append([])
 
     if (Flag_frf_analysis == 1):
-        print("Proc. ", rank, " / time at the beginning of the FRF:", time.ctime())
+        print("Proc. {} / time at the beginning of the FRF: {}".format(rank, time.ctime()))
 
         if rank == 0:
             print('nb of total dofs: ', len(SolvedDofF)+len(SolvedDofA))
@@ -534,20 +534,20 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         if rank!=0:
             comm.send(frfsave, dest=0, tag=11)
 
-        print("Proc. ", rank, " / time at the end of the FRF:", time.ctime())
+        print("Proc. {} / time at the end of the FRF: {}".format(rank,time.ctime()))
 
         if (flag_write_gmsh_results == 1) and (rank == 0):
             dataW=list()
             #prepare pressure field
             dataW.append([np.real(press_save),'nodal',1,'pressure (real)'])
             dataW.append([np.imag(press_save),'nodal',1,'pressure (imaginary)'])
-            dataW.append([scipy.absolute(press_save),'nodal',1,'pressure (norm)'])
+            dataW.append([np.absolute(press_save),'nodal',1,'pressure (norm)'])
             #prepare gradient pressure field
             itG=0
             for itP in NamePara:
                 dataW.append([np.real(dpress_save[itG]),'nodal',1,'pressure gradient '+itP+' (real)'])
                 dataW.append([np.imag(dpress_save[itG]),'nodal',1,'pressure gradient '+itP+' (imaginary)'])
-                dataW.append([scipy.absolute(dpress_save[itG]),'nodal',1,'pressure gradient '+itP+' (norm)'])
+                dataW.append([np.absolute(dpress_save[itG]),'nodal',1,'pressure gradient '+itP+' (norm)'])
                 itG=itG+1
             print("Write pressure field and gradients in msh file")
             silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',

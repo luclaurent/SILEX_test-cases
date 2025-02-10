@@ -74,7 +74,7 @@ def computeFreqPerProc(nbStep,nbProc,freqInit,freqEnd):
 
 #function for finding the number of the node by specifying the coordinates
 def findNode(coorNodes,coorSpecif):
-    return scipy.where(scipy.all(coorNodes==coorSpecif,axis=1))
+    return np.where(scipy.all(coorNodes==coorSpecif,axis=1))
 
 ###########################################################
 # To run it in parallel for several frequencies:

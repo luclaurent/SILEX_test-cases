@@ -1,12 +1,12 @@
 // Parameters: acoustic cavity
 lx = 1.0;
-ly = 1.0;
+ly = 0.6;
 
 // xfem 1
 //n1 = lx/3; 
 
 // xfem 2
-n1 = lx/50;
+n1 = lx/10;
 
 // xfem 3
 //n1 = lx/27;

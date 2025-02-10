@@ -119,7 +119,7 @@ cwd = Path(__file__).resolve().parent
 
 freq_ini = 150.0
 freq_end = 500.0
-nb_freq_step = 500
+nb_freq_step = 5
 
 flag_write_gmsh_results = 1
 
@@ -231,8 +231,8 @@ if (flag_write_gmsh_results == 1) and (rank == 0):
     )
 
 if rank == 0:
-    logger.info("nnodes for structure=", struc_nnodes)
-    logger.info("nelem for structure=", struc_nelem)
+    logger.info("nnodes for structure= {}".format(struc_nnodes))
+    logger.info("nelem for structure= {}".format(struc_nelem))
 
 ##################################################################
 # compute level set

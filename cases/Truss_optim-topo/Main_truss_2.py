@@ -211,7 +211,7 @@ for i in range(len(frequencies)):
         frf.append(np.sqrt( Q[(dico[24]-1)*2]**2 + Q[(dico[24]-1)*2+1]**2) )
     else:
         frf.append(np.sqrt( Q[(24-1)*2]**2 + Q[(24-1)*2+1]**2) )
-    #frf.append(scipy.absolute(Q[(24-1)*2+1]))
+    #frf.append(np.absolute(Q[(24-1)*2+1]))
 
     # displacement written on 2 columns:
     disp=np.zeros((nnodes,2))

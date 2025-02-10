@@ -9,37 +9,64 @@
 ###########################################################
 # Libraries
 ###########################################################
-import getopt
 import string
 import time
+import numpy as np
 import scipy
 import scipy.sparse
 import scipy.sparse.linalg
 import scipy.io
-
-import pickle
-
-import sys
+import getopt
 import os
 from shutil import copyfile
-sys.path.append('../../librairies')
+from pathlib import Path
+from loguru import logger
 
-import silex_lib_xfem_acou_tet4
-import silex_lib_gmsh
-#import silex_lib_dkt_fortran as silex_lib_dkt
+import pylab as pl
+import pickle
 
-#import silex_lib_tet4_fortran_test as silex_lib_tet4
 
-#import silex_lib_porous_tet4_fortran
+import pymumps
 
-# manage mumps librairie
-import mumps
-#from mpi4py import MPI
-#comm = MPI.COMM_WORLD
-#nproc = comm.Get_size()
-#rank = comm.Get_rank()
+import sys
+from meshRW import msh, msh2
+from SILEXlib import silex_lib_fem, silex_lib_xfem
+from SILEXlib import MeshField
+
+# load classes
+acousticsFEM = silex_lib_fem.LinearAcousticsTET4()
+acousticsXFEM = silex_lib_xfem.LinearAcousticsTET4()
+# structureFEM = silex_lib_fem.DKT()
+
 
 from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+
+nproc = comm.Get_size()
+rank = comm.Get_rank()
+log_format = (
+    "<cyan> R{extra[rank]}</cyan> |"
+    "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+    "<level>{level: <8}</level> | "
+    "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
+    "<level>{message}</level>"
+)
+
+logger.remove()
+logger.configure(extra={"rank": 0})  # Default values
+logger.add(
+    sys.stdout,
+    level="DEBUG",
+    format=log_format,
+    colorize=True,
+    backtrace=True,
+    diagnose=True,
+)
+logger = logger.bind(rank=rank)
+
+# mpirun -np 2 python Main_xfem.py
+logger.info("START")
 
 
 def mpiInfo():
@@ -51,9 +78,13 @@ def mpiInfo():
 
 class comm_mumps_one_proc:
     rank = 0
+
     def py2f(self):
         return 0
+
+
 mycomm = comm_mumps_one_proc()
+
 
 # distribution of frequencies per processor
 def computeFreqPerProc(nbStep, nbProc, freqInit, freqEnd):
@@ -64,36 +95,37 @@ def computeFreqPerProc(nbStep, nbProc, freqInit, freqEnd):
     varCase = 1
     if nbFreqProcRemain == 0:
         varCase = 0
-    listFreq = np.zeros((nbFreqProc+varCase, nbProc))
+    listFreq = np.zeros((nbFreqProc + varCase, nbProc))
     listAllFreq = np.linspace(freqInit, freqEnd, nbStep)
-    # print(np.linspace(freqInit,freqEnd,nbStep))
+    # logger.info(np.linspace(freqInit,freqEnd,nbStep))
     # build array of frequencies
     itF = 0
     for itP in range(nbProc):
-        for itC in range(nbFreqProc+varCase):
-            if itC*nbProc+itP < nbStep:
+        for itC in range(nbFreqProc + varCase):
+            if itC * nbProc + itP < nbStep:
                 listFreq[itC, itP] = listAllFreq[itF]
                 itF += 1
 
-    # print(listFreq)
+    # logger.info(listFreq)
     return listFreq
 
-#load structure mesh fo values of parameters
-def buildStructMesh(fileOrig,destFile,paraVal):
-    #copy original file to the used one
-    copyfile(fileOrig+'.geo',destFile+'.geo')
-    #change value of parameters in the new file
-    for key,value in enumerate(paraVal):
-        oldText="<val##"+str(key)+">"
-        newText='%g'%value
-        #print(oldText)
-        #print(newText) 
-        cmdSed="sed -i 's/"+oldText+"/"+newText+"/g' "+destFile+'.geo'
-        #print(cmdSed)
+
+# load structure mesh fo values of parameters
+def buildStructMesh(fileOrig, destFile, paraVal):
+    # copy original file to the used one
+    copyfile(fileOrig + ".geo", destFile + ".geo")
+    # change value of parameters in the new file
+    for key, value in enumerate(paraVal):
+        oldText = "<val##" + str(key) + ">"
+        newText = "%g" % value
+        # logger.info(oldText)
+        # logger.info(newText)
+        cmdSed = "sed -i 's/" + oldText + "/" + newText + "/g' " + destFile + ".geo"
+        # logger.info(cmdSed)
         os.system(cmdSed)
-        
-    #run gmsh to build the mesh
-    #os.system('gmsh -3 -format msh2 '+destFile+'.geo')
+
+    # run gmsh to build the mesh
+    # os.system('gmsh -3 -format msh2 '+destFile+'.geo')
 
 
 ###########################################################
@@ -114,19 +146,21 @@ def buildStructMesh(fileOrig,destFile,paraVal):
 ##############################################################
 
 
-def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDefine):
-
-    print("##################################################")
-    print("##################################################")
-    print("##################################################")
-    print("##    Start SILEX vibro-acoustics computation   ##")
-    print("##################################################")
-    print("##################################################")
+def RunPb(
+    freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1
+):  # , caseDefine):
+    logger.info("##################################################")
+    logger.info("##################################################")
+    logger.info("##################################################")
+    logger.info("##    Start SILEX vibro-acoustics computation   ##")
+    logger.info("##################################################")
+    logger.info("##################################################")
 
     # load 3D geometry
-    orig_mesh_file = 'geom/cavity_acou3D_struc_3D_v3_para'
-    mesh_file = 'geom/cavity_acou3D_struc_3D_v3'
-    results_file_ini = 'results/cavity_acou3D_struc_3D_v3'
+    orig_mesh_file = "geom/cavity_acou3D_struc_3D_v3_para"
+    mesh_file = "geom/cavity_acou3D_struc_3D_v3"
+    results_file_ini = "results/cavity_acou3D_struc_3D_v3"
+    cwd = Path(__file__).resolve().parent
 
     listFreqPerProc = computeFreqPerProc(nbStep, nbProc, freqMin, freqMax)
 
@@ -137,7 +171,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
     # air
     celerity = 340.0
     rho = 1.2
-    fluid_damping = (1+0.01j)
+    fluid_damping = 1 + 0.01j
 
     nproc = comm.Get_size()
     rank = comm.Get_rank()
@@ -147,8 +181,8 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
     flag_edge_enrichment = 0
 
     # prepare save file
-    results_file = results_file_ini+'_nowall'
-    print(results_file)
+    results_file = results_file_ini + "_nowall"
+    logger.info(results_file)
 
     ##############################################################
     # Load fluid mesh
@@ -156,11 +190,14 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
 
     tic = time.process_time()
 
-    fluid_nodes = silex_lib_gmsh.ReadGmshNodes(mesh_file+'_air.msh', 3)
-    fluid_elements1, IdNodes1 = silex_lib_gmsh.ReadGmshElements(
-        mesh_file+'_air.msh', 4, 1)  # air, cavity + controlled volume
-    fluid_elements5, IdNodes5 = silex_lib_gmsh.ReadGmshElements(
-        mesh_file+'_air.msh', 4, 5)  # air, ONLY controlled volume
+    mesh = msh.mshReader(cwd / (mesh_file + "_air.msh"))
+
+    fluid_nodes = mesh.getNodes()
+    fluid_elements1 = mesh.getElements(tag=1)["TET4"]  # air, cavity
+    fluid_elements5 = mesh.getElements(tag=5)["TET4"]  # air, control volum
+
+    IdNodes1 = np.unique(fluid_elements1.flatten())
+    IdNodes5 = np.unique(fluid_elements5.flatten())
 
     fluid_nnodes = fluid_nodes.shape[0]
     fluid_nelem1 = fluid_elements1.shape[0]
@@ -172,30 +209,34 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
     fluid_ndof = fluid_nnodes
 
     if rank == 0:
-        print("Number of nodes:", fluid_nnodes)
-        print("Number of elements in air:", fluid_nelem1)
-        print("Number of nodes in air:", fluid_nnodes1)
+        logger.info("Number of nodes:", fluid_nnodes)
+        logger.info("Number of elements in air:", fluid_nelem1)
+        logger.info("Number of nodes in air:", fluid_nnodes1)
 
     if (flag_write_gmsh_results == 1) and (rank == 0):
-        silex_lib_gmsh.WriteResults(
-            results_file+'_air_cavity_Mesh1', fluid_nodes, fluid_elements1, 4)
-        silex_lib_gmsh.WriteResults(
-            results_file+'_air_controlled_volume_Mesh5', fluid_nodes, fluid_elements5, 4)
+        msh2.mshWriter(
+            cwd / (results_file + "_air_cavity_Mesh1.msh"),
+            fluid_nodes,
+            {"type": "TET4", "connectivity": fluid_elements1},
+        )
+        msh2.mshWriter(
+            cwd / (results_file + "_air_controlled_volume_Mesh5.msh"),
+            fluid_nodes,
+            {"type": "TET4", "connectivity": fluid_elements5},
+        )
 
-    
     ##############################################################
     # Compute Standard Fluid Matrices
     ##############################################################
 
     tic = time.process_time()
 
-    IIf, JJf, Vffk, Vffm = silex_lib_xfem_acou_tet4.globalacousticmatrices(
-        fluid_elements1, fluid_nodes, celerity, rho)
+    IIf, JJf, Vffk, Vffm = acousticsFEM.getMatrices(
+        fluid_nodes, fluid_elements1, [celerity, rho]
+    )
 
-    KFF = scipy.sparse.csc_matrix(
-        (Vffk, (IIf, JJf)), shape=(fluid_ndof, fluid_ndof))
-    MFF = scipy.sparse.csc_matrix(
-        (Vffm, (IIf, JJf)), shape=(fluid_ndof, fluid_ndof))
+    KFF = scipy.sparse.csc_matrix((Vffk, (IIf, JJf)), shape=(fluid_ndof, fluid_ndof))
+    MFF = scipy.sparse.csc_matrix((Vffm, (IIf, JJf)), shape=(fluid_ndof, fluid_ndof))
 
     SolvedDofF = list(range(fluid_ndof))
 
@@ -203,11 +244,9 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
     # Construct the whole system
     #################################################################
 
-    K = scipy.sparse.bmat([
-        [fluid_damping*KFF[SolvedDofF, :][:, SolvedDofF]]])
+    K = scipy.sparse.bmat([[fluid_damping * KFF[SolvedDofF, :][:, SolvedDofF]]])
 
-    M = scipy.sparse.bmat([
-        [MFF[SolvedDofF, :][:, SolvedDofF]]])
+    M = scipy.sparse.bmat([[MFF[SolvedDofF, :][:, SolvedDofF]]])
 
     ##################################################################
     # Build Second member
@@ -215,8 +254,8 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
 
     # To impose the load on the fluid:
     # fluid node number 1
-    UF = np.zeros(2*fluid_ndof, dtype=float)
-    UF[9-1] = 3.1250E-05
+    UF = np.zeros(2 * fluid_ndof, dtype=float)
+    UF[9 - 1] = 3.1250e-05
 
     SolvedDof = np.hstack([SolvedDofF])
 
@@ -228,114 +267,156 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
     frequencies = []
     frf = []
 
-    if (Flag_frf_analysis == 1):
-        print("Proc. ", rank, " / time at the beginning of the FRF:", time.ctime())
+    if Flag_frf_analysis == 1:
+        logger.info(
+            "Proc. {} / time at the beginning of the FRF: {}".format(rank, time.ctime())
+        )
 
         if rank == 0:
-            print('nb of total dofs: ', len(SolvedDofF))
+            logger.info("nb of total dofs: ", len(SolvedDofF))
 
         press_save = []
         disp_save = []
 
-        #extract frequencies for the associated processors
-        freqCompute=listFreqPerProc[:,rank]
-        freqCompute=freqCompute[freqCompute>0]
-        it=0
-        itmax=len(freqCompute)         
+        # extract frequencies for the associated processors
+        freqCompute = listFreqPerProc[:, rank]
+        freqCompute = freqCompute[freqCompute > 0]
+        it = 0
+        itmax = len(freqCompute)
         for freq in freqCompute:
-            it=it+1
-            #freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
+            it = it + 1
+            # freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
             frequencies.append(freq)
-            omega = 2*np.pi*freq
+            omega = 2 * np.pi * freq
 
-            print("Freq. step ",it," proc number", rank, "frequency=", freq)
+            logger.info("Freq. step {} - proc number {} - frequency={}".format(it, rank, freq))
 
             tic = time.process_time()
 
-            F = np.array(omega**2*UF[SolvedDof], dtype='c16')
+            F = np.array(omega**2 * UF[SolvedDof], dtype="c16")
 
-            if rank>=0:
-                 #print(K)
-                 #print(M)
-                 #print(omega)
-                 sol = mumps.spsolve(K-(omega**2)*M, F+0.j,comm=mycomm)
-                 
-                 #sol = mumps.spsolve(scipy.sparse.coo_matrix( \
-                 #   K-(omega**2)*M, dtype='complex'), F+0.j,comm=mycomm)
-                 #sol
-                 #sol = scipy.sparse.linalg.spsolve(scipy.sparse.csc_matrix(
-                 #     K-(omega**2)*M, dtype='c16'), F)
-            
+            if rank >= 0:
+                # logger.info(K)
+                # logger.info(M)
+                # logger.info(omega)
+                #  sol = mumps.spsolve(K-(omega**2)*M, F+0.j,comm=mycomm)
+                sol = scipy.sparse.linalg.spsolve(
+                    K - (omega**2) * M, F + 0.0j)
+
+                # sol = mumps.spsolve(scipy.sparse.coo_matrix( \
+                #   K-(omega**2)*M, dtype='complex'), F+0.j,comm=mycomm)
+                # sol
+                # sol = scipy.sparse.linalg.spsolve(scipy.sparse.csc_matrix(
+                #     K-(omega**2)*M, dtype='c16'), F)
+
             ## pressure field without enrichment
             press1 = np.zeros((fluid_ndof), dtype=complex)
             press1[SolvedDofF] = sol[list(range(len(SolvedDofF)))]
             ## compute and store FRF on the test volume
             # frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes,CorrectedPressure))
-            frf.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(
-                fluid_elements5, fluid_nodes, press1, 0.*press1, np.real(0.*press1)+1., press1*0-1.0))
+            frf.append(
+                acousticsXFEM.getQuadraticPressure(
+                    fluid_nodes,
+                    fluid_elements5,
+                    press1,
+                    0.0 * press1,
+                    np.real(0.0 * press1) + 1.0,
+                    np.real(0.0 * press1) * 0 - 1.0,
+                )
+            )
 
-            
             if (flag_write_gmsh_results == 1) and (rank == 0):
                 press_save.append(press1)
-           
-        frfsave=[frequencies,frf]
-        if rank!=0:
+
+        frfsave = [frequencies, frf]
+        if rank != 0:
             comm.send(frfsave, dest=0, tag=11)
 
-        print("Proc. ", rank, " / time at the end of the FRF:", time.ctime())
+        logger.info(
+            "Proc. {} / time at the end of the FRF: {}".format(rank, time.ctime())
+        )
 
         if (flag_write_gmsh_results == 1) and (rank == 0):
-            dataW=list()
-            #prepare pressure field
-            dataW.append([np.real(press_save),'nodal',1,'pressure (real)'])
-            dataW.append([np.imag(press_save),'nodal',1,'pressure (imaginary)'])
-            dataW.append([scipy.absolute(press_save),'nodal',1,'pressure (norm)'])            
-            print("Write pressure field and gradients in msh file")
-            silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',
-                                        fluid_nodes, fluid_elements1, 4,dataW)
-            print(">>> Done!!")
-            
+            dataW = list()
+            # prepare pressure field
+            dataW.append(
+                {
+                    "data": np.real(press_save),
+                    "type": "nodal",
+                    "nbsteps": len(freqCompute),
+                    "name": "pressure (real)",
+                }
+            )
+            dataW.append(
+                {
+                    "data": np.imag(press_save),
+                    "type": "nodal",
+                    "nbsteps": len(freqCompute),
+                    "name": "pressure (imaginary)",
+                }
+            )
+            dataW.append(
+                {
+                    "data": np.absolute(press_save),
+                    "type": "nodal",
+                    "nbsteps": len(freqCompute),
+                    "name": "pressure (norm)",
+                }
+            )
+            logger.info("Write pressure field and gradients in msh file")
+            msh2.mshWriter(
+                cwd / (results_file + str(rank) + "_results_fluid_frf.msh"),
+                fluid_nodes,
+                {"type": "TET4", "connectivity": fluid_elements1},
+                fields=dataW,
+                append=True,
+            )
+
+            logger.info(">>> Done!!")
+
         #####################
         #####################
         # save the FRF problem
-        Allfrequencies=np.zeros(nbStep)
-        Allfrf=np.zeros(nbStep)
-        k=0
-        if rank==0:
+        Allfrequencies = np.zeros(nbStep)
+        Allfrf = np.zeros(nbStep)
+        k = 0
+        if rank == 0:
             for i in range(nproc):
-                if i==0:
-                    data=frfsave
-                    print(data)
+                if i == 0:
+                    data = frfsave
+                    logger.info(data)
                 else:
-                    print(i)
-                    data=comm.recv(source=i, tag=11)
-                    #data=data_buffer
+                    logger.info(i)
+                    data = comm.recv(source=i, tag=11)
+                    # data=data_buffer
 
                 for j in range(len(data[0])):
-                    Allfrequencies[k]=data[0][j]
-                    Allfrf[k]=data[1][j]
-                    k=k+1
+                    Allfrequencies[k] = data[0][j]
+                    Allfrf[k] = data[1][j]
+                    k = k + 1
             #####################
-            IXsort=np.argsort(Allfrequencies)
-            AllfreqSorted=np.zeros(nbStep)
-            AllfrfSorted=np.zeros(nbStep)
-            for itS in range(0,nbStep):
-                AllfreqSorted[itS]=Allfrequencies[IXsort[itS]]
-                AllfrfSorted[itS]=Allfrf[IXsort[itS]]
+            IXsort = np.argsort(Allfrequencies)
+            AllfreqSorted = np.zeros(nbStep)
+            AllfrfSorted = np.zeros(nbStep)
+            for itS in range(0, nbStep):
+                AllfreqSorted[itS] = Allfrequencies[IXsort[itS]]
+                AllfrfSorted[itS] = Allfrf[IXsort[itS]]
 
-            Allfrfsave=list()
+            Allfrfsave = list()
             Allfrfsave.append(AllfreqSorted)
             Allfrfsave.append(AllfrfSorted)
 
-            f=open(results_file+'_results.frf','wb')
-            pickle.dump(Allfrfsave, f)
-            print(Allfrfsave)
-            f.close()
+            with open(cwd / (results_file + "_results.frf"), "wb") as f:
+                pickle.dump(frfsave, f)
             #####################
             #####################
-            #save on mat file
-            scipy.io.savemat(results_file+'_results.mat',mdict={'AllFRF': Allfrfsave})
-            scipy.io.savemat(results_file_ini+'results.mat',mdict={'AllFRF': Allfrfsave})
+            # save on mat file
+            scipy.io.savemat(
+                cwd / (results_file + "_results.mat"), mdict={"AllFRF": Allfrfsave}
+            )
+            scipy.io.savemat(
+                cwd / (results_file_ini + "results.mat"), mdict={"AllFRF": Allfrfsave}
+            )
             #####################
             #####################
             return Allfrfsave
@@ -349,20 +430,20 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, saveResults=1):#, caseDe
 #####################
 #####################
 #####################
-#function for dealing with options
-def manageOpt(argv,dV):
-    #load default values
-    freqMin     = dV.freqMin
-    freqMax     = dV.freqMax
-    nbStep      = dV.nbStep
-    
-    #load info from MPI
-    nbProc,rank,comm=mpiInfo()
-    #load options
-    opts,args = getopt.getopt(argv,"p:s:F:f:hp:c:")
-    for opt,arg in opts:
+# function for dealing with options
+def manageOpt(argv, dV):
+    # load default values
+    freqMin = dV.freqMin
+    freqMax = dV.freqMax
+    nbStep = dV.nbStep
+
+    # load info from MPI
+    nbProc, rank, comm = mpiInfo()
+    # load options
+    opts, args = getopt.getopt(argv, "p:s:F:f:hp:c:")
+    for opt, arg in opts:
         if opt == "-s":
-            nbStep  = int(arg)
+            nbStep = int(arg)
         elif opt == "-F":
             freqMax = float(arg)
         elif opt == "-f":
@@ -370,37 +451,41 @@ def manageOpt(argv,dV):
         elif opt == "-h":
             usage()
             sys.exit()
-    #print chosen parameters
-    print ("Number of processors: ",nbProc)
-    print ("Number of frequency steps: ",nbStep)
-    print ("Maximum frequency: ",freqMax)
-    print ("Minimum frequency: ",freqMin)
-    #print ("Case: ",caseDefine)
-    print ("\n\n")
+    # print chosen parameters
+    print("Number of processors: ", nbProc)
+    print("Number of frequency steps: ", nbStep)
+    print("Maximum frequency: ", freqMax)
+    print("Minimum frequency: ", freqMin)
+    # print ("Case: ",caseDefine)
+    print("\n\n")
 
-    #run computation
-    RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm)#,caseDefine)
+    # run computation
+    RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm)  # ,caseDefine)
 
-#usage definition
+
+# usage definition
 def usage():
-    dV=defaultV
-    print("Usage: ",sys.argv[0],"-psFfh [+arg]")
-    print("\t -p : number of processors (default value ",dV.nbProc,")")
-    print("\t -s : number of steps in the frequency range (default value ",dV.nbStep,")")
-    print("\t -F : maximum frequency (default value ",dV.freqMax,")")
-    print("\t -f : minimum frequency (default value ",dV.freqMin,")")
+    dV = defaultV
+    logger.info("Usage: ", sys.argv[0], "-psFfh [+arg]")
+    logger.info("\t -p : number of processors (default value ", dV.nbProc, ")")
+    logger.info(
+        "\t -s : number of steps in the frequency range (default value ", dV.nbStep, ")"
+    )
+    logger.info("\t -F : maximum frequency (default value ", dV.freqMax, ")")
+    logger.info("\t -f : minimum frequency (default value ", dV.freqMin, ")")
 
-#default values
+
+# default values
 class defaultV:
-    freqMin     = 10.0
-    freqMax     = 600.0
-    nbStep      = 2000
-    nbProc=1
-    #caseDef= 'thick_u'
+    freqMin = 10.0
+    freqMax = 600.0
+    nbStep = 5 # 2000
+    nbProc = 1
+    # caseDef= 'thick_u'
+
 
 ### Run autonomous
-if __name__ == '__main__':
-    #run with options
-    dV=defaultV
-    manageOpt(sys.argv[1:],dV)
-
+if __name__ == "__main__":
+    # run with options
+    dV = defaultV
+    manageOpt(sys.argv[1:], dV)

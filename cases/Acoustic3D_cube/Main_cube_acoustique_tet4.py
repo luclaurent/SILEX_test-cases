@@ -91,7 +91,7 @@ cwd = Path(__file__).resolve().parent
 
 freq_ini     = 150.0
 freq_end     = 1000.0
-nb_freq_step = 1000
+nb_freq_step = 20
 
 #deltafreq=(freq_end-freq_ini)/(nb_freq_step-1)
 

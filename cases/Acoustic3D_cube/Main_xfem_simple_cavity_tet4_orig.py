@@ -28,10 +28,12 @@ import pickle
 import sys
 sys.path.append('../../librairies')
 
-from SILEXlib import silex_lib_xfem_acou_tet4
-from SILEXlib import silex_lib_acou_tet4
+# from SILEXlib import silex_lib_xfem_acou_tet4
+# from SILEXlib import silex_lib_acou_tet4
+import silex_lib_acou_tet4  as silex_lib_acou_tet4
+import silex_lib_xfem_acou_tet4  as silex_lib_xfem_acou_tet4
 from SILEXlib import silex_lib_gmsh
-from SILEXlib import silex_lib_dkt as silex_lib_dkt
+# from SILEXlib import silex_lib_dkt as silex_lib_dkt
 
 # from SILEXlib import silex_lib_porous_tet4_fortran
 #import silex_lib_tet4_fortran
@@ -78,7 +80,7 @@ cwd = Path(__file__).resolve().parent
 
 freq_ini     = 150.0
 freq_end     = 500.0
-nb_freq_step = 500
+nb_freq_step = 5
 
 flag_write_gmsh_results=1
 
@@ -339,8 +341,8 @@ if (Flag_frf_analysis==1):
         
         F=np.array(omega**2*UF[SolvedDof] , dtype='float')
 
-        sol = pymumps.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='float')  , F , comm=mycomm  )
-        #sol=scipy.sparse.linalg.spsolve( scipy.sparse.csc_matrix(K-(omega**2)*M,dtype=float) , np.array(F , dtype=float) )
+        # sol = pymumps.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='float')  , F , comm=mycomm  )
+        sol=scipy.sparse.linalg.spsolve( scipy.sparse.csc_matrix(K-(omega**2)*M,dtype=float) , np.array(F , dtype=float) )
 
         press1 = np.zeros((fluid_ndof1),dtype=complex)
         press1[SolvedDofF]=sol[list(range(len(SolvedDofF)))]
@@ -349,7 +351,7 @@ if (Flag_frf_analysis==1):
         CorrectedPressure=np.zeros((fluid_ndof1),dtype=complex)
         CorrectedPressure[SolvedDofA]=press1[SolvedDofA]+enrichment[SolvedDofA]*np.sign(LevelSet[SolvedDofA])
         #frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes,CorrectedPressure))
-        frf.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadraticpressure(fluid_elements5,fluid_nodes,press1,enrichment,LevelSet,LevelSet*0-1.0))
+        frf.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(fluid_elements5,fluid_nodes,press1,enrichment,LevelSet,LevelSet*0-1.0))
         #frf.append(scipy.dot(scipy.dot(M,sol),sol))
 
         #print(silex_lib_xfem_acou_tet4.makexfemposfile.__doc__)
@@ -364,7 +366,7 @@ if (Flag_frf_analysis==1):
     print ("Proc. {} / time at the end of the FRF: {}".format(rank, time.ctime()))
 
     if (flag_write_gmsh_results==1) and (rank==0):
-        silex_lib_gmsh.WriteResults2(str(cwd /(results_file+str(rank)+'_results_fluid_frf')),fluid_nodes,fluid_elements1,4,[[press_save,'nodal',1,'pressure']])
+        silex_lib_gmsh.WriteResults2(str(cwd /(results_file+'_'+str(rank)+'_results_fluid_frf')),fluid_nodes,fluid_elements1,4,[[press_save,'nodal',1,'pressure']])
 
     f=open(cwd /(results_file+'_results.frf'),'wb')
     pickle.dump(frfsave, f)

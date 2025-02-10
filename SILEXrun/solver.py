@@ -125,12 +125,12 @@ class solverTools(object):
         # tmp = []
         # for i in LSEnrichednodes:
         #     for j in range(4):
-        #         tmpp = scipy.where(fluid_elements1[:, j] == i)[0]
+        #         tmpp = np.where(fluid_elements1[:, j] == i)[0]
         #         for k in range(len(tmpp)):
         #             tmp.append(tmpp[k])
-        # tmp.append(scipy.where(fluid_elements1[:,1]==i))
-        # tmp.append(scipy.where(fluid_elements1[:,2]==i))
-        # tmp.append(scipy.where(fluid_elements1[:,3]==i))
+        # tmp.append(np.where(fluid_elements1[:,1]==i))
+        # tmp.append(np.where(fluid_elements1[:,2]==i))
+        # tmp.append(np.where(fluid_elements1[:,3]==i))
         #
         # tmp = np.unique(np.array(tmp))
         # tmp1,elttest0,tmp2=scipy.intersect1d(fluid_elements1[:,0],LSEnrichednodes,return_indices=True)
