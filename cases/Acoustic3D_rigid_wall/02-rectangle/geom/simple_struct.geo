@@ -1,5 +1,5 @@
 // Parameters: acoustic cavity
-lx1 = 0.6001;
+lx1 = 0.75001;
 ly1 = 0.6;
 lz1 = 0.4;
 
@@ -7,8 +7,8 @@ lz1 = 0.4;
 a = 0.66;
 
 // size of elements
-h =  lx1/10;
-h2 = lz1/10;
+h =  lx1/20;
+h2 = lz1/20;
 
 //h  = lx1*10;
 //h2 = lz1*10;

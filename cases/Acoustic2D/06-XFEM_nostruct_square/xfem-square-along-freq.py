@@ -60,6 +60,9 @@ flag_edge_enrichment=1
 
 dirichlet = False
 
+x_w = 0.800001
+y_w = 0.6
+
 # freq_comparaison = 210.0
 
 
@@ -69,11 +72,11 @@ if rank == 0:
     gmsh.initialize()
     gmsh.open(str(cwd / (mesh_file + "_fluid.geo")))
     gmsh.model.mesh.generate(2)
-    gmsh.model.mesh.refine()
-    gmsh.model.mesh.refine()
-    gmsh.model.mesh.refine()
-    gmsh.model.mesh.refine()
-    gmsh.model.mesh.refine()
+    # gmsh.model.mesh.refine()
+    # gmsh.model.mesh.refine()
+    # gmsh.model.mesh.refine()
+    # gmsh.model.mesh.refine()
+    # gmsh.model.mesh.refine()
     # gmsh.model.mesh.refine()
     # gmsh.model.mesh.refine()
     gmsh.option.setNumber("Mesh.MshFileVersion",2.2)  
@@ -122,8 +125,8 @@ logger.info("nelem for fluid=", fluid_nelem)
 
 tic = time.process_time()
 
-LevelSet = fluid_nodes[:, 0] - 0.75
-LevelSetTangent = fluid_nodes[:, 1] - 1.5
+LevelSet = fluid_nodes[:, 0] - x_w
+LevelSetTangent = fluid_nodes[:, 1] - y_w
 
 if (flag_write_gmsh_results == 1) and (rank == 0):
     msh2.mshWriter(
@@ -157,7 +160,7 @@ logger.info("time to compute level set: {}".format(toc - tic))
 ##################################################################
 tic = time.process_time()
 
-struc_nodes = np.array([[0.75, 0.0], [0.75, 0.3], [0.75, 1.5]])
+struc_nodes = np.array([[x_w, 0.0], [x_w, 0.5], [x_w, y_w]])
 struc_elements = np.array([[1, 2], [2, 3]])
 struc_boun = np.array([3])
 
@@ -327,6 +330,8 @@ M = scipy.sparse.bmat(
 ##############################################################
 
 FF = np.zeros(fluid_ndof)
+press = np.zeros(fluid_ndof)
+enrichment = np.zeros(fluid_ndof)
 solvFRF = list()
 solvPRESS = list()
 solvENRICH = list()

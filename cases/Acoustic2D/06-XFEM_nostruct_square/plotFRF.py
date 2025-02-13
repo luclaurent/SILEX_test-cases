@@ -17,19 +17,19 @@ for file in glob.glob("solvFRF*.pkl"):
     dataplot.append(data)
     #
     d["freq"] = data["freq"]
-    nbelem = re.findall(r'\d+', file)
-    d[str(int(nbelem[0]))] = data["mag"]
+    d['pquad_'+str(int(data["nelem"]))+'_'+str(int(data["nbnodes"]))] = data["mag"]
+    d['Lp_'+str(int(data["nelem"]))+'_'+str(int(data["nbnodes"]))] = 10*np.log10(np.abs(data["mag"])/pref**2)
 
 
 
 # compute eigen frequencies
-lx = 0.6
-ly = 0.75
+lx = 0.8
+ly = 0.6
 clty = 340.0
 fmax = 1000
 eigfreq = list()
-for i in range(100):
-    for j in range(100):
+for i in range(10):
+    for j in range(10):
         eigfreq.append((clty/2)*(i**2/lx**2+j**2/ly**2)**0.5)
 
 eigfreq = np.sort(np.array(eigfreq))

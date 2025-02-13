@@ -3,7 +3,7 @@
 ax = 0.6;
 hy = 0.6;
 
-n1 = hy/20;
+n1 = hy/50;
 
 Point(1) = {ax,  0  , 0, n1};
 Point(2) = {ax,  hy  , 0, n1};

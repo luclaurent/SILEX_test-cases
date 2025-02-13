@@ -9,17 +9,17 @@ cp = cProfile.Profile()
 
 from Main_acou3D_struc3D_v3_grad import *
 
-freqMin=10.
-freqMax=150.
+freqMin=150.
+freqMax=300.
 paraVal=np.array([1.,1.,0.5,0.8])#[2.0,2.0,1.0,1.0])
-nbStep=2000
+nbStep=2
 
 
 #load info from MPI
 nbProc,rank,comm=mpiInfo() 
 
 #cp.enable()
-dataFRFgrad=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,[0,1,2,3],0)
+dataFRFgrad=RunPb(freqMin,freqMax,nbStep,nbProc,rank,comm,paraVal,[0,1,2,3],1)
 #cp.disable()
 #cp.print_stats()
 

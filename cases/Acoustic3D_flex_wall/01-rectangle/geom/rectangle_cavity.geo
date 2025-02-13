@@ -26,7 +26,7 @@ Point(6) = {lx1,    0  , lz1, h};
 Point(7) = {lx1,    ly1 , lz1, h};
 Point(8) = {0 ,    ly1 , lz1, h};
 
-xc= 0.7;
+xc= 0.85;
 yc= 0.3;
 zc= 0.1;
 lxc = 0.1;

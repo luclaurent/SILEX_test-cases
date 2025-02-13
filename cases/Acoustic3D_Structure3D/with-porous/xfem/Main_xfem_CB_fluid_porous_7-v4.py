@@ -17,6 +17,7 @@
 
 import string
 import time
+import numpy as np
 import scipy
 import scipy.sparse
 import scipy.sparse.linalg

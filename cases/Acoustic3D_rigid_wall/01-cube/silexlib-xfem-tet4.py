@@ -364,7 +364,7 @@ def RunPb(
     # Construct the whole system
     #################################################################
 
-    K = scipy.sparse.construct.bmat(
+    K = scipy.sparse.bmat(
         [
             [
                 fluid_damping * KFF[SolvedDofF, :][:, SolvedDofF],
@@ -377,7 +377,7 @@ def RunPb(
         ]
     )
 
-    M = scipy.sparse.construct.bmat(
+    M = scipy.sparse.bmat(
         [
             [MFF[SolvedDofF, :][:, SolvedDofF], MAF[SolvedDofF, :][:, SolvedDofA]],
             [MAF[SolvedDofA, :][:, SolvedDofF], MAA[SolvedDofA, :][:, SolvedDofA]],

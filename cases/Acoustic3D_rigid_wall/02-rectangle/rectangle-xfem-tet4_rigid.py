@@ -117,7 +117,7 @@ def buildStructMesh(fileOrig, destFile, paraVal):
 
 
 def RunPb(
-    freqMin, freqMax, nbStep, nbrefine, nbProc, rank, comm, saveResults=1
+    freqMin, freqMax, nbStep, nbrefine, nbProc, rank, comm, saveResults=0
 ):  # , caseDefine):
     logger.info("##################################################")
     logger.info("##################################################")
@@ -235,6 +235,8 @@ def RunPb(
 
     # LS from a structure mesh
     LevelSet,distance = objXFEM.getLevelSet(fluid_nodes, struc_nodes, struc_elements)
+    #manual calculation of LevelSet
+    LevelSet = fluid_nodes[:, 0] - 0.75
 
 
     # # LS from a simple analytic shape (sphere)
@@ -313,7 +315,7 @@ def RunPb(
         msh2.mshWriter(
             cwd / (results_file + "_enriched_elements.msh"),
             fluid_nodes,
-            {"type": "TET4", "connectivity": fluid_elements1[EnrichedElements]}
+            {"type": "TET4", "connectivity": fluid_elements1[EnrichedElements-1]}
         )   
             
         LS_moins_enriched = numpy.setdiff1d(LSEnrichedElements, EnrichedElements)
@@ -376,7 +378,7 @@ def RunPb(
     # Construct the whole system
     #################################################################
 
-    K = scipy.sparse.construct.bmat(
+    K = scipy.sparse.bmat(
         [
             [
                 fluid_damping * KFF[SolvedDofF, :][:, SolvedDofF],
@@ -389,7 +391,7 @@ def RunPb(
         ]
     )
 
-    M = scipy.sparse.construct.bmat(
+    M = scipy.sparse.bmat(
         [
             [MFF[SolvedDofF, :][:, SolvedDofF], MAF[SolvedDofF, :][:, SolvedDofA]],
             [MAF[SolvedDofA, :][:, SolvedDofF], MAA[SolvedDofA, :][:, SolvedDofA]],
@@ -622,7 +624,7 @@ def manageOpt(argv, dV):
     # load info from MPI
     nbProc, rank, comm = mpiInfo()
     # load options
-    opts, args = getopt.getopt(argv, "p:s:F:f:hp:c:")
+    opts, args = getopt.getopt(argv, "p:s:F:f:hp:c:r:")
     for opt, arg in opts:
         if opt == "-s":
             nbStep = int(arg)
@@ -635,6 +637,8 @@ def manageOpt(argv, dV):
             paraVal = tmp
         elif opt == "-c":
             caseDefine = str(arg)
+        elif opt == "-r":
+            nbRefine = int(arg)
         elif opt == "-g":
             tmp = numpy.array(arg.split(","), dtype=numpy.int)
             gradCompute = tmp

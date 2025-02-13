@@ -145,9 +145,9 @@ def RunPb(
     fluid_damping = 1  # + 0.01j
     # shell structure
     material_Struc = []
-    material_Struc.append(75000.0e6)  # E Young
-    material_Struc.append(0.33)  # nu
-    material_Struc.append(5.0e-3)  # thickness
+    material_Struc.append(70000.0e6)  # E Young
+    material_Struc.append(0.27)  # nu
+    material_Struc.append(4.0e-3)  # thickness
     material_Struc.append(2700.0)  # rho
 
     dtypecustom = float

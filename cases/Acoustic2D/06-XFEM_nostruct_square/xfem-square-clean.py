@@ -48,7 +48,7 @@ results_file = "xfem_1"
 celerity = 340.0
 rho = 1.2
 
-freq_ini = 1000
+freq_ini = 300
 
 flag_write_gmsh_results = 1
 
@@ -60,7 +60,7 @@ flag_edge_enrichment = 0
 dirichlet = False
 
 x_w = 0.800001
-y_w = 1.5
+y_w = 0.6
 
 
 ##############################################################
