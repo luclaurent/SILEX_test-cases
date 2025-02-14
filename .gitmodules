@@ -1,0 +1,3 @@
+[submodule "SILEXrun"]
+	path = SILEXrun
+	url = git@github.com:luclaurent/SILEXrun.git
