@@ -5,10 +5,10 @@ lz1 = 0.6;
 
 
 // size of elements
-h =  lx1/30;
+h =  lx1/20;
 
 Mesh.CharacteristicLengthMax=10*h;
-Mesh.ElementOrder = 1;
+Mesh.ElementOrder = 2;
 
 // Cavity: Corners
 Point(1) = {0,     0  , 0, h};

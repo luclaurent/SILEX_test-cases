@@ -55,7 +55,7 @@ results_file=Path(__file__).parent / 'cube_sloshing_with_stiffener_tet10'
 dataPb['freq_ini'] = 0.1
 dataPb['freq_ref'] = 0.1
 dataPb['freq_end'] = 2.0
-dataPb['nb_freq_step'] = 300
+dataPb['nb_freq_step'] = 100
 
 # Imposed acceleration on tank and stiffener surfaces 
 dataPb['U_dot_dot_imposed'] = np.array([1.0,0.0,0.0])
