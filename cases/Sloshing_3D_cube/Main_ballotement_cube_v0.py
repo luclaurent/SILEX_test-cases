@@ -10,11 +10,11 @@ import pickle
 
 import sys
 from pathlib import Path
-# sys.path.append('/home/legay/Codes/SILEXGIT/SILEXlib/SILEXlib/tests/')
+sys.path.append('/home/legay/Codes/SILEXGIT/SILEXlib/SILEXlib/tests/')
 import mumps
 import gmsh
-from SILEXlib.tests import utils_tests as u
-from SILEXlib.tests import utils_acoustics as ua
+import utils as u
+import utils_acoustics as ua
 
 
 from SILEXlib import silex_lib_acou_tet4 as libF
@@ -259,11 +259,7 @@ for f in np.linspace(dataPb['freq_ini'],
     forceType ='float'
 
 #    sol = scipy.sparse.linalg.spsolve(KFF-omega**2*MFF,FF)
-
-    ctx = mumps.Context()
-    ctx.factor(HFF-omega**2*SFF)
-    sol = ctx.solve(CF)
-    # sol = mumps.spsolve( HFF-omega**2*SFF , CF , comm=mycomm )
+    sol = mumps.spsolve( HFF-omega**2*SFF , CF , comm=mycomm )
     press.append(sol.copy())
 
     QuantityOfInterest.append(sol[8-1]) # upper corner
