@@ -12,15 +12,16 @@ import pickle
 import sys
 from pathlib import Path
 sys.path.append('/home/legay/Codes/SILEXGIT/SILEXlib/SILEXlib/tests/')
-import mumps
+import pymumps as mumps
 import gmsh
-import utils as u
-import utils_acoustics as ua
+# import utils as u
+# import utils_acoustics as ua
 from meshRW import msh2
 
 # for tet10
 from SILEXlib import silex_lib_acou_tet10 as libF_tet10
 from SILEXlib import silex_lib_xfem_acou_tet10 as libF_tet10_xfem
+from SILEXlib import silex_lib_xfem_acou_tet4 as libF_tet4_xfem
 from SILEXlib import silex_lib_acou_tri6 as libFreeSurf_tet10
 
 # for tet4
@@ -118,6 +119,8 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
     datafluidmesh['fluid_volume_elts'] = fluid_volume_elements
     datafluidmesh['structure_surface_elts'] = structure_surface_elements
     datafluidmesh['free_fluid_surface_elts'] = free_fluid_surface_elements
+    
+    
     #datastructuremesh = dict()
     #datastructuremesh['structure_surface_elts'] = structure_surface_elements
     #datastructuremesh['nodes'] = fluid_nodes # !!!! attention aux tailles des matrices par la suite !!!!!
@@ -249,7 +252,7 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
     IIxf,JJxf,Vkaa,Vmaa,Vkfa,Vmfa = libF_tet10_xfem.globalxfemacousticmatrices(datafluidmesh['fluid_volume_elts'],
                                                                         datafluidmesh['nodes'],
                                                                         Stiffener_LS,
-                                                                        Stiffener_tangent_LS,
+                                                                        Stiffener_tangent_LS*0.0-1.0,
                                                                         1.0,1.0)
 
     HAA=scipy.sparse.csc_matrix( (Vkaa,(IIxf,JJxf)), shape=(fluid_ndof, fluid_ndof) )
@@ -467,25 +470,30 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
 
         #    sol = scipy.sparse.linalg.spsolve(KFF-omega**2*MFF,FF)
             C = np.array([*CF[SolvedDofF]*(-omega**2), *CA[SolvedDofA]*(-omega**2)])
-            sol = mumps.spsolve( H-omega**2*S , C , comm=mycomm )
+            # sol = mumps.spsolve( H-omega**2*S , C , comm=mycomm )
+            sol = scipy.sparse.linalg.spsolve(H-omega**2*S, C)
+            
             CorrectedPressure = np.zeros(fluid_ndof)
-            CorrectedPressure[SolvedDofF] = sol[SolvedDofF]
+            UncorrectedPressure = np.zeros(fluid_ndof)
+            CorrectedPressure[SolvedDofF] = sol[SolvedDofF].copy()
+            UncorrectedPressure[SolvedDofF] = sol[SolvedDofF].copy()
             enrichment = np.zeros(fluid_ndof)
             enrichment[SolvedDofA]= sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA),1))].copy()
+            enrichpress.append(enrichment)
             #CorrectedPressure=np.array(pressure)
             CorrectedPressure=CorrectedPressure+np.array(enrichment*np.sign(Stiffener_LS).T)
             Correctedpress.append(CorrectedPressure)
 
-            soltmp = np.zeros(fluid_ndof) #np.zeros_like(sol[SolvedDofF])
-            soltmp[SolvedDofA] = sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA),1))].copy()
-            soltmp[SpecialTet4nodes-1] = 0.0
-            enrichpress.append(soltmp)
-            pressSpecial= np.zeros(fluid_ndof)
-            pressSpecial[SolvedDofF]=sol[SolvedDofF].copy()
-            pressSpecial[SpecialTet4nodes-1]=pressSpecial[SpecialTet4nodes-1]+np.array(enrichment[SpecialTet4nodes-1]*np.sign(Stiffener_LS[SpecialTet4nodes-1]).T)
-            press.append(pressSpecial)
+            # soltmp = np.zeros(fluid_ndof) #np.zeros_like(sol[SolvedDofF])
+            # soltmp[SolvedDofA] = sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA),1))].copy()
+            # soltmp[SpecialTet4nodes-1] = 0.0
+            # enrichpress.append(soltmp)
+            # pressSpecial= np.zeros(fluid_ndof)
+            # pressSpecial[SolvedDofF]=sol[SolvedDofF].copy()
+            # pressSpecial[SpecialTet4nodes-1]=pressSpecial[SpecialTet4nodes-1]+np.array(enrichment[SpecialTet4nodes-1]*np.sign(Stiffener_LS[SpecialTet4nodes-1]).T)
+            # press.append(pressSpecial)
             #enrichpress.append(CorrectedPressure*0.0)
-            #press.append(CorrectedPressure)
+            press.append(UncorrectedPressure)
 
             QuantityOfInterest.append(sol[8-1]) # upper corner
             
@@ -500,7 +508,7 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
             print(libF_tet10_xfem.tet10totet4.__doc__)
 
             objMesh = lib.MeshField(nodes=datafluidmesh['nodes'], 
-                                    elems=elemtet4, 
+                                    elems=datafluidmesh['fluid_volume_elts'], 
                                     leveset=Stiffener_LS, 
                                     levelsetTg=Stiffener_tangent_LS)
             objMesh.addField(uncorrectedField=np.vstack(press).transpose(),
@@ -513,18 +521,30 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
             dataW.append({'data':datameshfield['LST'],'type':'nodal','name':'tangent levelset'})
             # for it in range(len(press)):
             #     dataW.append({'data':datameshfield['fields'][:,it],'type':'nodal','name':'field '+str(it)+' (levelset)'})
-            dataW = {
+            dataW.append({
                 'name': 'press',
                 'nbsteps': len(press),
                 'type': 'nodal',
                 'data': datameshfield['fields']
-            }
+            })
+            dataW.append({
+                'name': 'uncorrected press',
+                 'nbsteps': len(press),
+                'type': 'nodal',
+                'data': datameshfield['uncorrected']
+            })
+            dataW.append({
+                'name': 'correction press',
+                 'nbsteps': len(press),
+                'type': 'nodal',
+                'data': datameshfield['correction']
+            })
 #            # export mesh
             msh2.mshWriter(
                 filename= results_file.as_posix() +'_results_fluid_frf_meshfield3D.msh',
                 nodes=datameshfield['nodes'],
                 elements=[{'type':'TET4','connectivity':datameshfield['TET4']},
-                        {'type':'PRI6','connectivity':datameshfield['PRI6']}],
+                          {'type':'PRI6','connectivity':datameshfield['PRI6']}],
                 fields=dataW,
                 append=True
                 )
@@ -533,13 +553,17 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
                                     datafluidmesh['nodes'],
                                     datafluidmesh['fluid_volume_elts'],
                                     11,
-                                    [[Correctedpress,'nodal',1,'pressure']]
+                                    [[Correctedpress,'nodal',1,'pressure'],
+                                     [press,'nodal',1,'uncorrectpressure'],
+                                     [enrichpress,'nodal',1,'correction']]
                                     )
             silex_lib_gmsh.WriteResults2(results_file.as_posix() +'_results_fluid_frf_on_tet4mesh',
                                     datafluidmesh['nodes'],
                                     elemtet4,
                                     4,
-                                    [[Correctedpress,'nodal',1,'pressure']]
+                                    [[Correctedpress,'nodal',1,'pressure'],
+                                     [press,'nodal',1,'uncorrectpressure'],
+                                     [enrichpress,'nodal',1,'correction']]
                                     )
 
         print ("Time at the end of the FRF:",time.ctime())
@@ -549,18 +573,40 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
         f.close()
     return
 
-def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_stiffener,results_file):
+def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_stiffener,results_file, convert_from_tet10=False):
     ##############################################################
     # Load fluid mesh and tank
     ##############################################################
 
     tic = time.process_time()
 
-    fluid_nodes=silex_lib_gmsh.ReadGmshNodes(mesh_file_fluid.as_posix()+'.msh',3)
-    fluid_volume_elements,Idfluid_volume_elements=silex_lib_gmsh.ReadGmshElements(mesh_file_fluid.as_posix()+'.msh',4,10)
-    
-    structure_surface_elements,Idnode_structure_surface_elements=silex_lib_gmsh.ReadGmshElements(mesh_file_fluid.as_posix()+'.msh',2,20)
-    free_fluid_surface_elements,Idnode_free_fluid_surface_elements=silex_lib_gmsh.ReadGmshElements(mesh_file_fluid.as_posix()+'.msh',2,30)
+    if convert_from_tet10:
+        fluid_nodes=silex_lib_gmsh.ReadGmshNodes(mesh_file_fluid.as_posix()+'.msh',3)
+        fluid_volume_elements,Idfluid_volume_elements=silex_lib_gmsh.ReadGmshElements(mesh_file_fluid.as_posix()+'.msh',11,10)
+        
+        structure_surface_elements,Idnode_structure_surface_elements=silex_lib_gmsh.ReadGmshElements(mesh_file_fluid.as_posix()+'.msh',9,20)
+        free_fluid_surface_elements,Idnode_free_fluid_surface_elements=silex_lib_gmsh.ReadGmshElements(mesh_file_fluid.as_posix()+'.msh',9,30)
+        # convert tet10 to tet4
+        fluid_volume_elements = fluid_volume_elements[:,0:4] # just take the first 4 nodes of the tet10 elements
+        structure_surface_elements = structure_surface_elements[:,0:3]
+        free_fluid_surface_elements = free_fluid_surface_elements[:,0:3]
+        # remove unsed nodes
+        nb_nodes_initial = fluid_nodes.shape[0]
+        fluid_nodes = fluid_nodes[np.unique(fluid_volume_elements)-1,:] # -1
+        # renumber elements
+        renumbering = np.zeros(nb_nodes_initial)
+        renumbering[np.unique(fluid_volume_elements)-1] = np.arange(1,fluid_nodes.shape[0]+1)
+        fluid_volume_elements = renumbering[fluid_volume_elements-1].astype(int) # -1 for fortran indexing
+        structure_surface_elements = renumbering[structure_surface_elements-1].astype(int) # -1 for fortran indexing
+        free_fluid_surface_elements = renumbering[free_fluid_surface_elements-1].astype(int) # -1 for fortran indexing
+        # update
+        
+    else:
+        fluid_nodes=silex_lib_gmsh.ReadGmshNodes(mesh_file_fluid.as_posix()+'.msh',3)
+        fluid_volume_elements,Idfluid_volume_elements=silex_lib_gmsh.ReadGmshElements(mesh_file_fluid.as_posix()+'.msh',4,10)
+        
+        structure_surface_elements,Idnode_structure_surface_elements=silex_lib_gmsh.ReadGmshElements(mesh_file_fluid.as_posix()+'.msh',2,20)
+        free_fluid_surface_elements,Idnode_free_fluid_surface_elements=silex_lib_gmsh.ReadGmshElements(mesh_file_fluid.as_posix()+'.msh',2,30)
 
 
 
@@ -617,9 +663,9 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
 
     # gmsh output to check
     if dataPb['flag_write_gmsh_results']==1:
-        silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Fluid_volume',datafluidmesh['nodes'],datafluidmesh['fluid_volume_elts'],4)
-        silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Tank_surfaces',datafluidmesh['nodes'],datafluidmesh['structure_surface_elts'],2)
-        silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Fluid_Free_surface',datafluidmesh['nodes'],datafluidmesh['free_fluid_surface_elts'],2)
+        silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Fluid_volume_tet4',datafluidmesh['nodes'],datafluidmesh['fluid_volume_elts'],4)
+        silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Tank_surfaces_tet4',datafluidmesh['nodes'],datafluidmesh['structure_surface_elts'],2)
+        silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Fluid_Free_surface_tet4',datafluidmesh['nodes'],datafluidmesh['free_fluid_surface_elts'],2)
 
     ##############################################################
     # Load stiffener mesh / compute Level Set / Get enriched nodes and elements
@@ -686,13 +732,15 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
                                                         Stiffener_tangent_nodes,
                                                         Stiffener_tangent_mesh)
 
+    Stiffener_tangent_LS = Stiffener_tangent_LS*0.0-1.0 # we put -1 to have the same sign as the Level Set
+
     if dataPb['flag_write_gmsh_results']==1:
         # gmsh output to check
-        silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Stiffener_surface',
+        silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Stiffener_surface_tet4',
                                     dataXfemStiffener['nodes'],
                                     dataXfemStiffener['stiffener_surface_elements'],2)
 
-        silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_LevelSet',
+        silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_LevelSet_tet4',
                                     datafluidmesh['nodes'],
                                     datafluidmesh['fluid_volume_elts'],
                                     4,
@@ -727,7 +775,7 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
 
     # gmsh output to check
     if dataPb['flag_write_gmsh_results']==1:
-        silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Enriched_Fluid_Elements',datafluidmesh['nodes'],datafluidmesh['fluid_volume_elts'][EnrichedElements-1],4)
+        silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Enriched_Fluid_Elements_tet4',datafluidmesh['nodes'],datafluidmesh['fluid_volume_elts'][EnrichedElements-1],4)
         #silex_lib_gmsh.WriteResults(results_file.as_posix()+'_LSEnriched_Fluid_Elements',datafluidmesh['nodes'],datafluidmesh['fluid_volume_elts'][LSEnrichedElements-1],4)
 
     ##############################################################
@@ -789,7 +837,7 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
 
     # check if normal vectors are pointing out of the fluid volume
     if dataPb['flag_write_gmsh_results']==1:
-        silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Normal_to_tank_surfaces',
+        silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Normal_to_tank_surfaces_tet4',
                                 datafluidmesh['nodes'],
                                 datafluidmesh['structure_surface_elts'],
                                 2,
@@ -815,7 +863,7 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
 
     # check if normal vectors are pointing out of the fluid volume
     if dataPb['flag_write_gmsh_results']==1:
-        silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Normal_to_stiffener',
+        silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Normal_to_stiffener_tet4',
                                 dataXfemStiffener['nodes'],
                                 dataXfemStiffener['stiffener_surface_elements'],
                                 2,
@@ -875,7 +923,7 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
 
 
         if dataPb['flag_write_gmsh_results']==1:
-            silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_Eigen_modes',
+            silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_Eigen_modes_tet4',
                                     datafluidmesh['nodes'],
                                     datafluidmesh['fluid_volume_elts'],
                                     4,
@@ -932,15 +980,27 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
             dataW.append({'data':datameshfield['LST'],'type':'nodal','name':'tangent levelset'})
             # for it in range(len(press)):
             #     dataW.append({'data':datameshfield['fields'][:,it],'type':'nodal','name':'field '+str(it)+' (levelset)'})
-            dataW = {
+            dataW.append({
                 'name': 'press',
                 'nbsteps': len(press),
                 'type': 'nodal',
                 'data': datameshfield['fields']
-            }
+            })
+            dataW.append({
+                'name': 'uncorrected press',
+                 'nbsteps': len(press),
+                'type': 'nodal',
+                'data': datameshfield['uncorrected']
+            })
+            dataW.append({
+                'name': 'correction press',
+                 'nbsteps': len(press),
+                'type': 'nodal',
+                'data': datameshfield['correction']
+            })
             # export mesh
             msh2.mshWriter(
-                filename= results_file.as_posix() +'_results_fluid_frf_meshfield3D.msh',
+                filename= results_file.as_posix() +'_results_fluid_frf_tet4_meshfield3D.msh',
                 nodes=datameshfield['nodes'],
                 elements=[{'type':'TET4','connectivity':datameshfield['TET4']},
                         {'type':'PRI6','connectivity':datameshfield['PRI6']}],

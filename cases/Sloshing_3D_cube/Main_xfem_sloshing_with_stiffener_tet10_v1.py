@@ -14,8 +14,8 @@ from pathlib import Path
 sys.path.append('/home/legay/Codes/SILEXGIT/SILEXlib/SILEXlib/tests/')
 import mumps
 import gmsh
-import utils as u
-import utils_acoustics as ua
+# import utils as u
+# import utils_acoustics as ua
 
 import silex_lib_compute_sloshing
 
@@ -54,10 +54,10 @@ mycomm=comm_mumps_one_proc()
 dataPb = dict()
 
 # parallepipedic cavity with plane structure
-mesh_file_fluid=Path(__file__).parent / 'cube_xfem_sloshing_Fluid_and_Tank_tet10'
-mesh_file_stiffener=Path(__file__).parent / 'cube_xfem_sloshing_Stiffener_DKT'
+mesh_file_fluid=Path(__file__).parent / 'cube_xfem_sloshing_Fluid_and_Tank_tet10_LF'
+mesh_file_stiffener=Path(__file__).parent / 'cube_xfem_sloshing_Stiffener_DKT_h'
 
-results_file=Path(__file__).parent / 'cube_xfem_sloshing_with_stiffener_tet10'
+results_file=Path(__file__).parent / 'cube_xfem_sloshing_Fluid_and_Tank_tet10_LF'
 
 dataPb['freq_ini'] = 0.1
 dataPb['freq_ref'] = 0.1
@@ -65,7 +65,8 @@ dataPb['freq_end'] = 2.0
 dataPb['nb_freq_step'] = 100
 
 # Imposed acceleration on tank and stiffener surfaces 
-dataPb['U_dot_dot_imposed'] = np.array([1.0,0.0,0.0])
+# dataPb['U_dot_dot_imposed'] = np.array([1.0,0.0,0.0])
+dataPb['U_dot_dot_imposed'] = np.array([0.0,0.0,1.0])
 
 # Flags
 dataPb['flag_eigen_vectors'] = 0
@@ -90,3 +91,4 @@ dataFluid['rho'] = 1000.0
 #dataPb['valload'] = 1
 
 silex_lib_compute_sloshing.sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_stiffener,results_file)
+silex_lib_compute_sloshing.sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_stiffener,results_file, convert_from_tet10=True)
