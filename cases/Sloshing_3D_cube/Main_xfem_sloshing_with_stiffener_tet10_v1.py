@@ -65,8 +65,8 @@ dataPb['freq_end'] = 2.0
 dataPb['nb_freq_step'] = 100
 
 # Imposed acceleration on tank and stiffener surfaces 
-# dataPb['U_dot_dot_imposed'] = np.array([1.0,0.0,0.0])
-dataPb['U_dot_dot_imposed'] = np.array([0.0,0.0,1.0])
+dataPb['U_dot_dot_imposed'] = np.array([1.0,0.0,0.0])
+# dataPb['U_dot_dot_imposed'] = np.array([1.0,0.0,1.0])
 
 # Flags
 dataPb['flag_eigen_vectors'] = 0
