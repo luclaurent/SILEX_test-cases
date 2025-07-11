@@ -3,7 +3,8 @@ from scipy import optimize
 
 obj = solver.solve()
 
-bounds = [(-0.29, 0.29), (-0.29, 0.29)]
+val_bnd = 0.21
+bounds = [(-0.21, 0.21), (-0.21, 0.21)]
 
 results = dict()
 results['shgo'] = optimize.shgo(obj.run, bounds)

@@ -150,8 +150,8 @@ obj = solve()
 
 # X = np.linspace()
 nb_val = 10
-lup = np.linspace(-0.29, 0.29, nb_val)
-ldown = np.linspace(-0.29, 0.29, nb_val)
+lup = np.linspace(-0.21, 0.21, nb_val)
+ldown = np.linspace(-0.21, 0.21, nb_val)
 X, Y = np.meshgrid(lup, ldown)
 val_p = np.zeros(nb_val * nb_val)
 val_f = np.zeros(nb_val * nb_val)
