@@ -61,14 +61,14 @@ lz = 0.6
 
 # Baffle position and geom
 lx_baffle = 0.31
-lz_baffle = 0.37
+lz_baffle = 0.27
 thickness_baffle = 0.002 # only for classic conforming mesh
 lx_baffle_shift_up = 0.18
 lx_baffle_shift_down = 0.08
 
 
 #size of elements
-h_fluid_elts =  lx/20
+h_fluid_elts =  lx/15
 
 # parallepipedic cavity with plane structure
 mesh_file_fluid_tet10       =Path(__file__).parent / 'cube_xfem_sloshing_Fluid_and_Tank_tet10'
@@ -95,7 +95,7 @@ silex_lib_cube_tank_gmsh_geometry.classic_fluid_and_tank(lx,ly,lz,lx_baffle,lx_b
 dataPb['freq_ini'] = 0.5
 dataPb['freq_ref'] = 0.5
 dataPb['freq_end'] = 2.0
-dataPb['nb_freq_step'] = 200
+dataPb['nb_freq_step'] = 3
 
 # Imposed acceleration on tank and stiffener surfaces 
 dataPb['U_dot_dot_imposed'] = np.array([1.0,0.0,0.0])
@@ -103,7 +103,7 @@ dataPb['U_dot_dot_imposed'] = np.array([1.0,0.0,0.0])
 # Flags
 dataPb['flag_eigen_vectors'] = 0
 dataPb['flag_FRF'] = 1
-dataPb['flag_write_gmsh_results'] = 0
+dataPb['flag_write_gmsh_results'] = 1
 
 # fluid
 dataFluid = dict()
@@ -112,8 +112,8 @@ dataFluid['rho'] = 1000.0
 #data['fluid_damping'] = 1.0
 
 
+#silex_lib_compute_sloshing.sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid_tet4,mesh_file_stiffener,results_file_tet4)
 silex_lib_compute_sloshing.sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid_tet10,mesh_file_stiffener,results_file_tet10)
-silex_lib_compute_sloshing.sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid_tet4,mesh_file_stiffener,results_file_tet4)
-silex_lib_compute_sloshing.sloshing_rigid_baffle_tet4(dataPb,dataFluid,mesh_file_tet4_classic,results_file_tet4_classic)
-silex_lib_compute_sloshing.sloshing_rigid_baffle_tet10(dataPb,dataFluid,mesh_file_tet10_classic,results_file_tet10_classic)
+#silex_lib_compute_sloshing.sloshing_rigid_baffle_tet4(dataPb,dataFluid,mesh_file_tet4_classic,results_file_tet4_classic)
+#silex_lib_compute_sloshing.sloshing_rigid_baffle_tet10(dataPb,dataFluid,mesh_file_tet10_classic,results_file_tet10_classic)
 

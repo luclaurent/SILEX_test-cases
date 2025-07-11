@@ -16,7 +16,7 @@ import mumps
 import gmsh
 import utils as u
 import utils_acoustics as ua
-
+from meshRW import msh2
 
 # for tet10
 from SILEXlib import silex_lib_acou_tet10 as libF_tet10
@@ -30,6 +30,10 @@ from SILEXlib import silex_lib_acou_tri3 as libFreeSurf_tet4
 
 # for tet4 and tet10 : level set
 from SILEXlib import silex_lib_xfem_acou_tet4 as libF_levelset
+
+# for post-processing XFEM results
+from SILEXlib import MeshField as lib
+
 
 # for DKT
 from SILEXlib import silex_lib_dkt as libDKT
@@ -365,6 +369,38 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
     S=scipy.sparse.construct.bmat( [ [SFF[SolvedDofF,:][:,SolvedDofF],None],
                                     [None,HAA[SolvedDofA,:][:,SolvedDofA]*0.0]
                                     ] )
+
+    ##############################################################
+    # Build a tet4 mesh from tet10 fluid mesh : just for plotting
+    ##############################################################
+
+    elemtet4=libF_tet10_xfem.tet10totet4(np.array(datafluidmesh['nodes']),
+                                         np.array(datafluidmesh['fluid_volume_elts']))
+            
+    # Get enriched nodes and elements directly from the stiffener surface mesh
+    EnrichedElementstet4tmp1,NbEnrichedElementstet4=libF_levelset.getsurfenrichedelements(dataXfemStiffener['nodes'],
+                                                                            dataXfemStiffener['stiffener_surface_elements'],
+                                                                            datafluidmesh['nodes'],
+                                                                            elemtet4)
+    EnrichedElementstet4=np.unique(EnrichedElementstet4tmp1[list(range(NbEnrichedElementstet4))])  # here, start with 1 (fortran indexing)
+    Enrichednodestet4 = np.unique(elemtet4[EnrichedElementstet4-1])
+    # nodes enriched for tet10 / but no enriched for tet4
+    SpecialTet4nodes = np.setdiff1d(Enrichednodes,Enrichednodestet4) 
+    
+
+
+    if dataPb['flag_write_gmsh_results']==1:
+        silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Mesh_Fluid_volume_tet10TOtet4',
+                                    datafluidmesh['nodes'],
+                                    elemtet4,4)
+        silex_lib_gmsh.WriteResults(results_file.as_posix()+'_Enriched_Fluid_Elements_tet10TOtet4',
+                                    datafluidmesh['nodes'],
+                                    elemtet4[EnrichedElementstet4-1],4)
+
+
+
+
+
     ##############################################################
     # Compute eigen modes
     ##############################################################
@@ -372,7 +408,7 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
     if dataPb['flag_eigen_vectors']==1:
 
         eigen_values,eigen_vectors= scipy.sparse.linalg.eigsh(H,
-                                                                3,
+                                                                10,
                                                                 S,
                                                                 sigma=0,which='LM')
 
@@ -380,28 +416,41 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
         print('XFEM eigen frequencies : ',freq_eigv_S)
         eigen_vector_list=[]
         for i in range(eigen_values.shape[0]):
-            Q=np.zeros(fluid_ndof)
-            Q=eigen_vectors[SolvedDofF,i]
-            eigen_vector_list.append(Q)
+            #Q=np.zeros(fluid_ndof)
+            #Q=eigen_vectors[SolvedDofF,i]
+            press = np.zeros(fluid_ndof)
+            Q = eigen_vectors[:,i].copy()
+            press[SolvedDofF] = Q[SolvedDofF]
+            enrichment = np.zeros(fluid_ndof)
+            enrichment[SolvedDofA]= Q[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA),1))]
+            CorrectedPressure=np.array(press)
+            CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA].T+np.array(enrichment[SolvedDofA]*np.sign(Stiffener_LS[SolvedDofA]).T)
+            eigen_vector_list.append(CorrectedPressure)
+            #eigen_vector_list.append(Q)
 
         f=open(results_file.as_posix() +'_eigen_frequencies.pck','wb')
         pickle.dump(freq_eigv_S, f)
         f.close()
 
 
+
+
+
         if dataPb['flag_write_gmsh_results']==1:
             silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_Eigen_modes',
                                     datafluidmesh['nodes'],
                                     datafluidmesh['fluid_volume_elts'],
-                                    4,
+                                    11,
                                     [[eigen_vector_list,'nodal',1,'modes']])
 
     ##############################################################
     # Compute FRF
     ##############################################################
     if dataPb['flag_FRF']==1:
+        Correctedpress=[]
         press=[]
         frequencies=[]
+        enrichpress=[]
         QuantityOfInterest=[]
         damping=None
 
@@ -419,9 +468,27 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
         #    sol = scipy.sparse.linalg.spsolve(KFF-omega**2*MFF,FF)
             C = np.array([*CF[SolvedDofF]*(-omega**2), *CA[SolvedDofA]*(-omega**2)])
             sol = mumps.spsolve( H-omega**2*S , C , comm=mycomm )
-            press.append(sol[SolvedDofF].copy())
+            CorrectedPressure = np.zeros(fluid_ndof)
+            CorrectedPressure[SolvedDofF] = sol[SolvedDofF]
+            enrichment = np.zeros(fluid_ndof)
+            enrichment[SolvedDofA]= sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA),1))].copy()
+            #CorrectedPressure=np.array(pressure)
+            CorrectedPressure=CorrectedPressure+np.array(enrichment*np.sign(Stiffener_LS).T)
+            Correctedpress.append(CorrectedPressure)
+
+            soltmp = np.zeros(fluid_ndof) #np.zeros_like(sol[SolvedDofF])
+            soltmp[SolvedDofA] = sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA),1))].copy()
+            soltmp[SpecialTet4nodes-1] = 0.0
+            enrichpress.append(soltmp)
+            pressSpecial= np.zeros(fluid_ndof)
+            pressSpecial[SolvedDofF]=sol[SolvedDofF].copy()
+            pressSpecial[SpecialTet4nodes-1]=pressSpecial[SpecialTet4nodes-1]+np.array(enrichment[SpecialTet4nodes-1]*np.sign(Stiffener_LS[SpecialTet4nodes-1]).T)
+            press.append(pressSpecial)
+            #enrichpress.append(CorrectedPressure*0.0)
+            #press.append(CorrectedPressure)
 
             QuantityOfInterest.append(sol[8-1]) # upper corner
+            
             
 
 
@@ -429,11 +496,50 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
 
         if dataPb['flag_write_gmsh_results']==1:
             print('QuantityOfInterest : ',QuantityOfInterest)
+
+            print(libF_tet10_xfem.tet10totet4.__doc__)
+
+            objMesh = lib.MeshField(nodes=datafluidmesh['nodes'], 
+                                    elems=elemtet4, 
+                                    leveset=Stiffener_LS, 
+                                    levelsetTg=Stiffener_tangent_LS)
+            objMesh.addField(uncorrectedField=np.vstack(press).transpose(),
+                             enrichmentField=np.vstack(enrichpress).transpose())
+            datameshfield = objMesh.getData()
+            
+            # prepare fields
+            dataW = []
+            dataW.append({'data':datameshfield['LS'],'type':'nodal', 'name':'levelset'})
+            dataW.append({'data':datameshfield['LST'],'type':'nodal','name':'tangent levelset'})
+            # for it in range(len(press)):
+            #     dataW.append({'data':datameshfield['fields'][:,it],'type':'nodal','name':'field '+str(it)+' (levelset)'})
+            dataW = {
+                'name': 'press',
+                'nbsteps': len(press),
+                'type': 'nodal',
+                'data': datameshfield['fields']
+            }
+#            # export mesh
+            msh2.mshWriter(
+                filename= results_file.as_posix() +'_results_fluid_frf_meshfield3D.msh',
+                nodes=datameshfield['nodes'],
+                elements=[{'type':'TET4','connectivity':datameshfield['TET4']},
+                        {'type':'PRI6','connectivity':datameshfield['PRI6']}],
+                fields=dataW,
+                append=True
+                )
+
             silex_lib_gmsh.WriteResults2(results_file.as_posix() +'_results_fluid_frf',
                                     datafluidmesh['nodes'],
                                     datafluidmesh['fluid_volume_elts'],
+                                    11,
+                                    [[Correctedpress,'nodal',1,'pressure']]
+                                    )
+            silex_lib_gmsh.WriteResults2(results_file.as_posix() +'_results_fluid_frf_on_tet4mesh',
+                                    datafluidmesh['nodes'],
+                                    elemtet4,
                                     4,
-                                    [[press,'nodal',1,'pressure']]
+                                    [[Correctedpress,'nodal',1,'pressure']]
                                     )
 
         print ("Time at the end of the FRF:",time.ctime())
@@ -780,6 +886,7 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
     ##############################################################
     if dataPb['flag_FRF']==1:
         press=[]
+        enrichpress = []
         frequencies=[]
         QuantityOfInterest=[]
         damping=None
@@ -799,6 +906,10 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
             C = np.array([*CF[SolvedDofF]*(-omega**2), *CA[SolvedDofA]*(-omega**2)])
             sol = mumps.spsolve( H-omega**2*S , C , comm=mycomm )
             press.append(sol[SolvedDofF].copy())
+            soltmp = np.zeros_like(sol[SolvedDofF])
+            soltmp[SolvedDofA] = sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA),1))].copy()
+
+            enrichpress.append(soltmp)
 
             QuantityOfInterest.append(sol[8-1]) # upper corner
             
@@ -808,12 +919,41 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
 
         if dataPb['flag_write_gmsh_results']==1:
             print('QuantityOfInterest : ',QuantityOfInterest)
-            silex_lib_gmsh.WriteResults2(results_file.as_posix() +'_results_fluid_frf',
-                                    datafluidmesh['nodes'],
-                                    datafluidmesh['fluid_volume_elts'],
-                                    4,
-                                    [[press,'nodal',1,'pressure']]
-                                    )
+            objMesh = lib.MeshField(nodes=datafluidmesh['nodes'], 
+                                    elems=datafluidmesh['fluid_volume_elts'], 
+                                    leveset=Stiffener_LS, 
+                                    levelsetTg=Stiffener_tangent_LS)
+            objMesh.addField(uncorrectedField=np.vstack(press).transpose(),
+                             enrichmentField=np.vstack(enrichpress).transpose())
+            datameshfield = objMesh.getData()
+            # prepare fields
+            dataW = []
+            dataW.append({'data':datameshfield['LS'],'type':'nodal', 'name':'levelset'})
+            dataW.append({'data':datameshfield['LST'],'type':'nodal','name':'tangent levelset'})
+            # for it in range(len(press)):
+            #     dataW.append({'data':datameshfield['fields'][:,it],'type':'nodal','name':'field '+str(it)+' (levelset)'})
+            dataW = {
+                'name': 'press',
+                'nbsteps': len(press),
+                'type': 'nodal',
+                'data': datameshfield['fields']
+            }
+            # export mesh
+            msh2.mshWriter(
+                filename= results_file.as_posix() +'_results_fluid_frf_meshfield3D.msh',
+                nodes=datameshfield['nodes'],
+                elements=[{'type':'TET4','connectivity':datameshfield['TET4']},
+                        {'type':'PRI6','connectivity':datameshfield['PRI6']}],
+                fields=dataW,
+                append=True
+                )
+
+            #silex_lib_gmsh.WriteResults2(results_file.as_posix() +'_results_fluid_frf',
+            #                        datafluidmesh['nodes'],
+            #                        datafluidmesh['fluid_volume_elts'],
+            #                        4,
+            #                        [[press,'nodal',1,'pressure']]
+            #                        )
 
         print ("Time at the end of the FRF:",time.ctime())
 
