@@ -1,10 +1,9 @@
 import string
 import time
 import numpy as np
-import scipy
-import scipy.sparse
-import scipy.sparse.linalg
-import scipy.sparse.construct
+
+
+from loguru import logger as log
 
 import pylab as pl
 import pickle
@@ -58,26 +57,26 @@ class solve:
         self.lz = 0.6
 
         # Baffle position and geom
-        self.lx_baffle = 0.31
-        self.lz_baffle = 0.27
+        self.lx_baffle = 0.53333333333
+        self.lz_baffle = 0.273333333333
         self.thickness_baffle = 0.002  # only for classic conforming mesh
         self.lx_baffle_shift_up = 0.18
         self.lx_baffle_shift_down = 0.08
         
         
 
-        self.dataPb["freq_ini"] = 0.5
+        self.dataPb["freq_ini"] = 0.9
         self.dataPb["freq_ref"] = 0.5
-        self.dataPb["freq_end"] = 2.0
-        self.dataPb["nb_freq_step"] = 3
+        self.dataPb["freq_end"] = 1.1
+        self.dataPb["nb_freq_step"] = 10
 
         # Imposed acceleration on tank and stiffener surfaces
-        self.dataPb["U_dot_dot_imposed"] = np.array([1.0, 0.0, 0.0])
+        self.dataPb["U_dot_dot_imposed"] = np.array([1.0, 1.0, 0.0])*np.sqrt(2.0)  
 
         # Flags
         self.dataPb["flag_eigen_vectors"] = 0
         self.dataPb["flag_FRF"] = 1
-        self.dataPb["flag_write_gmsh_results"] = 1
+        self.dataPb["flag_write_gmsh_results"] = 0
 
         # fluid
         self.dataFluid = dict()
@@ -87,7 +86,7 @@ class solve:
 
 
         # size of elements
-        self.h_fluid_elts = self.lx / 15
+        self.h_fluid_elts = self.lx / 20
 
         # # parallepipedic cavity with plane structure
         # mesh_file_fluid_tet10       =Path(__file__).parent / 'cube_xfem_sloshing_Fluid_and_Tank_tet10'
@@ -146,4 +145,29 @@ class solve:
 
 
 obj = solve()
-obj.run([0.18, 0.08])
+# valtest = obj.run([0.09666666666666668, -0.1933333333333333])  # Run once to initialize the mesh and results
+# log.info(f"Test run completed with value: {valtest}")
+
+# X = np.linspace()
+nb_val = 10
+lup = np.linspace(-0.29, 0.29, nb_val)
+ldown = np.linspace(-0.29, 0.29, nb_val)
+X, Y = np.meshgrid(lup, ldown)
+val_p = np.zeros(nb_val * nb_val)
+val_f = np.zeros(nb_val * nb_val)
+
+for i,(xs,ys) in enumerate(zip(X.flatten(), Y.flatten())):
+    log.info(f"Running for {xs:.2f} and {ys:.2f}")
+    val_p[i],_, val_f[i],_ = obj.run([xs, ys])
+    log.info(f"Results: {val_p[i]}Pa and {val_f[i]}N")
+    if val_p[i] > 1e12 or val_f[i] > 1e12:
+        log.error(f"Error in computation for parameters {xs}, {ys}")
+        raise ValueError(f"Computation failed for parameters {xs}, {ys}")
+    
+
+
+    
+results_file = Path(__file__).parent / "results_parametric_tet4.pck"
+log.info(f"Saving results to {results_file}")
+with open(results_file, "wb") as f:
+    pickle.dump((X, Y, val_p, val_f), f)

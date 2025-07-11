@@ -673,9 +673,9 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
     #free_fluid_surface_elements = u.getElementsFromEntities(gmsh,free_fluid_surface[0],free_fluid_surface_entities)
     #fluid_volume_elements = u.getElementsFromEntities(gmsh,fluid_volume[0],fluid_volume_entities)
 
-    print(' ----  structure_surface_elements : ',structure_surface_elements)
-    print(' ----  free_fluid_surface_elements : ',free_fluid_surface_elements)
-    print(' ----  fluid_volume_elements : ',fluid_volume_elements)
+    # print(' ----  structure_surface_elements : ',structure_surface_elements)
+    # print(' ----  free_fluid_surface_elements : ',free_fluid_surface_elements)
+    # print(' ----  fluid_volume_elements : ',fluid_volume_elements)
 
     datafluidmesh = dict()
     datafluidmesh['nodes'] = fluid_nodes
@@ -738,8 +738,8 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
     #stiffener_surface_elements = u.getElementsFromEntities(gmsh,stiffener_surface[0],stiffener_surface_entities)
     #stiffener_edge_elements = u.getElementsFromEntities(gmsh,stiffener_edge[0],stiffener_edge_entities)
 
-    print(' ----  stiffener_surface_elements : ',stiffener_surface_elements)
-    print(' ----  stiffener_edge_elements : ',stiffener_edge_elements)
+    # print(' ----  stiffener_surface_elements : ',stiffener_surface_elements)
+    # print(' ----  stiffener_edge_elements : ',stiffener_edge_elements)
 
 
     dataXfemStiffener = dict()
@@ -763,7 +763,7 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
                                                         Stiffener_tangent_nodes,
                                                         Stiffener_tangent_mesh)
 
-    Stiffener_tangent_LS = Stiffener_tangent_LS*0.0-1.0 # we put -1 to have the same sign as the Level Set
+    # Stiffener_tangent_LS = Stiffener_tangent_LS*0.0-1.0 # we put -1 to have the same sign as the Level Set
 
     if dataPb['flag_write_gmsh_results']==1:
         # gmsh output to check
@@ -901,6 +901,18 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
                                 [[VecNormalEltsA,'elemental',3,'Normal to stiffener elements']])
 
     ##############################################################
+    # Compute coupling terms around the stiffener
+    ##############################################################
+    IIc1,JJc1,Vc1=libF_tet4_xfem.computexfemcoupling1(datafluidmesh['nodes'],
+                                                      dataXfemStiffener['nodes'],
+                                                      datafluidmesh['fluid_volume_elts'],
+                                                      dataXfemStiffener['stiffener_surface_elements'],
+                                                      EnrichedElements)
+    #IIc2,JJc2,Vc2=libF_tet10_xfem.computexfemcoupling2(fluid_nodes1,struc_nodes,fluid_elements1,struc_elements,EnrichedElements,LevelSet)
+    stiffener_ndof = dataXfemStiffener['nodes'].shape[0]*6
+    CSA=scipy.sparse.csc_matrix( (Vc1,(IIc1,JJc1)), shape=(stiffener_ndof,fluid_ndof) ) 
+    
+    ##############################################################
     # Compute Standard Strcuture Matrices
     ##############################################################
 
@@ -966,6 +978,7 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
     if dataPb['flag_FRF']==1:
         Correctedpress=[]
         press=[]
+        force = []
         enrichpress = []
         frequencies=[]
         QuantityOfInterest=[]
@@ -993,12 +1006,21 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
             soltmp[SolvedDofA] = sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA),1))].copy()
 
             enrichpress.append(soltmp)
+            torseur = CSA@soltmp
+            fx = np.sum(torseur[0::6])
+            fy = np.sum(torseur[1::6])
+            fz = np.sum(torseur[2::6])
+            #
+            force.append(np.linalg.norm(np.array([fx,fy,fz])))
+            
             CorrectedPressure=CorrectedPressure+np.array(soltmp*np.sign(Stiffener_LS).T)
             Correctedpress.append(CorrectedPressure)
             
             QuantityOfInterest.append(sol[8-1]) # upper corner
         maxQI = np.max(np.abs(QuantityOfInterest))
         meanQI = np.mean(np.abs(QuantityOfInterest))
+        maxforce = np.max(force)
+        meanforce = np.mean(force)
             
 
 
@@ -1061,7 +1083,7 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
         f=open(results_file.as_posix() +'_results.frf','wb')
         pickle.dump(frfsave, f)
         f.close()
-    return meanQI, maxQI
+    return meanQI, maxQI, meanforce, maxforce
 
 def sloshing_rigid_baffle_tet4(dataPb,dataFluid,mesh_file,results_file):
     ##############################################################

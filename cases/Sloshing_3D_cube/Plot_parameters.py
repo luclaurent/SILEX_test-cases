@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.append('/home/legay/Codes/SILEXGIT/SILEXlib/SILEXlib/tests/')
 
 ######################################
-filename = Path(__file__).parent / 'cube_xfem_sloshing_with_stiffener_tet4_h20_results.frf'
+filename = Path(__file__).parent / 'cube_xfem_sloshing_with_stiffener_tet4_results.frf'
 f=open(filename,'rb')
 frf_tet4_xfem =pickle.load(f)
 f.close()
