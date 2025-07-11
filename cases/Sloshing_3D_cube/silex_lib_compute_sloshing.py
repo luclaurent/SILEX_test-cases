@@ -997,6 +997,8 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
             Correctedpress.append(CorrectedPressure)
             
             QuantityOfInterest.append(sol[8-1]) # upper corner
+        maxQI = np.max(np.abs(QuantityOfInterest))
+        meanQI = np.mean(np.abs(QuantityOfInterest))
             
 
 
@@ -1059,7 +1061,7 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
         f=open(results_file.as_posix() +'_results.frf','wb')
         pickle.dump(frfsave, f)
         f.close()
-    return
+    return meanQI, maxQI
 
 def sloshing_rigid_baffle_tet4(dataPb,dataFluid,mesh_file,results_file):
     ##############################################################
