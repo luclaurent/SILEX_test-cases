@@ -48,102 +48,83 @@ mycomm = comm_mumps_one_proc()
 #              S T A R T   M A I N   P R O B L E M
 ##############################################################
 ##############################################################
-class solve:
-    def __init__(self):
-        self.dataPb = dict()
 
-        # cube geom
-        self.lx = 1.0
-        self.ly = 0.8
-        self.lz = 0.6
+dataPb = dict()
 
-        # Baffle position and geom
-        self.lx_baffle = 0.31
-        self.lz_baffle = 0.27
-        self.thickness_baffle = 0.002  # only for classic conforming mesh
-        self.lx_baffle_shift_up = 0.18
-        self.lx_baffle_shift_down = 0.08
-        
-        
+# cube geom
+lx = 1.0
+ly = 0.8
+lz = 0.6
 
-        self.dataPb["freq_ini"] = 0.5
-        self.dataPb["freq_ref"] = 0.5
-        self.dataPb["freq_end"] = 2.0
-        self.dataPb["nb_freq_step"] = 3
-
-        # Imposed acceleration on tank and stiffener surfaces
-        self.dataPb["U_dot_dot_imposed"] = np.array([1.0, 0.0, 0.0])
-
-        # Flags
-        self.dataPb["flag_eigen_vectors"] = 0
-        self.dataPb["flag_FRF"] = 1
-        self.dataPb["flag_write_gmsh_results"] = 1
-
-        # fluid
-        self.dataFluid = dict()
-        # data['celerity'] = 343.0
-        self.dataFluid["rho"] = 1000.0
-        # data['fluid_damping'] = 1.0
+# Baffle position and geom
+lx_baffle = 0.31
+lz_baffle = 0.27
+thickness_baffle = 0.002  # only for classic conforming mesh
+lx_baffle_shift_up = 0.18
+lx_baffle_shift_down = 0.08
 
 
-        # size of elements
-        self.h_fluid_elts = self.lx / 15
+# size of elements
+h_fluid_elts = lx / 15
 
-        # # parallepipedic cavity with plane structure
-        # mesh_file_fluid_tet10       =Path(__file__).parent / 'cube_xfem_sloshing_Fluid_and_Tank_tet10'
-        # results_file_tet10          =Path(__file__).parent / 'cube_xfem_sloshing_with_stiffener_tet10_h20'
+# # parallepipedic cavity with plane structure
+# mesh_file_fluid_tet10       =Path(__file__).parent / 'cube_xfem_sloshing_Fluid_and_Tank_tet10'
+# results_file_tet10          =Path(__file__).parent / 'cube_xfem_sloshing_with_stiffener_tet10_h20'
 
-        self.mesh_file_fluid_tet4 = Path(__file__).parent / "cube_xfem_sloshing_Fluid_and_Tank_tet4"
-        self.results_file_tet4 = Path(__file__).parent / "cube_xfem_sloshing_with_stiffener_tet4_parameters"
+mesh_file_fluid_tet4 = Path(__file__).parent / "cube_xfem_sloshing_Fluid_and_Tank_tet4"
+results_file_tet4 = Path(__file__).parent / "cube_xfem_sloshing_with_stiffener_tet4_h20"
 
-        self.mesh_file_stiffener = Path(__file__).parent / "cube_xfem_sloshing_Stiffener_DKT"
+mesh_file_stiffener = Path(__file__).parent / "cube_xfem_sloshing_Stiffener_DKT"
 
-        # mesh_file_tet10_classic     =Path(__file__).parent / 'cube_sloshing_with_stiffener_tet10'
-        # results_file_tet10_classic  =Path(__file__).parent / 'cube_sloshing_with_stiffener_tet10_h20'
+# mesh_file_tet10_classic     =Path(__file__).parent / 'cube_sloshing_with_stiffener_tet10'
+# results_file_tet10_classic  =Path(__file__).parent / 'cube_sloshing_with_stiffener_tet10_h20'
 
-        # mesh_file_tet4_classic      =Path(__file__).parent / 'cube_sloshing_with_stiffener_tet4'
-        # results_file_tet4_classic   =Path(__file__).parent / 'cube_sloshing_with_stiffener_tet4_h20'
+# mesh_file_tet4_classic      =Path(__file__).parent / 'cube_sloshing_with_stiffener_tet4'
+# results_file_tet4_classic   =Path(__file__).parent / 'cube_sloshing_with_stiffener_tet4_h20'
 
-        # silex_lib_cube_tank_gmsh_geometry.xfem_fluid_and_tank(lx,ly,lz,h_fluid_elts,2,mesh_file_fluid_tet10)
-        silex_lib_cube_tank_gmsh_geometry.xfem_fluid_and_tank(self.lx, 
-                                                              self.ly, 
-                                                              self.lz, 
-                                                              self.h_fluid_elts, 
-                                                              1, 
-                                                              self.mesh_file_fluid_tet4)
-        
-    def run(self, parameters):
-        
-        lx_baffle_shift_up = parameters[0]
-        lx_baffle_shift_down = parameters[1]
-        
-        silex_lib_cube_tank_gmsh_geometry.Stiffener_DKT(
-            self.lx,
-            self.ly,
-            self.lz,
-            self.lx_baffle,
-            lx_baffle_shift_up,
-            lx_baffle_shift_down,
-            self.lz_baffle,
-            self.h_fluid_elts * 0.5,
-            1,
-            self.mesh_file_stiffener,
-        )
-        # silex_lib_cube_tank_gmsh_geometry.classic_fluid_and_tank(lx,ly,lz,lx_baffle,lx_baffle_shift_up,lx_baffle_shift_down,lz_baffle,thickness_baffle,h_fluid_elts,2,mesh_file_tet10_classic)
-        # silex_lib_cube_tank_gmsh_geometry.classic_fluid_and_tank(lx,ly,lz,lx_baffle,lx_baffle_shift_up,lx_baffle_shift_down,lz_baffle,thickness_baffle,h_fluid_elts,1,mesh_file_tet4_classic)
+# silex_lib_cube_tank_gmsh_geometry.xfem_fluid_and_tank(lx,ly,lz,h_fluid_elts,2,mesh_file_fluid_tet10)
+silex_lib_cube_tank_gmsh_geometry.xfem_fluid_and_tank(
+    lx, ly, lz, h_fluid_elts, 1, mesh_file_fluid_tet4
+)
+silex_lib_cube_tank_gmsh_geometry.Stiffener_DKT(
+    lx,
+    ly,
+    lz,
+    lx_baffle,
+    lx_baffle_shift_up,
+    lx_baffle_shift_down,
+    lz_baffle,
+    h_fluid_elts * 0.5,
+    1,
+    mesh_file_stiffener,
+)
+# silex_lib_cube_tank_gmsh_geometry.classic_fluid_and_tank(lx,ly,lz,lx_baffle,lx_baffle_shift_up,lx_baffle_shift_down,lz_baffle,thickness_baffle,h_fluid_elts,2,mesh_file_tet10_classic)
+# silex_lib_cube_tank_gmsh_geometry.classic_fluid_and_tank(lx,ly,lz,lx_baffle,lx_baffle_shift_up,lx_baffle_shift_down,lz_baffle,thickness_baffle,h_fluid_elts,1,mesh_file_tet4_classic)
 
 
+dataPb["freq_ini"] = 0.5
+dataPb["freq_ref"] = 0.5
+dataPb["freq_end"] = 2.0
+dataPb["nb_freq_step"] = 3
 
-        return silex_lib_compute_sloshing.sloshing_rigid_baffle_tet4_xfem(self.dataPb, 
-                                                                          self.dataFluid,
-                                                                          self.mesh_file_fluid_tet4,
-                                                                          self.mesh_file_stiffener, 
-                                                                          self.results_file_tet4)
-        # silex_lib_compute_sloshing.sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid_tet10,mesh_file_stiffener,results_file_tet10)
-        # silex_lib_compute_sloshing.sloshing_rigid_baffle_tet4(dataPb,dataFluid,mesh_file_tet4_classic,results_file_tet4_classic)
-        # silex_lib_compute_sloshing.sloshing_rigid_baffle_tet10(dataPb,dataFluid,mesh_file_tet10_classic,results_file_tet10_classic)
+# Imposed acceleration on tank and stiffener surfaces
+dataPb["U_dot_dot_imposed"] = np.array([1.0, 0.0, 0.0])
+
+# Flags
+dataPb["flag_eigen_vectors"] = 0
+dataPb["flag_FRF"] = 1
+dataPb["flag_write_gmsh_results"] = 1
+
+# fluid
+dataFluid = dict()
+# data['celerity'] = 343.0
+dataFluid["rho"] = 1000.0
+# data['fluid_damping'] = 1.0
 
 
-
-obj = solve()
-obj.run([0.18, 0.18])
+silex_lib_compute_sloshing.sloshing_rigid_baffle_tet4_xfem(
+    dataPb, dataFluid, mesh_file_fluid_tet4, mesh_file_stiffener, results_file_tet4
+)
+# silex_lib_compute_sloshing.sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid_tet10,mesh_file_stiffener,results_file_tet10)
+# silex_lib_compute_sloshing.sloshing_rigid_baffle_tet4(dataPb,dataFluid,mesh_file_tet4_classic,results_file_tet4_classic)
+# silex_lib_compute_sloshing.sloshing_rigid_baffle_tet10(dataPb,dataFluid,mesh_file_tet10_classic,results_file_tet10_classic)
