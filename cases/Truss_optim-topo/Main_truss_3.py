@@ -39,7 +39,7 @@ print("SILEX CODE - calcul d'une ferme de charpente")
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 # Input mesh: define the name of the mesh file (*.msh)
 MeshFileName='truss'
@@ -66,7 +66,7 @@ elements,Idnodes=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',eltype,1)
 nbmodes=30
 
 # FRF: frequency range
-frequencies=scipy.linspace(1,1000,1000)
+frequencies=np.linspace(1,1000,1000)
 
 # Define material
 Young  = 2e11
@@ -84,8 +84,8 @@ Section = 0.05**2 # area of the section
 Inertia = 0.05**4/12
 
 # Boundary conditions
-IdNodesFixed_x=scipy.array([1,7,13,19],dtype=int)
-IdNodesFixed_y=scipy.array([1,7,13,19],dtype=int)
+IdNodesFixed_x=np.array([1,7,13,19],dtype=int)
+IdNodesFixed_y=np.array([1,7,13,19],dtype=int)
 
 # If the user wants to have only the mesh for gmsh, uncomment next line
 #silex_lib_gmsh.WriteResults('maillage_seul',nodes,elements,eltype)
@@ -112,7 +112,7 @@ print("Number of elements:",nelem)
 
 
 # Choose initial "unit" xe
-#xe=scipy.ones(nelem)
+#xe=np.ones(nelem)
 # or load static optimum xe
 f=open('Results_truss_optim_xe_static.pkl','rb')
 xe=pickle.load(f)
@@ -128,16 +128,16 @@ rhoelem    = rhoMin+xe**penal*(rho-rhoMin)
 
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # initialize displacement vector
-Q=scipy.zeros(ndof)
+Q=np.zeros(ndof)
 
 # initialize force vector
-F=scipy.zeros((ndof))
+F=np.zeros((ndof))
 
 for i in range(len(LoadX)):
     F[(LoadX[i][0]-1)*2]=LoadX[i][1]
@@ -163,16 +163,16 @@ C=alpha*M+beta*K
 
 eigen_values,eigen_vectors= scipy.sparse.linalg.eigsh(K[SolvedDofs,:][:,SolvedDofs],nbmodes,M[SolvedDofs,:][:,SolvedDofs],sigma=0,which='LM')
 
-freq_eigv=list(scipy.sqrt(eigen_values)/(2*scipy.pi))
+freq_eigv=list(np.sqrt(eigen_values)/(2*np.pi))
 
 eigen_vector_list=[]
 for i in range(eigen_values.shape[0]):
-    Q=scipy.zeros(ndof)
+    Q=np.zeros(ndof)
     Q[SolvedDofs]=eigen_vectors[:,i]
-    disp=scipy.zeros((nnodes,3))
+    disp=np.zeros((nnodes,3))
     disp[range(nnodes),0]=Q[list(range(0,ndof,2))]
     disp[range(nnodes),1]=Q[list(range(1,ndof,2))]
-    disp[range(nnodes),2]=scipy.zeros(nnodes)
+    disp[range(nnodes),2]=np.zeros(nnodes)
     eigen_vector_list.append(disp)
 
 silex_lib_gmsh.WriteResults2(ResultsFileName+'_modes',nodes,elements,eltype,[[eigen_vector_list,'nodal',3,'modes']])
@@ -184,24 +184,24 @@ silex_lib_gmsh.WriteResults2(ResultsFileName+'_modes',nodes,elements,eltype,[[ei
 frf=[]
 
 disp_save=[]
-Q=scipy.zeros(ndof, dtype=complex)
+Q=np.zeros(ndof, dtype=complex)
 
 for i in range(len(frequencies)):
 
     freq = frequencies[i]
-    omega=2*scipy.pi*freq
+    omega=2*np.pi*freq
 
     print ("frequency=",freq)
 
     #sol = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs]-(omega*omega)*M[SolvedDofs,:][:,SolvedDofs], F[SolvedDofs].T)
-    #sol = mumps.spsolve( scipy.sparse.csc_matrix(K-(omega*omega)*M,dtype='d') , scipy.array(F.todense() , dtype='d'), comm=comm_mumps_one_proc()).T
-    Q[SolvedDofs] = mumps.spsolve( scipy.sparse.csc_matrix(K[SolvedDofs,:][:,SolvedDofs]+omega*1j*C[SolvedDofs,:][:,SolvedDofs]-(omega**2)*M[SolvedDofs,:][:,SolvedDofs],dtype='c16') , scipy.array(F[SolvedDofs],dtype='c16'), comm=mycomm).T
+    #sol = mumps.spsolve( scipy.sparse.csc_matrix(K-(omega*omega)*M,dtype='d') , np.array(F.todense() , dtype='d'), comm=comm_mumps_one_proc()).T
+    Q[SolvedDofs] = mumps.spsolve( scipy.sparse.csc_matrix(K[SolvedDofs,:][:,SolvedDofs]+omega*1j*C[SolvedDofs,:][:,SolvedDofs]-(omega**2)*M[SolvedDofs,:][:,SolvedDofs],dtype='c16') , np.array(F[SolvedDofs],dtype='c16'), comm=mycomm).T
     
-    #frf.append(scipy.sqrt(Q[(24-1)*2]**2+Q[(24-1)*2+1]**2))
-    frf.append(    scipy.sqrt(     (Q[(24-1)*2].real)**2+     (Q[(24-1)*2].imag)**2   )    )
+    #frf.append(np.sqrt(Q[(24-1)*2]**2+Q[(24-1)*2+1]**2))
+    frf.append(    np.sqrt(     (Q[(24-1)*2].real)**2+     (Q[(24-1)*2].imag)**2   )    )
 
     # displacement written on 2 columns:
-    disp=scipy.zeros((nnodes,2))
+    disp=np.zeros((nnodes,2))
     disp[range(nnodes),0]=Q[list(range(0,ndof,2))]
     disp[range(nnodes),1]=Q[list(range(1,ndof,2))]
     disp_save.append(disp)
@@ -209,7 +209,7 @@ for i in range(len(frequencies)):
 frfsave=[frequencies,frf]
 silex_lib_gmsh.WriteResults2(ResultsFileName+'_static_optim_with_damping_disp_frf',nodes,elements,eltype,[[disp_save,'nodal',2,'displacement']])
 
-print (" time at the end of the FRF:",time.ctime())
+print (" time at the end of the FRF: {}".format(time.ctime()))
 
 # Save the FRF problem
 f=open(ResultsFileName+'_static_optim_damping.frf','wb')

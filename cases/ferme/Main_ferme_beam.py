@@ -19,7 +19,7 @@ print("SILEX CODE - calcul d'une ferme de charpente - poutre Bernoulli")
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 # Input mesh: define the name of the mesh file (*.msh)
 MeshFileName='ferme'
@@ -47,8 +47,8 @@ Section = (80.0*40.0-2.0*36.0**2)*1e-6 # area of the section
 Inertia = (80.0*40.0**3.0/12.0-2.0*(36.0**4.0/12.0+2.0**2.0*36.0**2.0))*1e-12
 
 # Boundary conditions
-IdNodesFixed_x=scipy.array([1,5],dtype=int)
-IdNodesFixed_y=scipy.array([1,5],dtype=int)
+IdNodesFixed_x=np.array([1,5],dtype=int)
+IdNodesFixed_y=np.array([1,5],dtype=int)
 # Load on x direction : [ [ node , force_x ]  ,  [ node , force_x ] , .....  ]
 LoadX=[[1,0.0],
        [2,0.0],
@@ -91,15 +91,15 @@ print("Number of nodes:",nnodes)
 print("Number of elements:",nelem)
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1])
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # initialize displacement vector
-Q=scipy.zeros(ndof)
+Q=np.zeros(ndof)
 
 # initialize force vector
-F=scipy.zeros((ndof))
+F=np.zeros((ndof))
 
 for i in range(len(LoadX)):
     F[(LoadX[i][0]-1)*3]=LoadX[i][1]
@@ -133,15 +133,15 @@ Q[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[Solv
 #############################################################################
 
 # displacement written on 2 columns:
-disp=scipy.zeros((nnodes,2))
+disp=np.zeros((nnodes,2))
 disp[range(nnodes),0]=Q[list(range(0,ndof,3))]
 disp[range(nnodes),1]=Q[list(range(1,ndof,3))]
 # external forces written on 2 columns:
-load=scipy.zeros((nnodes,2))
+load=np.zeros((nnodes,2))
 load[range(nnodes),0]=F[list(range(0,ndof,3))]
 load[range(nnodes),1]=F[list(range(1,ndof,3))]
 # get normal forces for compressive elements only, becomes positive
-#CompressiveElts=abs(NormalForce)*(scipy.sign(NormalForce)-1)/(-2.0)
+#CompressiveElts=abs(NormalForce)*(np.sign(NormalForce)-1)/(-2.0)
 
 # compute ratio between normal force and buckling limit load for compressive elements only
 #Ratio=CompressiveElts/Fcr
@@ -165,5 +165,5 @@ fields_to_write=[ [disp,'nodal',2,'displacement'],
 
 # write the mesh and the results in a gmsh-format file
 silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_write)
-toc=time.clock()
-print("Time for total computation",toc-tic)
+toc=time.process_time()
+print("Time for total computation {}".format(toc-tic))

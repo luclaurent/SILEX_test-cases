@@ -89,7 +89,7 @@ ce_fl = celerity
 # Load fluid mesh
 ##############################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 fluid_nodes    = silex_lib_gmsh.ReadGmshNodes(mesh_file+'.msh',3)
 fluid_elements1,IdNodes1 = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',4,1) # air, cavity + controlled volume
@@ -131,12 +131,12 @@ print ("Number of nodes at interface:",fluid_nnodes3)
 ##############################################################
 
 # renumbering air
-old = scipy.unique(fluid_elements1)
-new = list(range(1,len(scipy.unique(fluid_elements1))+1))
-new_nodes=fluid_nodes[scipy.unique(fluid_elements1)-1,:]
+old = np.unique(fluid_elements1)
+new = list(range(1,len(np.unique(fluid_elements1))+1))
+new_nodes=fluid_nodes[np.unique(fluid_elements1)-1,:]
 
 dico1 = dict(zip(old,new))
-new_elements=scipy.zeros((fluid_nelem1,4),dtype=int)
+new_elements=np.zeros((fluid_nelem1,4),dtype=int)
 for e in range(fluid_nelem1):
     for i in range(4):
         new_elements[e,i]=dico1[fluid_elements1[e][i]]
@@ -144,7 +144,7 @@ for e in range(fluid_nelem1):
 fluid_elements1 = new_elements
 fluid_nodes1    = new_nodes
 
-new_elements=scipy.zeros((fluid_nelem5,4),dtype=int)
+new_elements=np.zeros((fluid_nelem5,4),dtype=int)
 for e in range(fluid_nelem5):
     for i in range(4):
         new_elements[e,i]=dico1[fluid_elements5[e][i]]
@@ -152,12 +152,12 @@ for e in range(fluid_nelem5):
 fluid_elements5 = new_elements
 
 # renumbering porous
-old = scipy.unique(fluid_elements2)
-new = list(range(1,len(scipy.unique(fluid_elements2))+1))
-new_nodes=fluid_nodes[scipy.unique(fluid_elements2)-1,:]
+old = np.unique(fluid_elements2)
+new = list(range(1,len(np.unique(fluid_elements2))+1))
+new_nodes=fluid_nodes[np.unique(fluid_elements2)-1,:]
 
 dico2 = dict(zip(old,new))
-new_elements=scipy.zeros((fluid_nelem2,4),dtype=int)
+new_elements=np.zeros((fluid_nelem2,4),dtype=int)
 for e in range(fluid_nelem2):
     for i in range(4):
         new_elements[e,i]=dico2[fluid_elements2[e][i]]
@@ -178,15 +178,15 @@ for i in range(len(IdNodesS4)):
 #stop
 
 IdNodesFixed_porous_us_x=IdNodesS4
-##IdNodesFixed_porous_us_y=scipy.unique(scipy.hstack([IdNodesS4,IdNodesS6]))
-##IdNodesFixed_porous_us_z=scipy.unique(scipy.hstack([IdNodesS4,IdNodesS5]))
+##IdNodesFixed_porous_us_y=np.unique(np.hstack([IdNodesS4,IdNodesS6]))
+##IdNodesFixed_porous_us_z=np.unique(np.hstack([IdNodesS4,IdNodesS5]))
 IdNodesFixed_porous_us_y=IdNodesS4
 IdNodesFixed_porous_us_z=IdNodesS4
 IdNodesFixed_porous_uf_x=IdNodesS4
 IdNodesFixed_porous_uf_y=IdNodesS4
 IdNodesFixed_porous_uf_z=IdNodesS4
 
-Fixed_Dofs_porous = scipy.hstack([(IdNodesFixed_porous_us_x-1)*6,
+Fixed_Dofs_porous = np.hstack([(IdNodesFixed_porous_us_x-1)*6,
                                   (IdNodesFixed_porous_us_y-1)*6+1,
                                   (IdNodesFixed_porous_us_z-1)*6+2,
                                   (IdNodesFixed_porous_uf_x-1)*6+3,
@@ -195,13 +195,13 @@ Fixed_Dofs_porous = scipy.hstack([(IdNodesFixed_porous_us_x-1)*6,
                                   ])
 
 # get connectivity at interface
-IdNodesS3_for_1=scipy.zeros(fluid_nnodes3,dtype=int)
-IdNodesS3_for_2=scipy.zeros(fluid_nnodes3,dtype=int)
+IdNodesS3_for_1=np.zeros(fluid_nnodes3,dtype=int)
+IdNodesS3_for_2=np.zeros(fluid_nnodes3,dtype=int)
 for i in range(fluid_nnodes3):
     IdNodesS3_for_1[i]=dico1[IdNodesS3[i]]
     IdNodesS3_for_2[i]=dico2[IdNodesS3[i]]
 
-InterfaceConnectivity=scipy.zeros((fluid_nelem3,6),dtype=int)
+InterfaceConnectivity=np.zeros((fluid_nelem3,6),dtype=int)
 for e in range(fluid_nelem3):
     for i in range(3):
         InterfaceConnectivity[e,i]   = dico1[fluid_elements_S3[e,i]]
@@ -218,7 +218,7 @@ silex_lib_gmsh.WriteResults(results_file+'Mesh5',fluid_nodes1,fluid_elements5,4)
 # Compute Standard Fluid Matrices
 ##############################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 IIf,JJf,Vffk,Vffm=silex_lib_xfem_acou_tet4.globalacousticmatrices(fluid_elements1,fluid_nodes1,celerity,rho)
 
@@ -231,15 +231,15 @@ SolvedDofF=list(range(fluid_ndof1))
 # Compute Porous Matrices
 ##############################################################
 porous_material_prop=[E_sol,nu_sol,ro_sol,to_por,po_por,sg_por,lambda_por,lambda_prime_por,ro_fl,visco_fl,pdtl_fl,gamma_fl,p0_fl,ce_fl]
-#omega=2.0*scipy.pi*100.0
+#omega=2.0*np.pi*100.0
 #IIp,JJp,Vppk,Vppm=silex_lib_porous_tet4_fortran.stiffnessmassmatrix(fluid_nodes2,fluid_elements2,porous_material_prop,omega)
 
 #KPP=scipy.sparse.csc_matrix( (Vppk,(IIp,JJp)), shape=(fluid_ndof2,fluid_ndof2) )
 #MPP=scipy.sparse.csc_matrix( (Vppm,(IIp,JJp)), shape=(fluid_ndof2,fluid_ndof2) )
 
-SolvedDofP=scipy.setdiff1d(range(fluid_ndof2),Fixed_Dofs_porous)
+SolvedDofP=np.setdiff1d(range(fluid_ndof2),Fixed_Dofs_porous)
 
-#SolvedDofP=scipy.setdiff1d(range(fluid_ndof2),range(fluid_ndof2))
+#SolvedDofP=np.setdiff1d(range(fluid_ndof2),range(fluid_ndof2))
 
 ##############################################################
 # Compute Coupling Porous-air Matrices
@@ -250,25 +250,25 @@ SolvedDofP=scipy.setdiff1d(range(fluid_ndof2),Fixed_Dofs_porous)
 IIpf,JJpf,Vpf=silex_lib_porous_tet4_fortran.computecouplingporousair(fluid_nodes1,InterfaceConnectivity,po_por)
 CPF=scipy.sparse.csc_matrix( (Vpf,(IIpf,JJpf)), shape=(fluid_ndof2,fluid_ndof1) )
 
-SolvedDof = scipy.hstack([SolvedDofF,SolvedDofP+fluid_ndof1])
+SolvedDof = np.hstack([SolvedDofF,SolvedDofP+fluid_ndof1])
 
 ##################################################################
 # Construct the whole system
 ##################################################################
 
-#K=scipy.sparse.construct.bmat( [ [KFF[SolvedDofF,:][:,SolvedDofF],-CPF[SolvedDofP,:][:,SolvedDofF].T],
+#K=scipy.sparse.bmat( [ [KFF[SolvedDofF,:][:,SolvedDofF],-CPF[SolvedDofP,:][:,SolvedDofF].T],
 #                                 [None,KPP[SolvedDofP,:][:,SolvedDofP]] ] )
-#M=scipy.sparse.construct.bmat( [ [MFF[SolvedDofF,:][:,SolvedDofF],None],
+#M=scipy.sparse.bmat( [ [MFF[SolvedDofF,:][:,SolvedDofF],None],
 #                                 [CPF[SolvedDofP,:][:,SolvedDofF],MPP[SolvedDofP,:][:,SolvedDofP]] ] )
 
 # To impose the load on the fluid:
 # fluid node number 1
 #F = csc_matrix( ([1],([0],[0])), shape=(len(SolvedDofS)+len(SolvedDofF),1) )
 #ff = 25e-8/(8e-3)! for surface load:/(4*nz*ny)
-UF = scipy.zeros(fluid_ndof1+fluid_ndof2,dtype=float)
+UF = np.zeros(fluid_ndof1+fluid_ndof2,dtype=float)
 UF[11-1]=3.1250E-05
 
-#P=scipy.zeros((fluid_ndof))
+#P=np.zeros((fluid_ndof))
 #P[13-1]=1.0
 #print(silex_lib_xfem_acou_tet4.forceonsurface.__doc__)
 #P = silex_lib_xfem_acou_tet4.forceonsurface(fluid_nodes,fluid_elements_S2,1.0)
@@ -285,43 +285,43 @@ frequencies=[]
 frf=[]
 
 if (Flag_frf_analysis==1):
-    print ("Proc. ",rank," / time at the beginning of the FRF:",time.ctime())
+    print ("Proc. {} / time at the beginning of the FRF: {}".format(rank, time.ctime()))
 
     press_save=[]
     disp_save=[]
 
     for i in range(nb_freq_step_per_proc):
-    #for freq in scipy.linspace(freq_ini,freq_end,nb_freq_step):
+    #for freq in np.linspace(freq_ini,freq_end,nb_freq_step):
 
         freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
         frequencies.append(freq)
-        omega=2*scipy.pi*freq
+        omega=2*np.pi*freq
 
-        print ("proc number",rank,"frequency=",freq)
+        print ("proc number {} - frequency={}".format(rank,freq))
 
         IIp,JJp,Vppk,Vppm=silex_lib_porous_tet4_fortran.stiffnessmassmatrix(fluid_nodes2,fluid_elements2,porous_material_prop,omega)
         KPP=scipy.sparse.csc_matrix( (Vppk,(IIp,JJp)), shape=(fluid_ndof2,fluid_ndof2) )
         MPP=scipy.sparse.csc_matrix( (Vppm,(IIp,JJp)), shape=(fluid_ndof2,fluid_ndof2) )
 
-        K=scipy.sparse.construct.bmat( [ [KFF[SolvedDofF,:][:,SolvedDofF],-CPF[SolvedDofP,:][:,SolvedDofF].T],
+        K=scipy.sparse.bmat( [ [KFF[SolvedDofF,:][:,SolvedDofF],-CPF[SolvedDofP,:][:,SolvedDofF].T],
                                          [None,KPP[SolvedDofP,:][:,SolvedDofP]] ] )
-        M=scipy.sparse.construct.bmat( [ [MFF[SolvedDofF,:][:,SolvedDofF],None],
+        M=scipy.sparse.bmat( [ [MFF[SolvedDofF,:][:,SolvedDofF],None],
                                          [CPF[SolvedDofP,:][:,SolvedDofF],MPP[SolvedDofP,:][:,SolvedDofP]] ] )
-##        K=scipy.sparse.construct.bmat( [ [KFF[SolvedDofF,:][:,SolvedDofF],None],
+##        K=scipy.sparse.bmat( [ [KFF[SolvedDofF,:][:,SolvedDofF],None],
 ##                                         [None,KPP[SolvedDofP,:][:,SolvedDofP]] ] )
-##        M=scipy.sparse.construct.bmat( [ [MFF[SolvedDofF,:][:,SolvedDofF],None],
+##        M=scipy.sparse.bmat( [ [MFF[SolvedDofF,:][:,SolvedDofF],None],
 ##                                         [None,MPP[SolvedDofP,:][:,SolvedDofP]] ] )
 
-        F=scipy.array(omega**2*UF[SolvedDof] , dtype='c16')
-        #F=scipy.array(P , dtype='c16')
+        F=np.array(omega**2*UF[SolvedDof] , dtype='c16')
+        #F=np.array(P , dtype='c16')
 
-        #sol=scipy.sparse.linalg.spsolve( scipy.sparse.csc_matrix(K-(omega*omega)*M,dtype=complex) , scipy.array(F , dtype=complex) )
+        #sol=scipy.sparse.linalg.spsolve( scipy.sparse.csc_matrix(K-(omega*omega)*M,dtype=complex) , np.array(F , dtype=complex) )
         sol = mumps.spsolve( scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='c16') , F , comm=mycomm )
         #sol = mumps.spsolve( scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='float') , F , comm=mycomm )
         
 
-        #press = scipy.zeros((fluid_ndof),dtype=float)
-        press1 = scipy.zeros((fluid_ndof1),dtype=complex)
+        #press = np.zeros((fluid_ndof),dtype=float)
+        press1 = np.zeros((fluid_ndof1),dtype=complex)
         press1[SolvedDofF]=sol[list(range(len(SolvedDofF)))]
         frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes1,press1))
         #frf[i]=silex_lib_xfem_acou_tet4.computequadratiquepressure(fluid_elements,fluid_nodes,press)
@@ -337,11 +337,11 @@ if (Flag_frf_analysis==1):
     if rank==0:
         silex_lib_gmsh.WriteResults2(results_file+'_results_fluid_frf',fluid_nodes1,fluid_elements1,4,[[press_save,'nodal',1,'pressure']])
 
-    print ("Proc. ",rank," / time at the end of the FRF:",time.ctime())
+    print ("Proc. {} / time at the end of the FRF: {}".format(rank, time.ctime()))
 
     # save the FRF problem
-    Allfrequencies=scipy.zeros(nb_freq_step)
-    Allfrf=scipy.zeros(nb_freq_step)
+    Allfrequencies=np.zeros(nb_freq_step)
+    Allfrf=np.zeros(nb_freq_step)
     k=0
     if rank==0:
         for i in range(nproc):
@@ -352,7 +352,7 @@ if (Flag_frf_analysis==1):
                 k=k+1
 
         Allfrequencies, Allfrf = zip(*sorted(zip(Allfrequencies, Allfrf)))
-        Allfrfsave=[scipy.array(list(Allfrequencies)),scipy.array(list(Allfrf))]
+        Allfrfsave=[np.array(list(Allfrequencies)),np.array(list(Allfrf))]
         f=open(results_file+'_results.frf','wb')
         pickle.dump(Allfrfsave, f)
         f.close()

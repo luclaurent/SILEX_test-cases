@@ -56,7 +56,7 @@ mycomm=comm_mumps_one_proc()
 ###########################################################
 
 if rank==0:
-    print ("time at the beginning of the computation:",time.ctime())
+    print ("time at the beginning of the computation: {}".format(time.ctime()))
 
 ##############################################################
 ##############################################################
@@ -281,7 +281,7 @@ MSS = scipy.sparse.csc_matrix( (Vms,(IIks,JJks)), shape=(struc_ndof,struc_ndof) 
 
 toc = time.process_time()
 if rank==0:
-    print ("time for computing structure:",toc-tic)
+    print ("time for computing structure: {}".format(toc-tic))
 
 ##################################################################
 # Compute eigen modes of the structure
@@ -290,11 +290,11 @@ tic = time.process_time()
 
 eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(KSS[SolvedDofS,:][:,SolvedDofS],nb_mode_S,MSS[SolvedDofS,:][:,SolvedDofS],sigma=0,which='LM')
 
-freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*np.pi))
+freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
 toc = time.process_time()
 if rank==0:
-    print ("time for computing the structure modal basis:",toc-tic)
+    print ("time for computing the structure modal basis: {}".format(toc-tic))
 
 eigen_vector_S_list=[]
 for i in range(nb_mode_S):
@@ -319,7 +319,7 @@ LevelSet,distance = silex_lib_xfem_acou_tet4.computelevelset(fluid_nodes1,struc_
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute level set:",toc-tic)
+    print ("time to compute level set: {}".format(toc-tic))
 
 tic = time.process_time()
 
@@ -329,7 +329,7 @@ LevelSetTangent,tmp = silex_lib_xfem_acou_tet4.computelevelset(fluid_nodes1,tang
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute tangent level set:",toc-tic)
+    print ("time to compute tangent level set: {}".format(toc-tic))
 
 if (flag_write_gmsh_results==1) and (rank==0):
     silex_lib_gmsh.WriteResults2(results_file+'_LS_signed_distance',fluid_nodes1,fluid_elements1,4,[[[LevelSet],'nodal',1,'Level set']])
@@ -349,7 +349,7 @@ EnrichedElements=np.unique(EnrichedElements[list(range(NbEnrichedElements))])
 EnrichedElements=LSEnrichedElements[EnrichedElements-1]
 toc = time.process_time()
 if rank==0:
-    print ("time to find surface enriched elements:",toc-tic)
+    print ("time to find surface enriched elements: {}".format(toc-tic))
 
 tic = time.process_time()
 
@@ -361,7 +361,7 @@ EdgeEnrichedElementsInAllMesh=np.unique(EdgeEnrichedElementsInAllMesh[list(range
 
 toc = time.process_time()
 if rank==0:
-    print ("time to find edge enriched elements:",toc-tic)
+    print ("time to find edge enriched elements: {}".format(toc-tic))
 
 HeavisideEnrichedElements=np.setdiff1d(EnrichedElements,EdgeEnrichedElements)
 
@@ -386,7 +386,7 @@ CSA=0.5*scipy.sparse.csc_matrix( (Vc1,(IIc1,JJc1)), shape=(struc_ndof,fluid_ndof
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute coupling matrices:",toc-tic)
+    print ("time to compute coupling matrices: {}".format(toc-tic))
 
 ##############################################################
 # Compute Standard Fluid Matrices
@@ -442,7 +442,7 @@ SolvedDofA=Enrichednodes-1
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute Heaviside enrichment:",toc-tic)
+    print ("time to compute Heaviside enrichment: {}".format(toc-tic))
 
 ##################################################################
 # Compute Edge enrichment
@@ -462,7 +462,7 @@ MAFedge = scipy.sparse.csc_matrix( (vmfa,(II,JJ)), shape=(fluid_ndof1,fluid_ndof
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute edge enrichment:",toc-tic)
+    print ("time to compute edge enrichment: {}".format(toc-tic))
 
 KAA=KAAheaviside+KAAedge
 MAA=MAAheaviside+MAAedge
@@ -486,7 +486,7 @@ if rank==0:
     print ("Compute fluid modes")
 eigen_values_I,eigen_vectors_I= scipy.sparse.linalg.eigsh(KFF[SolvedDofI,:][:,SolvedDofI],nb_mode_F,MFF[SolvedDofI,:][:,SolvedDofI],sigma=0,which='LM')
 
-freq_eigv_I=list(scipy.sqrt(eigen_values_I)/(2*np.pi))
+freq_eigv_I=list(np.sqrt(eigen_values_I)/(2*np.pi))
 eigen_vector_F_list=[]
 for i in range(nb_mode_F):
     tmp=np.zeros((fluid_ndof1) , dtype='float')
@@ -501,7 +501,7 @@ if (flag_write_gmsh_results==1) and (rank==0):
 
 toc = time.process_time()
 if rank==0:
-    print ("time for computing the fluid modes:",toc-tic)
+    print ("time for computing the fluid modes: {}".format(toc-tic))
 
 
 ##################################################################
@@ -557,7 +557,7 @@ Psi_IA=scipy.sparse.csc_matrix(Psi_IA)
 toc = time.process_time()
 
 if rank==0:
-    print ("time to compute PSI_IA:",toc-tic)
+    print ("time to compute PSI_IA: {}".format(toc-tic))
 
 ##if rank==0:
 ##    eigen_vector_I_list=[]
@@ -615,7 +615,7 @@ Psi_IB=scipy.sparse.csc_matrix(Psi_IB)
 toc = time.process_time()
 
 if rank==0:
-    print ("time to compute PSI_FB:",toc-tic)
+    print ("time to compute PSI_FB: {}".format(toc-tic))
 
 ##if rank==0:
 ##    eigen_vector_I_list=[]
@@ -647,7 +647,7 @@ CnA = eigen_vectors_S.T*CSA[SolvedDofS,:][:,SolvedDofA]
 ##################################################################
 # Compute structure damping matrix
 ##################################################################
-VDnn = 2.0*modal_damping_S*scipy.sqrt(eigen_values_S)
+VDnn = 2.0*modal_damping_S*np.sqrt(eigen_values_S)
 IIDnn = list(range(nb_mode_F+len(SolvedDofB)+len(SolvedDofA),nb_mode_F+len(SolvedDofB)+len(SolvedDofA)+nb_mode_S))
 JJDnn = list(range(nb_mode_F+len(SolvedDofB)+len(SolvedDofA),nb_mode_F+len(SolvedDofB)+len(SolvedDofA)+nb_mode_S))
 
@@ -681,7 +681,7 @@ Khat_BA = KFF[SolvedDofB,:][:,SolvedDofI]*Psi_IA
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute Khat_hat:",toc-tic)
+    print ("time to compute Khat_hat: {}".format(toc-tic))
 
 tic = time.process_time()
 
@@ -690,7 +690,7 @@ Mstar_IB = MFF[SolvedDofI,:][:,SolvedDofI]*Psi_IB+MFF[SolvedDofI,:][:,SolvedDofB
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute Mstar:",toc-tic)
+    print ("time to compute Mstar: {}".format(toc-tic))
 
 tic = time.process_time()
 
@@ -705,7 +705,7 @@ Mhat_BB = MFF[SolvedDofB,:][:,SolvedDofB]+scipy.sparse.csc_matrix((Psi_IB.T).tod
 
 toc = time.process_time()
 if rank==0:
-    print ("time to compute Mhat:",toc-tic)
+    print ("time to compute Mhat: {}".format(toc-tic))
 
 #CmP=PhiFm.T*CPF[SolvedDofP,:][:,SolvedDofF].T
 #CAP=Psi_FA.T*CPF[SolvedDofP,:][:,SolvedDofF].T
@@ -740,7 +740,7 @@ frequencies=[]
 frf=[]
 
 if (Flag_frf_analysis==1):
-    print ("Proc. ",rank," / time at the beginning of the FRF:",time.ctime())
+    print ("Proc. {} / time at the beginning of the FRF: {}".format(rank, time.ctime()))
 
     if rank==0:
         print('nb of total dofs: ',nb_mode_F+len(SolvedDofB)+len(SolvedDofA)+nb_mode_S,)
@@ -754,20 +754,20 @@ if (Flag_frf_analysis==1):
         frequencies.append(freq)
         omega=2*np.pi*freq
 
-        print ("proc number",rank,"frequency=",freq)
+        print ("proc number {} - frequency={}".format(rank,freq))
 
         tic = time.process_time()
 
         Kimp=-(omega**2/(k_imp_paroi-1j*omega*d_imp_paroi))*CII
 
-        K=scipy.sparse.construct.bmat( [ [K_diag_mm,None,       None,                           None],
+        K=scipy.sparse.bmat( [ [K_diag_mm,None,       None,                           None],
                                          [None,     Khat_BB+Kimp[SolvedDofB,:][:,SolvedDofB],    Khat_BA,                           None],
                                          [None,     Khat_BA.T,  Khat_AA,                           None],
                                          [None,     None,       -CnA,Knn]
                                          ]
                                        )
         
-        M=scipy.sparse.construct.bmat( [ [M_diag_mm,    Mhat_mB,    Mhat_mA,                          None],
+        M=scipy.sparse.bmat( [ [M_diag_mm,    Mhat_mB,    Mhat_mA,                          None],
                                          [Mhat_mB.T,    Mhat_BB,    Mhat_BA,                               None],
                                          [Mhat_mA.T,    Mhat_BA.T,  Mhat_AA,                               CnA.T],
                                          [None,         None,       None,                              Mnn]
@@ -791,7 +791,7 @@ if (Flag_frf_analysis==1):
         enrichment = np.zeros(fluid_ndof1,dtype=complex)
         enrichment[SolvedDofA]= P_A
         CorrectedPressure=np.array(press)
-        CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA].T+np.array(enrichment[SolvedDofA]*scipy.sign(LevelSet[SolvedDofA]).T)
+        CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA].T+np.array(enrichment[SolvedDofA]*np.sign(LevelSet[SolvedDofA]).T)
         frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes1,CorrectedPressure))
         #frf.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(fluid_elements5,fluid_nodes1,press,enrichment,LevelSet,LevelSetTangent))
 
@@ -811,7 +811,7 @@ if (Flag_frf_analysis==1):
     if rank!=0:
         comm.send(frfsave, dest=0, tag=11)
 
-    print ("Proc. ",rank," / time at the end of the FRF:",time.ctime())
+    print ("Proc. {} / time at the end of the FRF: {}".format(rank, time.ctime()))
 
     if (flag_write_gmsh_results==1) and (rank==0):
         silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',fluid_nodes1,fluid_elements1,4,[[press_save,'nodal',1,'pressure']])

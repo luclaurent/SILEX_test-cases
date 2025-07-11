@@ -17,14 +17,14 @@ f=open('Results_parametric','r')
 [VM,case]=pickle.load(f)
 f.close()
 
-VM=scipy.array(VM)
+VM=np.array(VM)
 I=scipy.argmax(VM)
 
-print "VM max = ",max(VM)
+logger.info("VM max = ",max(VM)
 Fcombi_worst=case[I]
 
 ###################################################################
-tic = time.clock()
+tic = time.process_time()
 # Input mesh: define the name of the mesh file (*.msh)
 MeshFileName='long_support'
 
@@ -73,7 +73,7 @@ IdNodesFixed_y=IdnodeS7
 IdNodesFixed_z=IdnodeS6
 
 # compute external forces from pressure
-press = 1.0/(10.0*2.0*scipy.pi*7.0) #MPa
+press = 1.0/(10.0*2.0*np.pi*7.0) #MPa
 # give the direction of the surfacic load:
 #          if [0.0,0.0,0.0] then the local normal to the surface is used
 #          otherwise, the direction is normalized to 1
@@ -101,8 +101,8 @@ Fworst=  Fcombi_worst[0]*F1x+Fcombi_worst[1]*F1y+Fcombi_worst[2]*F1z+Fcombi_wors
 
 F=Fworst
 
-toc = time.clock()
-print "time for the user part:",toc-tic
+toc = time.process_time()
+logger.info("time for the user part:",toc-tic
 
 #############################################################################
 #      EXPERT PART
@@ -113,27 +113,27 @@ print "time for the user part:",toc-tic
 nnodes = nodes.shape[0]
 ndof   = nnodes*ndim
 nelem  = elements.shape[0]
-print "Number of nodes:",nnodes
-print "Number of elements:",nelem
+logger.info("Number of nodes:",nnodes
+logger.info("Number of elements:",nelem
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # initialize displacement vector
-Q=scipy.zeros(ndof)
+Q=np.zeros(ndof)
 
 #############################################################################
 #      compute stiffness matrix
 #############################################################################
-tic0 = time.clock()
-tic = time.clock()
+tic0 = time.process_time()
+tic = time.process_time()
 #print silex_lib_elt.stiffnessmatrix.__doc__
 Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(nodes,elements,[Young,nu])
-toc = time.clock()
-print "time to compute the stiffness matrix / FORTRAN:",toc-tic
+toc = time.process_time()
+logger.info("time to compute the stiffness matrix / FORTRAN:",toc-tic
 
 K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
 
@@ -141,44 +141,44 @@ K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
 #       Solve the problem
 #############################################################################
 
-tic = time.clock()
-Q[scipy.ix_(SolvedDofs)] = scipy.sparse.linalg.spsolve(K[scipy.ix_(SolvedDofs,SolvedDofs)],F[scipy.ix_(SolvedDofs)])
-toc = time.clock()
-print "time to solve the problem:",toc-tic
+tic = time.process_time()
+Q[np.ix_(SolvedDofs)] = scipy.sparse.linalg.spsolve(K[np.ix_(SolvedDofs,SolvedDofs)],F[np.ix_(SolvedDofs)])
+toc = time.process_time()
+logger.info("time to solve the problem:",toc-tic
 
 #############################################################################
 #       compute smooth stress and error in elements
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu],Q)
 
-toc = time.clock()
-print "time to compute stres and error:",toc-tic
-print "The global error is:",ErrorGlobal
-print "Total time for the computational part:",toc-tic0
+toc = time.process_time()
+logger.info("time to compute stres and error:",toc-tic
+logger.info("The global error is:",ErrorGlobal
+logger.info("Total time for the computational part:",toc-tic0
 
 #############################################################################
 #         Write results to gmsh format
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 # displacement written on 3 columns:
-disp=scipy.zeros((nnodes,ndim))
+disp=np.zeros((nnodes,ndim))
 disp[range(nnodes),0]=Q[range(0,ndof,3)]
 disp[range(nnodes),1]=Q[range(1,ndof,3)]
 disp[range(nnodes),2]=Q[range(2,ndof,3)]
 
 # external load written on 3 columns:
-load=scipy.zeros((nnodes,ndim))
+load=np.zeros((nnodes,ndim))
 load[range(nnodes),0]=F[range(0,ndof,3)]
 load[range(nnodes),1]=F[range(1,ndof,3)]
 load[range(nnodes),2]=F[range(2,ndof,3)]
 
 if flag_write_fields==0:
     fields_to_write=[ [disp,'nodal',ndim,'displacement'],
-                      [SigmaElem[scipy.ix_(range(nelem),[6])],'elemental',1,'Sigma V.M.'],
-                      [SigmaNodes[scipy.ix_(range(nnodes),[6])],'nodal',1,'Smooth Sigma V.M.'],
+                      [SigmaElem[np.ix_(range(nelem),[6])],'elemental',1,'Sigma V.M.'],
+                      [SigmaNodes[np.ix_(range(nnodes),[6])],'nodal',1,'Smooth Sigma V.M.'],
                       [ErrorElem,'elemental',1,'error'],
                       [load,'nodal',ndim,'Force'],
                       ]
@@ -186,41 +186,41 @@ if flag_write_fields==0:
 if flag_write_fields==1:
     fields_to_write=[ [disp,'nodal',ndim,'displacement'],
                       [load,'nodal',ndim,'Force'],
-                      [SigmaElem[scipy.ix_(range(nelem),[0])],'elemental',1,'Sigma 11'],
-                      [SigmaElem[scipy.ix_(range(nelem),[1])],'elemental',1,'Sigma 22'],
-                      [SigmaElem[scipy.ix_(range(nelem),[2])],'elemental',1,'Sigma 33'],
-                      [SigmaElem[scipy.ix_(range(nelem),[3])],'elemental',1,'Sigma 23'],
-                      [SigmaElem[scipy.ix_(range(nelem),[4])],'elemental',1,'Sigma 13'],
-                      [SigmaElem[scipy.ix_(range(nelem),[5])],'elemental',1,'Sigma 12'],
-                      [SigmaElem[scipy.ix_(range(nelem),[6])],'elemental',1,'Sigma V.M.'],
-                      [SigmaNodes[scipy.ix_(range(nnodes),[0])],'nodal',1,'Smooth Sigma 11'],
-                      [SigmaNodes[scipy.ix_(range(nnodes),[1])],'nodal',1,'Smooth Sigma 22'],
-                      [SigmaNodes[scipy.ix_(range(nnodes),[2])],'nodal',1,'Smooth Sigma 33'],
-                      [SigmaNodes[scipy.ix_(range(nnodes),[3])],'nodal',1,'Smooth Sigma 23'],
-                      [SigmaNodes[scipy.ix_(range(nnodes),[4])],'nodal',1,'Smooth Sigma 13'],
-                      [SigmaNodes[scipy.ix_(range(nnodes),[5])],'nodal',1,'Smooth Sigma 12'],
-                      [SigmaNodes[scipy.ix_(range(nnodes),[6])],'nodal',1,'Smooth Sigma V.M.'],
-                      [EpsilonElem[scipy.ix_(range(nelem),[0])],'elemental',1,'Epsilon 11'],
-                      [EpsilonElem[scipy.ix_(range(nelem),[1])],'elemental',1,'Epsilon 22'],
-                      [EpsilonElem[scipy.ix_(range(nelem),[2])],'elemental',1,'Epsilon 33'],
-                      [EpsilonElem[scipy.ix_(range(nelem),[3])]/2.0,'elemental',1,'Epsilon 23'],
-                      [EpsilonElem[scipy.ix_(range(nelem),[4])]/2.0,'elemental',1,'Epsilon 13'],
-                      [EpsilonElem[scipy.ix_(range(nelem),[5])]/2.0,'elemental',1,'Epsilon 12'],
-                      [EpsilonNodes[scipy.ix_(range(nnodes),[0])],'nodal',1,'Smooth Epsilon 11'],
-                      [EpsilonNodes[scipy.ix_(range(nnodes),[1])],'nodal',1,'Smooth Epsilon 22'],
-                      [EpsilonNodes[scipy.ix_(range(nnodes),[2])],'nodal',1,'Smooth Epsilon 33'],
-                      [EpsilonNodes[scipy.ix_(range(nnodes),[3])]/2.0,'nodal',1,'Smooth Epsilon 23'],
-                      [EpsilonNodes[scipy.ix_(range(nnodes),[4])]/2.0,'nodal',1,'Smooth Epsilon 13'],
-                      [EpsilonNodes[scipy.ix_(range(nnodes),[5])]/2.0,'nodal',1,'Smooth Epsilon 12'],
+                      [SigmaElem[np.ix_(range(nelem),[0])],'elemental',1,'Sigma 11'],
+                      [SigmaElem[np.ix_(range(nelem),[1])],'elemental',1,'Sigma 22'],
+                      [SigmaElem[np.ix_(range(nelem),[2])],'elemental',1,'Sigma 33'],
+                      [SigmaElem[np.ix_(range(nelem),[3])],'elemental',1,'Sigma 23'],
+                      [SigmaElem[np.ix_(range(nelem),[4])],'elemental',1,'Sigma 13'],
+                      [SigmaElem[np.ix_(range(nelem),[5])],'elemental',1,'Sigma 12'],
+                      [SigmaElem[np.ix_(range(nelem),[6])],'elemental',1,'Sigma V.M.'],
+                      [SigmaNodes[np.ix_(range(nnodes),[0])],'nodal',1,'Smooth Sigma 11'],
+                      [SigmaNodes[np.ix_(range(nnodes),[1])],'nodal',1,'Smooth Sigma 22'],
+                      [SigmaNodes[np.ix_(range(nnodes),[2])],'nodal',1,'Smooth Sigma 33'],
+                      [SigmaNodes[np.ix_(range(nnodes),[3])],'nodal',1,'Smooth Sigma 23'],
+                      [SigmaNodes[np.ix_(range(nnodes),[4])],'nodal',1,'Smooth Sigma 13'],
+                      [SigmaNodes[np.ix_(range(nnodes),[5])],'nodal',1,'Smooth Sigma 12'],
+                      [SigmaNodes[np.ix_(range(nnodes),[6])],'nodal',1,'Smooth Sigma V.M.'],
+                      [EpsilonElem[np.ix_(range(nelem),[0])],'elemental',1,'Epsilon 11'],
+                      [EpsilonElem[np.ix_(range(nelem),[1])],'elemental',1,'Epsilon 22'],
+                      [EpsilonElem[np.ix_(range(nelem),[2])],'elemental',1,'Epsilon 33'],
+                      [EpsilonElem[np.ix_(range(nelem),[3])]/2.0,'elemental',1,'Epsilon 23'],
+                      [EpsilonElem[np.ix_(range(nelem),[4])]/2.0,'elemental',1,'Epsilon 13'],
+                      [EpsilonElem[np.ix_(range(nelem),[5])]/2.0,'elemental',1,'Epsilon 12'],
+                      [EpsilonNodes[np.ix_(range(nnodes),[0])],'nodal',1,'Smooth Epsilon 11'],
+                      [EpsilonNodes[np.ix_(range(nnodes),[1])],'nodal',1,'Smooth Epsilon 22'],
+                      [EpsilonNodes[np.ix_(range(nnodes),[2])],'nodal',1,'Smooth Epsilon 33'],
+                      [EpsilonNodes[np.ix_(range(nnodes),[3])]/2.0,'nodal',1,'Smooth Epsilon 23'],
+                      [EpsilonNodes[np.ix_(range(nnodes),[4])]/2.0,'nodal',1,'Smooth Epsilon 13'],
+                      [EpsilonNodes[np.ix_(range(nnodes),[5])]/2.0,'nodal',1,'Smooth Epsilon 12'],
                       [ErrorElem,'elemental',1,'error'],
                       ]
 
 # write the mesh and the results in a gmsh-format file
 silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_write)
 
-toc = time.clock()
-print "time to write results:",toc-tic
-print "----- END -----"
+toc = time.process_time()
+logger.info("time to write results:",toc-tic
+logger.info("----- END -----"
 
 
 

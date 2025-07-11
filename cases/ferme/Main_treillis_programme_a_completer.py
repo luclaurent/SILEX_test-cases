@@ -14,14 +14,14 @@ print("Calcul d'un treillis de barres")
 #############################################################################
 
 # tableau de coordonnees des noeuds [m]
-nodes=scipy.array([[0.0  ,	   0.0	], # x,y du noeud 1
+nodes=np.array([[0.0  ,	   0.0	], # x,y du noeud 1
                    [  ???? , ????	], # x,y du noeud 2
                    [   ????,???? ], # ...
                    [  ???? , ????],
                    [  ???? ,???? ]])
 
 # table de connectivite des elements (les numeros des noeuds commencent a 1)
-elements=scipy.array([[     1 ,	 2],# element 1
+elements=np.array([[     1 ,	 2],# element 1
                       [   ????   ,????	 ], # element 2
                       [   ????   ,????	 ], # ...
                       [     ???? ,????	 ]])
@@ -52,24 +52,24 @@ nelem  = ???? # si on le donne directement
 #nelem = elements.shape[0] # pour un calcul automatique a partir du nombre de lignes du tableau nodes
 
 # degres de libertes fixes (attention, python commence a 0)
-Fixed_Dofs = scipy.array([0, ????, ????, ....])
+Fixed_Dofs = np.array([0, ????, ????, ....])
 
 # degres de libertes libres 
-SolvedDofs = scipy.array([ ????,  ????, ....]) # si on le donne directement
-#SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.array([ ????,  ????, ....]) # si on le donne directement
+#SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # Initialisation des deplacements aux noeuds
-U=scipy.zeros(ndof)
+U=np.zeros(ndof)
 
 # Initialisation des forces aux noeuds
-F=scipy.array([    ????  ,    ????   ,    ????   , .....])
+F=np.array([    ????  ,    ????   ,    ????   , .....])
 
 #############################################################################
 #      Calcul de la matrice de rigidite K
 #############################################################################
 
 # Initialisation d'une matrice nulle de taille ndof X ndof
-K=scipy.zeros((ndof,ndof))
+K=np.zeros((ndof,ndof))
 
 # Boucle sur les elements
 for e in range(nelem):
@@ -89,7 +89,7 @@ for e in range(nelem):
     lx        = xb-xa # difference le long de "x" des coordonnees des noeuds
     ly        = ????-???? # difference le long de "y" des coordonnees des noeuds
 
-    lelem     = scipy.sqrt(????) # pythagore pour calculer la longueur de l'element
+    lelem     = np.sqrt(????) # pythagore pour calculer la longueur de l'element
     cos_theta = ???? # calcul du cosinus de l'angle de l'element avec l'axe "x"
     sin_theta = ???? # calcul du sinus de l'angle de l'element avec l'axe "x"
 

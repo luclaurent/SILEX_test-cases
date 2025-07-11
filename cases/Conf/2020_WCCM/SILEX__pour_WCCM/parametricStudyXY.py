@@ -11,7 +11,7 @@ from Main_acou3D_struc3D_v3_grad import *
 
 freqMin=10.
 freqMax=200.
-paraValN=scipy.array([1.0,1.0,1.,1.0])
+paraValN=np.array([1.0,1.0,1.,1.0])
 nbStep=4
 
 import scipy
@@ -23,8 +23,8 @@ Xmax=4.
 Ymin=0.
 Ymax=3.
 
-Xl=scipy.linspace(Xmin,Xmax,nbVal)
-Yl=scipy.linspace(Ymin,Ymax,nbVal)
+Xl=np.linspace(Xmin,Xmax,nbVal)
+Yl=np.linspace(Ymin,Ymax,nbVal)
 Xm,Ym=scipy.meshgrid(Xl,Yl)
 Zm=list()
 

@@ -24,7 +24,7 @@ mycomm=comm_mumps_one_proc()
 print("SILEX CODE - calcul d'un assemblage")
 #############################################################################
 
-tic = time.clock()
+tic = time.process_time()
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
@@ -74,7 +74,7 @@ elementS2,IdnodeS2=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,2)
 ##silex_lib_gmsh.WriteResults(ResultsFileName+'_vol11',nodes,elementV11,5)
 ##silex_lib_gmsh.WriteResults(ResultsFileName+'_vol12',nodes,elementV12,5)
 
-elements=scipy.vstack([elementV10,elementV11,elementV12])
+elements=np.vstack([elementV10,elementV11,elementV12])
 
 ##silex_lib_gmsh.WriteResults(ResultsFileName+'_complet',nodes,elements,5)
 
@@ -153,23 +153,23 @@ ndof   = nnodes*3
 nelem  = elements.shape[0]
 
 # Boundary conditions
-IdNodesFixed_x=scipy.hstack([IdnodeS3,IdnodeS1])
-IdNodesFixed_y=scipy.hstack([IdnodeS3,IdnodeS1])
-IdNodesFixed_z=scipy.hstack([IdnodeS3,IdnodeS1])
+IdNodesFixed_x=np.hstack([IdnodeS3,IdnodeS1])
+IdNodesFixed_y=np.hstack([IdnodeS3,IdnodeS1])
+IdNodesFixed_z=np.hstack([IdnodeS3,IdnodeS1])
 
 # DEFINE LOAD
 #load = 1.0e2                     # traction loading (Pa)
-#direction = scipy.array([0,1,0]) # force in direction +y
+#direction = np.array([0,1,0]) # force in direction +y
 
 # load calculation
 #F = silex_lib_elt.forceonsurface(nodes,elementS1,load,direction)
-F = scipy.zeros(ndof,dtype=mytype)
+F = np.zeros(ndof,dtype=mytype)
 
 # frequency range
-frequencies=scipy.linspace(0,500,500)
+frequencies=np.linspace(0,500,500)
 
-toc = time.clock()
-print("time for the user part:",toc-tic)
+toc = time.process_time()
+print("time for the user part: {}".format(toc-tic))
 
 #############################################################################
 #      EXPERT PART
@@ -190,60 +190,60 @@ print("Number of elements:",elementV12.shape[0])
 print("")
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([
-    (scipy.array(IdNodesFixed_x)-1)*3,
-    (scipy.array(IdNodesFixed_y)-1)*3+1,
-    (scipy.array(IdNodesFixed_z)-1)*3+2])
+Fixed_Dofs = np.hstack([
+    (np.array(IdNodesFixed_x)-1)*3,
+    (np.array(IdNodesFixed_y)-1)*3+1,
+    (np.array(IdNodesFixed_z)-1)*3+2])
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # initialize displacement vector
-Q=scipy.zeros(ndof,dtype='float')
+Q=np.zeros(ndof,dtype='float')
 
 #############################################################################
 #      pre-stress of the links
 #############################################################################
 
 # Dof fixed in the x direction
-Fixed_link_Dofs_x = scipy.hstack([(IdnodeV12-1)*3])
+Fixed_link_Dofs_x = np.hstack([(IdnodeV12-1)*3])
 
 # Dof fixed in the x direction
-Fixed_link_Dofs_y = scipy.hstack([(IdnodeV12-1)*3+1])
+Fixed_link_Dofs_y = np.hstack([(IdnodeV12-1)*3+1])
 
 # Dof fixed in the x direction
-Fixed_link_Dofs_z = scipy.hstack([(IdnodeV12-1)*3+2])
+Fixed_link_Dofs_z = np.hstack([(IdnodeV12-1)*3+2])
 
 # define fixed dof
-Fixed_Dofs_link = scipy.hstack([Fixed_link_Dofs_x,Fixed_link_Dofs_y,Fixed_link_Dofs_z])
+Fixed_Dofs_link = np.hstack([Fixed_link_Dofs_x,Fixed_link_Dofs_y,Fixed_link_Dofs_z])
 
-SolvedDofs_link = scipy.setdiff1d(range(ndof),Fixed_Dofs_link)
+SolvedDofs_link = np.setdiff1d(range(ndof),Fixed_Dofs_link)
 
 
 n = 10                         # Number of increment in the quasistatic part
 for pre_load_force in [0]: #N
-    pre_load =pre_load_force/scipy.pi/50e-3**2                     # Quasistatic traction loading (Pa)
-    direction = scipy.array([0,1,0]) # force in direction +y
+    pre_load =pre_load_force/np.pi/50e-3**2                     # Quasistatic traction loading (Pa)
+    direction = np.array([0,1,0]) # force in direction +y
     print('pre load compressive force=',pre_load_force,'N')
 
     # Computation of the scale factor
-    scale  = scipy.linspace(0,1,n)
+    scale  = np.linspace(0,1,n)
 
     # load calculation
-    Force = silex_lib_elt.forceonsurface(nodes,scipy.vstack([elementS1,elementS3]),pre_load,direction)
+    Force = silex_lib_elt.forceonsurface(nodes,np.vstack([elementS1,elementS3]),pre_load,direction)
     NormFext = scipy.linalg.norm(Force)
 
     # Global initialization
-    Q          = scipy.zeros(ndof)
-    QQ         = scipy.zeros(ndof)
-    QQQ        = scipy.zeros(ndof)
-    niter      = scipy.zeros(n)
-    Fext       = scipy.zeros(ndof)
-    Fint1      = scipy.zeros(ndof)
-    Fint2      = scipy.zeros(ndof)
-    disp       = scipy.zeros((nnodes,3))
+    Q          = np.zeros(ndof)
+    QQ         = np.zeros(ndof)
+    QQQ        = np.zeros(ndof)
+    niter      = np.zeros(n)
+    Fext       = np.zeros(ndof)
+    Fint1      = np.zeros(ndof)
+    Fint2      = np.zeros(ndof)
+    disp       = np.zeros((nnodes,3))
     disp_save  = []
-    load       = scipy.zeros((nnodes,3))
+    load       = np.zeros((nnodes,3))
     load_save  = []
     sigma_save = []
     Usave      = []
@@ -258,7 +258,7 @@ for pre_load_force in [0]: #N
     print('Increment : ',n)
     print('')
 
-    tic = time.clock()
+    tic = time.process_time()
 
     for t in range(n):
 
@@ -303,7 +303,7 @@ for pre_load_force in [0]: #N
             kk = K[SolvedDofs_link,:][:,SolvedDofs_link]
 
             # Correction of displacement
-            dQ = scipy.zeros(ndof)
+            dQ = np.zeros(ndof)
             dQ[SolvedDofs_link] = mumps.spsolve(kk,rr)
             Q = Q + dQ
 
@@ -329,7 +329,7 @@ for pre_load_force in [0]: #N
         disp[range(nnodes),2]=Q[list(range(2,ndof,3))]
         disp_save.append(disp.copy())
 
-    toc = time.clock()
+    toc = time.process_time()
     tps = toc-tic
 
     f=open('U_compression.pkl','wb')
@@ -347,14 +347,14 @@ for pre_load_force in [0]: #N
     #############################################################################
     #      compute stiffness matrix
     #############################################################################
-    tic0 = time.clock()
-    tic = time.clock()
+    tic0 = time.process_time()
+    tic = time.process_time()
 
-    K1_i,K1_j,K1_v = silex_lib_elt.ktan_dd(nodes,elementV10,scipy.zeros(ndof,dtype='float'),flag1,param1)
+    K1_i,K1_j,K1_v = silex_lib_elt.ktan_dd(nodes,elementV10,np.zeros(ndof,dtype='float'),flag1,param1)
     K1 = scipy.sparse.csc_matrix((K1_v,(K1_i,K1_j)),shape=(ndof,ndof))
     K2_i,K2_j,K2_v = silex_lib_elt.ktan_dd(nodes,elementV11,Q,flag2,param2)
     K2 = scipy.sparse.csc_matrix((K2_v,(K2_i,K2_j)),shape=(ndof,ndof))           
-    K3_i,K3_j,K3_v = silex_lib_elt.ktan_dd(nodes,elementV12,scipy.zeros(ndof,dtype='float'),flag3,param3)
+    K3_i,K3_j,K3_v = silex_lib_elt.ktan_dd(nodes,elementV12,np.zeros(ndof,dtype='float'),flag3,param3)
     K3 = scipy.sparse.csc_matrix((K3_v,(K3_i,K3_j)),shape=(ndof,ndof))
 
     # elastic
@@ -369,15 +369,15 @@ for pre_load_force in [0]: #N
     M3=scipy.sparse.csc_matrix( (Vm3,(Ik3,Jk3)), shape=(ndof,ndof) )
     M = M1 + M2 + M3
 
-    toc = time.clock()
-    print("time to compute the stiffness and mass matrix :",toc-tic)
+    toc = time.process_time()
+    print("time to compute the stiffness and mass matrix : {}".format(toc-tic))
 
     # initialize displacement vector
-    Q=scipy.zeros(ndof,dtype=mytype)
+    Q=np.zeros(ndof,dtype=mytype)
 
-    Imposed_disp_dof=scipy.hstack([
-        (scipy.array(IdNodesFixed_x)-1)*3,
-        (scipy.array(IdNodesFixed_z)-1)*3+2])
+    Imposed_disp_dof=np.hstack([
+        (np.array(IdNodesFixed_x)-1)*3,
+        (np.array(IdNodesFixed_z)-1)*3+2])
 
     Q[Imposed_disp_dof]=1.0e-4
 
@@ -386,28 +386,28 @@ for pre_load_force in [0]: #N
     #############################################################################
 
     #Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
-    #Q=scipy.zeros(ndof,dtype='float')
+    #Q=np.zeros(ndof,dtype='float')
     #if flag_damping==1:
-    #    Q=scipy.zeros(ndof,dtype=mytype)
+    #    Q=np.zeros(ndof,dtype=mytype)
 
     if 1==0:
         eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(K[SolvedDofs,:][:,SolvedDofs],10,M[SolvedDofs,:][:,SolvedDofs],sigma=0,which='LM')
 
-        freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*scipy.pi))
+        freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
         eigen_vector_S_list=[]
         for i in range(eigen_values_S.shape[0]):
-            Q=scipy.zeros(ndof)
+            Q=np.zeros(ndof)
             Q[SolvedDofs]=eigen_vectors_S[:,i]
-            disp=scipy.zeros((nnodes,3))
+            disp=np.zeros((nnodes,3))
             disp[range(nnodes),0]=Q[list(range(0,ndof,3))].real
             disp[range(nnodes),1]=Q[list(range(1,ndof,3))].real
             disp[range(nnodes),2]=Q[list(range(2,ndof,3))].real
             eigen_vector_S_list.append(disp)
 
-        toc = time.clock()
+        toc = time.process_time()
         print ("structure eigen frequencies : ",freq_eigv_S)
-        print ("time for computing the structure modes:",toc-tic)
+        print ("time for computing the structure modes: {}".format(toc-tic))
         silex_lib_gmsh.WriteResults2(ResultsFileName+'_structure_modes',nodes,elements,5,[[eigen_vector_S_list,'nodal',3,'modes']])
 
     #############################################################################
@@ -421,7 +421,7 @@ for pre_load_force in [0]: #N
     for i in range(len(frequencies)):
 
         freq = frequencies[i]
-        omega=2*scipy.pi*freq
+        omega=2*np.pi*freq
 
         print ("frequency=",freq)
 
@@ -434,13 +434,13 @@ for pre_load_force in [0]: #N
             K = K1 + K2*Gstar/G0 + K3
             kk=scipy.sparse.csc_matrix(K[SolvedDofs,:][:,SolvedDofs]-(omega*omega)*M[SolvedDofs,:][:,SolvedDofs],dtype=mytype)
 
-        #Q[SolvedDofs] = mumps.spsolve( scipy.sparse.csc_matrix(K[SolvedDofs,:][:,SolvedDofs]-(omega*omega)*M[SolvedDofs,:][:,SolvedDofs],dtype=mytype) , scipy.array(F[SolvedDofs],dtype=mytype), comm=mycomm).T
-        Q[SolvedDofs] = mumps.spsolve( kk , scipy.array(F[SolvedDofs],dtype=mytype)-(K[SolvedDofs,:][:,Fixed_Dofs]-(omega*omega)*M[SolvedDofs,:][:,Fixed_Dofs])*Q[Fixed_Dofs], comm=mycomm).T
+        #Q[SolvedDofs] = mumps.spsolve( scipy.sparse.csc_matrix(K[SolvedDofs,:][:,SolvedDofs]-(omega*omega)*M[SolvedDofs,:][:,SolvedDofs],dtype=mytype) , np.array(F[SolvedDofs],dtype=mytype), comm=mycomm).T
+        Q[SolvedDofs] = mumps.spsolve( kk , np.array(F[SolvedDofs],dtype=mytype)-(K[SolvedDofs,:][:,Fixed_Dofs]-(omega*omega)*M[SolvedDofs,:][:,Fixed_Dofs])*Q[Fixed_Dofs], comm=mycomm).T
 
-        #frf.append(scipy.sqrt(Q[(187-1)*3]**2+Q[(187-1)*3+1]**2+Q[(187-1)*3+2]**2))
-        frf.append(scipy.linalg.norm(scipy.array([Q[(187-1)*3],Q[(187-1)*3+1],Q[(187-1)*3+2]])))
+        #frf.append(np.sqrt(Q[(187-1)*3]**2+Q[(187-1)*3+1]**2+Q[(187-1)*3+2]**2))
+        frf.append(scipy.linalg.norm(np.array([Q[(187-1)*3],Q[(187-1)*3+1],Q[(187-1)*3+2]])))
         
-        disp=scipy.zeros((nnodes,3),dtype='float')
+        disp=np.zeros((nnodes,3),dtype='float')
         disp[range(nnodes),0]=Q[list(range(0,ndof,3))].real
         disp[range(nnodes),1]=Q[list(range(1,ndof,3))].real
         disp[range(nnodes),2]=Q[list(range(2,ndof,3))].real

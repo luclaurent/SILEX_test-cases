@@ -20,13 +20,13 @@ deppoutreA   = [0.0 , -g200*0.5**3/(3.0*70000e6*(1.0e-3*20.0e-3**3/12.0))]
 
 # E.F. Force en A
 forceefA = [ 0.0 , g200 ]
-depBefA  = scipy.array([0.0, -1.51294562e-03 ])
-depCefA  = scipy.array([0.0, -1.84752857e-03 ])
+depBefA  = np.array([0.0, -1.51294562e-03 ])
+depCefA  = np.array([0.0, -1.84752857e-03 ])
 
 # E.F. Force en B
 forceefB = [ 0.0 , g200 ]
-depAefB  = scipy.array([0.0, -7.56472808e-04*2])
-depCefB  = scipy.array([0.0, 1.43687408e-03*2])
+depAefB  = np.array([0.0, -7.56472808e-04*2])
+depCefB  = np.array([0.0, 1.43687408e-03*2])
 
 #pointsBef = [[0.0, 0.0], [6.43609501e-01, g50], [9.68776133e-01, g50] , [0.0,0.0]]
 #polygon = pyplot.Polygon()

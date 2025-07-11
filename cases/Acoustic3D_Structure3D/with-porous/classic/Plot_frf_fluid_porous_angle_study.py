@@ -29,7 +29,7 @@ for freq in frf[0][0]:
         i_min=i+1
     i=i+1
     weight_function.append(weight)
-weight_function=scipy.array(weight_function)
+weight_function=np.array(weight_function)
 
 
 prefsquare=20e-6*20e-6

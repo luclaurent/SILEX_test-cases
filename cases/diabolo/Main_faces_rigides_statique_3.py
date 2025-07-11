@@ -145,21 +145,21 @@ print (" ")
 #nvisu = 13
 #visu_dir = 1   # x = 0 | y = 1 | z = 2
 
-elements = scipy.vstack([elemV1,elemV2])
+elements = np.vstack([elemV1,elemV2])
 
 #################################################################################
 #               BUILD THE R MATRIX                                              #
 #################################################################################
 
 R1 = silex_lib_extra.rigidify_surface(IdnodS1,nodes,[0.0,0.0,0.0])
-dofS1 = scipy.hstack([(IdnodS1-1)*3,(IdnodS1-1)*3+1,(IdnodS1-1)*3+2])
+dofS1 = np.hstack([(IdnodS1-1)*3,(IdnodS1-1)*3+1,(IdnodS1-1)*3+2])
 
 R2 = silex_lib_extra.rigidify_surface(IdnodS2,nodes,[0.0,0.104,0.0])
-dofS2 = scipy.hstack([(IdnodS2-1)*3,(IdnodS2-1)*3+1,(IdnodS2-1)*3+2])
+dofS2 = np.hstack([(IdnodS2-1)*3,(IdnodS2-1)*3+1,(IdnodS2-1)*3+2])
 
-sparse_ones = scipy.sparse.csc_matrix( (list(scipy.ones(ndof)),(list(range(ndof)),list(range(ndof)))), shape=(ndof,ndof) )
+sparse_ones = scipy.sparse.csc_matrix( (list(np.ones(ndof)),(list(range(ndof)),list(range(ndof)))), shape=(ndof,ndof) )
 
-R = scipy.sparse.construct.bmat( [ [ sparse_ones
+R = scipy.sparse.bmat( [ [ sparse_ones
                                      +R1[list(range(ndof)),:][:,list(range(ndof))]
                                      +R2[list(range(ndof)),:][:,list(range(ndof))]
                                      ,R1[:,list(range(ndof,ndof+6,1))]
@@ -173,16 +173,16 @@ R = scipy.sparse.construct.bmat( [ [ sparse_ones
 #################################################################################################################
 
 # Boundary conditions
-#IdNodesFixed_x=scipy.hstack((IdnodS1,IdnodS2))
-#IdNodesFixed_y=scipy.hstack((IdnodS1,IdnodS2))
-#IdNodesFixed_z=scipy.hstack((IdnodS1,IdnodS2))
+#IdNodesFixed_x=np.hstack((IdnodS1,IdnodS2))
+#IdNodesFixed_y=np.hstack((IdnodS1,IdnodS2))
+#IdNodesFixed_z=np.hstack((IdnodS1,IdnodS2))
 
 #################################################################################################################
 #                                              LOADING PART                                                     #
 #################################################################################################################
 
 # load calculation
-Fprime = scipy.zeros(ndof+6+6)
+Fprime = np.zeros(ndof+6+6)
 # FACE 1 superieure:
 Fprime[ndof+0]=100.0 # Newton / x
 Fprime[ndof+1]=100.0 # Newton / y
@@ -196,28 +196,28 @@ Fprime[ndof+5]=1.0 # Newton.metre / MZ
 #################################################################################################################
 
 # Global initialization
-Q          = scipy.zeros(ndof)
-Qprime     = scipy.zeros(ndof+6+6)
+Q          = np.zeros(ndof)
+Qprime     = np.zeros(ndof+6+6)
 
 #################################################################################################################
 #                                                 EXPERT PART                                                   #
 #################################################################################################################
 
 # define fixed dof
-#Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
+#Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
-#SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+#SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
-#SolvedDofsPrime = scipy.hstack([SolvedDofs,list(range(ndof,ndof+6))])
-#SolvedDofsPrime = scipy.setdiff1d(SolvedDofsPrime,dofS1)
+#SolvedDofsPrime = np.hstack([SolvedDofs,list(range(ndof,ndof+6))])
+#SolvedDofsPrime = np.setdiff1d(SolvedDofsPrime,dofS1)
 
-SolvedDofsPrime = scipy.setdiff1d(list(range(ndof+6+6)),dofS1)
-SolvedDofsPrime = scipy.setdiff1d(SolvedDofsPrime,dofS2)
+SolvedDofsPrime = np.setdiff1d(list(range(ndof+6+6)),dofS1)
+SolvedDofsPrime = np.setdiff1d(SolvedDofsPrime,dofS2)
 
 Fixed_DofsPrime = list(range(ndof,ndof+6+6))
 
-SolvedDofsPrime = scipy.setdiff1d(SolvedDofsPrime,Fixed_DofsPrime)
+SolvedDofsPrime = np.setdiff1d(SolvedDofsPrime,Fixed_DofsPrime)
 
 # stiffness matrix
 
@@ -242,8 +242,8 @@ Mprime=scipy.sparse.csc_matrix(R.T*M*R)
 #############################################################################
 #       Solve the fixed surface eigenvalue problem
 #############################################################################
-Dofs_n = scipy.setdiff1d(list(range(ndof)),dofS1)
-Dofs_n = scipy.setdiff1d(Dofs_n,dofS2)
+Dofs_n = np.setdiff1d(list(range(ndof)),dofS1)
+Dofs_n = np.setdiff1d(Dofs_n,dofS2)
 
 Dofs_s = list(range(ndof,ndof+12))
 #nb_modes=len(Dofs_n)-1
@@ -254,13 +254,13 @@ eigen_values_S,eigen_vectors_S = scipy.sparse.linalg.eigsh(Kprime[Dofs_n,:][:,Do
                                                            sigma=0, \
                                                            which='LM')
 
-freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*scipy.pi))
+freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
 eigen_vector_S_list=[]
 for i in range(eigen_values_S.shape[0]):
-    Q=scipy.zeros(ndof)
+    Q=np.zeros(ndof)
     Q[SolvedDofsPrime]=eigen_vectors_S[:,i]
-    disp=scipy.zeros((nnodes,3))
+    disp=np.zeros((nnodes,3))
     disp[range(nnodes),0]=Q[list(range(0,ndof,3))]
     disp[range(nnodes),1]=Q[list(range(1,ndof,3))]
     disp[range(nnodes),2]=Q[list(range(2,ndof,3))]
@@ -268,32 +268,32 @@ for i in range(eigen_values_S.shape[0]):
 
 silex_lib_gmsh.WriteResults2(ResultsFileName+'_structure_modes',nodes,elements,5,[[eigen_vector_S_list,'nodal',3,'modes']])
 
-print("Valeur propre max: ",scipy.sqrt(max(eigen_values_S))," Hz")
+print("Valeur propre max: ",np.sqrt(max(eigen_values_S))," Hz")
 print(" ")
 
 #############################################################################
 #       Make the SUPER BEAM ELEMENT
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
-Knninv_Kns=scipy.zeros((len(Dofs_n),12))
+Knninv_Kns=np.zeros((len(Dofs_n),12))
 
 MySolve = scipy.sparse.linalg.factorized(Kprime[Dofs_n,:][:,Dofs_n])
 for i in range(12):
     One_dof = [ndof+i]
-    #Kns_column = scipy.zeros(ndof)
+    #Kns_column = np.zeros(ndof)
     Kns_column = Kprime[Dofs_n,:][:,One_dof].todense()
     tmp = MySolve( Kns_column )
-    Knninv_Kns[:,[i]]= scipy.array(tmp)
+    Knninv_Kns[:,[i]]= np.array(tmp)
 
 static_mode_list=[]
 for i in range(12):
     tmp=-Knninv_Kns[:,[i]]
-    Qprime=scipy.zeros(ndof+12)
+    Qprime=np.zeros(ndof+12)
     Qprime[SolvedDofsPrime]=tmp
     Qprime[ndof+i]=1.0
     Q=R*Qprime
-    disp=scipy.zeros((nnodes,3))
+    disp=np.zeros((nnodes,3))
     disp[range(nnodes),0]=Q[list(range(0,ndof,3))]
     disp[range(nnodes),1]=Q[list(range(1,ndof,3))]
     disp[range(nnodes),2]=Q[list(range(2,ndof,3))]
@@ -325,17 +325,17 @@ f=open('supelm.pkl','wb')
 pickle.dump(tosave, f)
 f.close()
 
-toc = time.clock()
-print("time to make the SUPER BEAM ELEMENT:",toc-tic)
+toc = time.process_time()
+print("time to make the SUPER BEAM ELEMENT: {}".format(toc-tic))
 
 
 ###############################################################################
 ###         Write results to gmsh format
 ###############################################################################
-##tic = time.clock()
+##tic = time.process_time()
 ##
 ### displacement written on 3 columns:
-##disp=scipy.zeros((nnodes,3))
+##disp=np.zeros((nnodes,3))
 ##disp[range(nnodes),0]=Q[list(range(0,ndof,3))]
 ##disp[range(nnodes),1]=Q[list(range(1,ndof,3))]
 ##disp[range(nnodes),2]=Q[list(range(2,ndof,3))]
@@ -347,8 +347,8 @@ print("time to make the SUPER BEAM ELEMENT:",toc-tic)
 ### write the mesh and the results in a gmsh-format file
 ##silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,5,fields_to_write)
 ##
-toc = time.clock()
-print("time to write results:",toc-tic)
+toc = time.process_time()
+print("time to write results: {}".format(toc-tic))
 print("----- END -----")
 
 

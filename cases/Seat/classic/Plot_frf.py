@@ -23,7 +23,7 @@ f.close()
 f=open('results/classic_pgd.frf','rb')
 frf_classic_pgd=pickle.load(f)
 f.close()
-frf_classic_pgd[1]=scipy.array(frf_classic_pgd[1])
+frf_classic_pgd[1]=np.array(frf_classic_pgd[1])
 prefsquare=20e-6*20e-6
 
 pl.figure(1)

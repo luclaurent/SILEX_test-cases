@@ -28,7 +28,7 @@ print("SILEX CODE - Topology optimization for WHICH CONFIGURATION?")
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 # Input mesh: define the name of the mesh file (*.msh)
 MeshFileName='Cantilever-beam-quad4'
@@ -48,12 +48,12 @@ elements,Idnodes=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',eltype,103)
 
 # read lines where to impose boundary conditions
 #elementsS1,IdnodeS1=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',1,100)
-#IdnodeS1=scipy.zeros()
+#IdnodeS1=np.zeros()
 elementsS2,IdnodeS2=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',1,101)
 elementsS3,IdnodeS3=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',1,102)
 #elementsS3,IdnodeS3=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',1,10002)
-#IdnodeS23=scipy.unique(scipy.concatenate([IdnodeS2,IdnodeS3,IdnodeS1], axis=0))
-IdnodeS23=scipy.unique(scipy.concatenate([IdnodeS2,IdnodeS3], axis=0))
+#IdnodeS23=np.unique(scipy.concatenate([IdnodeS2,IdnodeS3,IdnodeS1], axis=0))
+IdnodeS23=np.unique(scipy.concatenate([IdnodeS2,IdnodeS3], axis=0))
 
 # Boundary conditions
 IdNodesFixed_x=IdnodeS23
@@ -76,10 +76,10 @@ gsf=1.0 ##gray-scale filter variable
 Flag_Filter = 2
 
 #F=silex_lib_elt.forceonline(nodes,elementsS2,[0.0,-10.0,0.0,-10.0],[0.0, 20.0, 0.0, 10.0])
-F=scipy.zeros(nodes.shape[0]*ndim)
+F=np.zeros(nodes.shape[0]*ndim)
 F[11]=-1
-toc = time.clock()
-print("time for the reading data part:",toc-tic)
+toc = time.process_time()
+print("time for the reading data part: {}".format(toc-tic))
 
 #############################################################################
 #      EXPERT PART
@@ -96,18 +96,18 @@ print("Number of elements:",nelem)
 velem,sumV=silex_lib_elt.getelementalvolume(nodes,elements)
 
 #define fixed dof
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # Displacement vector initialization
-U  = scipy.zeros(ndof)
-xe = scipy.ones(nelem)*volfrac
+U  = np.zeros(ndof)
+xe = np.ones(nelem)*volfrac
 XE_to_plot_list=[]
 change_to_list=[]
 loop_list=[]
-Ee=scipy.ones(nelem)*E0
+Ee=np.ones(nelem)*E0
 ###################      compute distances between elements     #######################
 #print(silex_lib_optim.getelementsneighbours.__doc__)
 change=1.0
@@ -118,46 +118,46 @@ evol_xnew=[]
 compliance_list=[]
 #volfrac_list=[0.45,0.46,0.47,0.48,0.49,0.50,0.51,0.52,0.53,0.54,0.55]
 #for volfrac in volfrac_list:
-toc1=time.clock()
+toc1=time.process_time()
 emax,neighbours,sumHH = silex_lib_optim.getelementsneighbours(nodes,elements,rmin,nelem)
 neighbours=neighbours[:,range(emax)]
-toc11=time.clock()
+toc11=time.process_time()
 time0=time.ctime()
 print("Time to compute getelementsneighbours:",toc11-toc1)
 while change>0.01 and loop<200:
-    tic1=time.clock()
+    tic1=time.process_time()
     loop=loop+1
     loop_list.append(loop)
     ###################      compute stiffness matrix     #######################
     #print(silex_lib_elt.stiffnessmatrix2.__doc__)
-    #tac0=time.clock()    
+    #tac0=time.process_time()    
     Ee=Emin+xe**penal*(E0-Emin)    
     Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix2(nodes,elements,Ee,[nu,1.0])
     K=scipy.sparse.csr_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
     U[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
     #U[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
-    #tac1=time.clock()
+    #tac1=time.process_time()
     ####################################     88-lines style    
     #Ee=Emin+xe**penal*(E0-Emin)
     StrEner=silex_lib_elt.getelementalstrainenergy(nodes,elements,[1,nu,1.0],U)
     ce=Ee*StrEner
-    #tac2=time.clock()
+    #tac2=time.process_time()
     #ce=xe**penal*silex_lib_elt.getelementalstrainenergy(nodes,elements,[1,nu,thickness],U)
     dc=(-penal*xe**(penal-1)*(E0-Emin))*StrEner
-    dv = scipy.ones(nelem)
-    #tac3=time.clock()
+    dv = np.ones(nelem)
+    #tac3=time.process_time()
     #H = silex_lib_elt.getdistancesbetweenelements88(nodes,elements,rmin)
     #Hs=H.sum(1)
     if Flag_Filter == 1:
         dc = silex_lib_optim.sensitivityfilter(nodes,elements,rmin,xe,dc,neighbours,sumHH)
     else:
         dc,dv = silex_lib_optim.densityfilter(nodes,elements,rmin,xe,dc,dv,neighbours,sumHH)    
-    #tac4=time.clock()
+    #tac4=time.process_time()
     #dc = scipy.dot(H,(xe*dc))/(scipy.maximum(0.001,xe)*Hs)
     xeold=xe
-    #tac5=time.clock()
+    #tac5=time.process_time()
     xe=silex_lib_optim.oc88(xe,dc,dv,volfrac,velem,gsf)
-    #tac6=time.clock()
+    #tac6=time.process_time()
     #evol_comp.append(comp)
     #evol_lmid.append(lmid)
     #evol_xnew.append(xnew_list)
@@ -167,7 +167,7 @@ while change>0.01 and loop<200:
     XE_to_plot_list.append(xe.copy())
     #plt.plot(loop_list,change_to_list)
     #plt.show()
-    toc1=time.clock()
+    toc1=time.process_time()
     print("change=",change,"loop=",loop,"time for iteration=",toc1-tic1)
     #print("tac1-tac0",tac1-tac0)
     #print("tac2-tac1",tac2-tac1)
@@ -208,20 +208,20 @@ silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,[[StrEner,'ele
 ############################################################################
 #       compute stress, smooth stress, strain and error
 ############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 #SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[1.0,nu,thickness],U)
 #
-#toc = time.clock()
+#toc = time.process_time()
 #print("number of optimization loops: ",loop)
-#print("time to compute stresses:",toc-tic)
+#print("time to compute stresses: {}".format(toc-tic))
 #print("The global error is:",ErrorGlobal)
 #
-#load=scipy.zeros((nnodes,ndim))
+#load=np.zeros((nnodes,ndim))
 #load[range(nnodes),0]=F[list(range(0,ndof,2))]
 #load[range(nnodes),1]=F[list(range(1,ndof,2))]
 #
-#disp=scipy.zeros((nnodes,ndim))
+#disp=np.zeros((nnodes,ndim))
 #disp[range(nnodes),0]=U[list(range(0,ndof,2))]
 #disp[range(nnodes),1]=U[list(range(1,ndof,2))]
 #   
@@ -237,7 +237,7 @@ tic = time.clock()
 #silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_write)
 
 silex_lib_gmsh.WriteResults2(ResultsFileName+'_Density_'+str(volfrac)+'_'+str(influence)+'rmin_'+str(gsf)+str(nelem)+'elems',nodes,elements,eltype,[[XE_to_plot_list,'elemental',1,'xe optim.']])
-toc = time.clock()
-print("Time to write result",toc-tic)
+toc = time.process_time()
+print("Time to write result {}".format(toc-tic))
 
 

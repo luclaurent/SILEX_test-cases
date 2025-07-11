@@ -78,7 +78,7 @@ for ii in Results:
 
 
 pl.figure(4)
-pl.plot(NbFluidModes,scipy.array(CPUtimePerStep)/TimeRef_OneFreq,'-o')
+pl.plot(NbFluidModes,np.array(CPUtimePerStep)/TimeRef_OneFreq,'-o')
 pl.axis([0, 300, 0, 1])
 pl.grid()
 pl.xlabel('Nb Fluid Modes')

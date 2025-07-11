@@ -36,7 +36,7 @@ print("SILEX CODE - calcul d'un capteur de force avec des tri3")
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 # Input mesh: define the name of the mesh file (*.msh)
 MeshFileName='caterpillar-tri3'
@@ -73,23 +73,23 @@ nu        = 0.3
 thickness = 200.0
 
 # define fixed dof
-IdNodesFixed_x=scipy.hstack([IdnodeS3,IdnodeS4])
-#IdNodesFixed_y=scipy.hstack([IdnodeS3,IdnodeS4])
+IdNodesFixed_x=np.hstack([IdnodeS3,IdnodeS4])
+#IdNodesFixed_y=np.hstack([IdnodeS3,IdnodeS4])
 IdNodesFixed_y=[]
 
 # force vector
-F=silex_lib_elt.forceonline(nodes,elementsS2,[0.0,435000/(scipy.pi*65.0),0.0,435000/(scipy.pi*65.0)],[1420.0-65.0,-420.0,1420.0+65.0,-420.0])
+F=silex_lib_elt.forceonline(nodes,elementsS2,[0.0,435000/(np.pi*65.0),0.0,435000/(np.pi*65.0)],[1420.0-65.0,-420.0,1420.0+65.0,-420.0])
 F=F/2
 
-toc = time.clock()
-print("time for the reading data part:",toc-tic)
+toc = time.process_time()
+print("time for the reading data part: {}".format(toc-tic))
 
 R3=silex_lib_extra.turn_dof2D(IdnodeS3,nodes,[     0.0 , 0.0 ])
 R4=silex_lib_extra.turn_dof2D(IdnodeS4,nodes,[ -1180.0 , 0.0 ])
 
 R=R3*R4
 
-tic0 = time.clock()
+tic0 = time.process_time()
 #############################################################################
 #      EXPERT PART
 #############################################################################
@@ -103,19 +103,19 @@ print("Number of nodes:",nnodes)
 print("Number of elements:",nelem)
 
 # define fixed dof
-#Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*2])
+#Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*2])
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # initialize displacement vector
-Q=scipy.zeros(ndof)
+Q=np.zeros(ndof)
 
 #############################################################################
 #      compute stiffness matrix
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(nodes,elements,[Young,nu,thickness])
 
@@ -123,45 +123,45 @@ K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) )
 
 K=R.T*K*R
 
-toc = time.clock()
-print("time to compute the stiffness matrix:",toc-tic)
+toc = time.process_time()
+print("time to compute the stiffness matrix: {}".format(toc-tic))
 
 #############################################################################
 #       Solve the problem
 #############################################################################
 
-tic = time.clock()
+tic = time.process_time()
 #Q[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 
 Q=R*Q
 
-toc = time.clock()
-print("time to solve the problem:",toc-tic)
+toc = time.process_time()
+print("time to solve the problem: {}".format(toc-tic))
 
 #############################################################################
 #       compute stress, smooth stress, strain and error
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu,thickness],Q)
 
-toc = time.clock()
-print("time to compute stresses:",toc-tic)
+toc = time.process_time()
+print("time to compute stresses: {}".format(toc-tic))
 print("The global error is:",ErrorGlobal)
 
 
 #############################################################################
 #         Write results to gmsh format
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 # displacement written on 2 columns:
-disp=scipy.zeros((nnodes,2))
+disp=np.zeros((nnodes,2))
 disp[range(nnodes),0]=Q[list(range(0,ndof,2))]
 disp[range(nnodes),1]=Q[list(range(1,ndof,2))]
 
-load=scipy.zeros((nnodes,ndim))
+load=np.zeros((nnodes,ndim))
 load[range(nnodes),0]=F[list(range(0,ndof,2))]
 load[range(nnodes),1]=F[list(range(1,ndof,2))]
 
@@ -200,8 +200,8 @@ if flag_write_fields==2:
 silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_write)
 
 
-toc = time.clock()
-print("time to write results:",toc-tic)
+toc = time.process_time()
+print("time to write results: {}".format(toc-tic))
 print("----- END -----")
 
 

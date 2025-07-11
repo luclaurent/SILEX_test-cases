@@ -20,7 +20,7 @@ print("SILEX CODE - calcul d'une ferme de charpente")
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 # Input mesh: define the name of the mesh file (*.msh)
 MeshFileName='maillage_seul'
@@ -50,8 +50,8 @@ Section = 1.0# area of the section
 Inertia = 1.0e-2*1.0e-2**3/12.0
 
 # Boundary conditions
-IdNodesFixed_x=scipy.array([1,2],dtype=int)
-IdNodesFixed_y=scipy.array([1,2],dtype=int)
+IdNodesFixed_x=np.array([1,2],dtype=int)
+IdNodesFixed_y=np.array([1,2],dtype=int)
 
 # Load on x direction
 LoadX=[]
@@ -72,16 +72,16 @@ print("Number of nodes:",nnodes)
 print("Number of elements:",nelem)
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*2,(IdNodesFixed_y-1)*2+1])
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # initialize displacement vector
-Q=scipy.zeros(ndof)
+Q=np.zeros(ndof)
 
 # initialize force vector
-F=scipy.zeros((ndof))
+F=np.zeros((ndof))
 
 for i in range(len(LoadX)):
     F[(LoadX[i][0]-1)*2]=LoadX[i][1]
@@ -113,17 +113,17 @@ NormalForce,Sigma,Fcr=silex_lib_elt.compute_normal_force_stress_buckling(nodes,e
 #############################################################################
 
 # displacement written on 2 columns:
-disp=scipy.zeros((nnodes,2))
+disp=np.zeros((nnodes,2))
 disp[range(nnodes),0]=Q[list(range(0,ndof,2))]
 disp[range(nnodes),1]=Q[list(range(1,ndof,2))]
 
 # external forces written on 2 columns:
-load=scipy.zeros((nnodes,2))
+load=np.zeros((nnodes,2))
 load[range(nnodes),0]=F[list(range(0,ndof,2))]
 load[range(nnodes),1]=F[list(range(1,ndof,2))]
 
 # get normal forces for compressive elements only, becomes positive
-CompressiveElts=abs(NormalForce)*(scipy.sign(NormalForce)-1)/(-2.0)
+CompressiveElts=abs(NormalForce)*(np.sign(NormalForce)-1)/(-2.0)
 
 # compute ratio between normal force and buckling limit load for compressive elements only
 Ratio=CompressiveElts/Fcr

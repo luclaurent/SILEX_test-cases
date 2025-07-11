@@ -18,7 +18,7 @@ print("SILEX CODE - calcul d'une plaque trouee avec des hexaedres a 8 noeuds")
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 # Input mesh: define the name of the mesh file (*.msh)
 MeshFileName='diabolo'
@@ -40,7 +40,7 @@ nodes=silex_lib_gmsh.ReadGmshNodes(MeshFileName+'.msh',ndim)
 elementsV1,IdnodesV1=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',eltype,1)
 elementsV2,IdnodesV2=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',eltype,2)
 
-elements=scipy.vstack([elementsV1,elementsV2])
+elements=np.vstack([elementsV1,elementsV2])
 
 # read surfaces where to impose boundary conditions
 # haut
@@ -73,10 +73,10 @@ IdNodesFixed_x=IdnodeS4
 IdNodesFixed_y=IdnodeS4
 IdNodesFixed_z=IdnodeS4
 
-toc = time.clock()
-print("time for the reading data part:",toc-tic)
+toc = time.process_time()
+print("time for the reading data part: {}".format(toc-tic))
 
-tic0 = time.clock()
+tic0 = time.process_time()
 
 #############################################################################
 #      EXPERT PART
@@ -91,19 +91,19 @@ print("Number of nodes:",nnodes)
 print("Number of elements:",nelem)
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # initialize displacement vector
-Q=scipy.zeros(ndof)
+Q=np.zeros(ndof)
 
 
 #############################################################################
 #      compute stiffness matrix
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 
 Ik1,Jk1,Vk1,Vm1=silex_lib_elt.stiffnessmatrix(nodes,elementsV1,[Young1,nu1,rho1])
@@ -116,42 +116,42 @@ M2=scipy.sparse.csc_matrix( (Vm2,(Ik2,Jk2)), shape=(ndof,ndof) )
 K=K1+K2
 M=M1+M2
 
-toc = time.clock()
-print("time to compute the stiffness matrix:",toc-tic)
+toc = time.process_time()
+print("time to compute the stiffness matrix: {}".format(toc-tic))
 
 #############################################################################
 #       Solve the problem
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(K[SolvedDofs,:][:,SolvedDofs],50,M[SolvedDofs,:][:,SolvedDofs],sigma=0,which='LM')
 
-freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*scipy.pi))
+freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
 eigen_vector_S_list=[]
 for i in range(eigen_values_S.shape[0]):
-    Q=scipy.zeros(ndof)
+    Q=np.zeros(ndof)
     Q[SolvedDofs]=eigen_vectors_S[:,i]
-    disp=scipy.zeros((nnodes,3))
+    disp=np.zeros((nnodes,3))
     disp[range(nnodes),0]=Q[list(range(0,ndof,3))]
     disp[range(nnodes),1]=Q[list(range(1,ndof,3))]
     disp[range(nnodes),2]=Q[list(range(2,ndof,3))]
     eigen_vector_S_list.append(disp)
 
-toc = time.clock()
+toc = time.process_time()
 print ("structure eigen frequencies : ",freq_eigv_S)
-print ("time for computing the structure modes:",toc-tic)
+print ("time for computing the structure modes: {}".format(toc-tic))
 #############################################################################
 #         Write results to gmsh format
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 silex_lib_gmsh.WriteResults2(ResultsFileName+'_structure_modes',nodes,elements,eltype,[[eigen_vector_S_list,'nodal',3,'modes']])
 
 
 
-toc = time.clock()
-print ("time to write results:",toc-tic)
+toc = time.process_time()
+print ("time to write results: {}".format(toc-tic))
 print ("----- END -----")
 
 

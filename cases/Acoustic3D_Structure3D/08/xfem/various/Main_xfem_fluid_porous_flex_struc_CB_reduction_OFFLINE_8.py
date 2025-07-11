@@ -61,7 +61,7 @@ mycomm=comm_mumps_one_proc()
 ###########################################################
 def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
     if rank==0:
-        print ("time at the beginning of the computation:",time.ctime())
+        print ("time at the beginning of the computation: {}".format(time.ctime()))
 
     ##############################################################
     ##############################################################
@@ -126,7 +126,7 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
     # Load fluid mesh
     ##############################################################
 
-    tic = time.clock()
+    tic = time.process_time()
 
     fluid_nodes    = silex_lib_gmsh.ReadGmshNodes(mesh_file+'.msh',3)
     fluid_elements1,IdNodes1 = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',4,1) # air, cavity + controlled volume
@@ -166,12 +166,12 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
 
 
     # renumbering air
-    old = scipy.unique(fluid_elements1)
-    new = list(range(1,len(scipy.unique(fluid_elements1))+1))
-    new_nodes=fluid_nodes[scipy.unique(fluid_elements1)-1,:]
+    old = np.unique(fluid_elements1)
+    new = list(range(1,len(np.unique(fluid_elements1))+1))
+    new_nodes=fluid_nodes[np.unique(fluid_elements1)-1,:]
 
     dico1 = dict(zip(old,new))
-    new_elements=scipy.zeros((fluid_nelem1,4),dtype=int)
+    new_elements=np.zeros((fluid_nelem1,4),dtype=int)
     for e in range(fluid_nelem1):
         for i in range(4):
             new_elements[e,i]=dico1[fluid_elements1[e][i]]
@@ -179,7 +179,7 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
     fluid_elements1 = new_elements
     fluid_nodes1    = new_nodes
 
-    new_elements=scipy.zeros((fluid_nelem5,4),dtype=int)
+    new_elements=np.zeros((fluid_nelem5,4),dtype=int)
     for e in range(fluid_nelem5):
         for i in range(4):
             new_elements[e,i]=dico1[fluid_elements5[e][i]]
@@ -187,12 +187,12 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
     fluid_elements5 = new_elements
 
     # renumbering porous
-    old = scipy.unique(fluid_elements2)
-    new = list(range(1,len(scipy.unique(fluid_elements2))+1))
-    new_nodes=fluid_nodes[scipy.unique(fluid_elements2)-1,:]
+    old = np.unique(fluid_elements2)
+    new = list(range(1,len(np.unique(fluid_elements2))+1))
+    new_nodes=fluid_nodes[np.unique(fluid_elements2)-1,:]
 
     dico2 = dict(zip(old,new))
-    new_elements=scipy.zeros((fluid_nelem2,4),dtype=int)
+    new_elements=np.zeros((fluid_nelem2,4),dtype=int)
     for e in range(fluid_nelem2):
         for i in range(4):
             new_elements[e,i]=dico2[fluid_elements2[e][i]]
@@ -206,14 +206,14 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
 
     # Boundary conditions on air cavity
     IdNodesFixed_porous_us_x=IdNodesS4
-    ##IdNodesFixed_porous_us_y=scipy.unique(scipy.hstack([IdNodesS4,IdNodesS6]))
+    ##IdNodesFixed_porous_us_y=np.unique(np.hstack([IdNodesS4,IdNodesS6]))
     IdNodesFixed_porous_us_y=IdNodesS4
     IdNodesFixed_porous_us_z=IdNodesS4
     IdNodesFixed_porous_uf_x=IdNodesS4
     IdNodesFixed_porous_uf_y=IdNodesS4
     IdNodesFixed_porous_uf_z=IdNodesS4
 
-    Fixed_Dofs_porous = scipy.hstack([(IdNodesFixed_porous_us_x-1)*6,
+    Fixed_Dofs_porous = np.hstack([(IdNodesFixed_porous_us_x-1)*6,
                                       (IdNodesFixed_porous_us_y-1)*6+1,
                                       (IdNodesFixed_porous_us_z-1)*6+2,
                                       (IdNodesFixed_porous_uf_x-1)*6+3,
@@ -222,13 +222,13 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
                                       ])
 
     # get connectivity at air-porous interface
-    IdNodesS3_for_1=scipy.zeros(fluid_nnodes3,dtype=int)
-    IdNodesS3_for_2=scipy.zeros(fluid_nnodes3,dtype=int)
+    IdNodesS3_for_1=np.zeros(fluid_nnodes3,dtype=int)
+    IdNodesS3_for_2=np.zeros(fluid_nnodes3,dtype=int)
     for i in range(fluid_nnodes3):
         IdNodesS3_for_1[i]=dico1[IdNodesS3[i]] # for the air mesh
         IdNodesS3_for_2[i]=dico2[IdNodesS3[i]] # for the porous mesh
 
-    InterfaceConnectivity=scipy.zeros((fluid_nelem3,6),dtype=int)
+    InterfaceConnectivity=np.zeros((fluid_nelem3,6),dtype=int)
     for e in range(fluid_nelem3):
         for i in range(3):
             InterfaceConnectivity[e,i]   = dico1[fluid_elements_S3[e,i]] # for the air mesh
@@ -249,7 +249,7 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
     # Compute Standard Fluid Matrices
     ##############################################################
 
-    tic = time.clock()
+    tic = time.process_time()
 
     IIf,JJf,Vffk,Vffm=silex_lib_xfem_acou_tet4.globalacousticmatrices(fluid_elements1,fluid_nodes1,celerity,rho)
 
@@ -258,15 +258,15 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
 
     SolvedDofF=list(range(fluid_ndof1))
 
-    SolvedDofB=scipy.hstack([IdNodesS3_for_1-1,9-1]) # 9 : node number where acoustic source is imposed
-    SolvedDofI=scipy.setdiff1d(SolvedDofF,SolvedDofB)
+    SolvedDofB=np.hstack([IdNodesS3_for_1-1,9-1]) # 9 : node number where acoustic source is imposed
+    SolvedDofI=np.setdiff1d(SolvedDofF,SolvedDofB)
 
     ##############################################################
     # Compute Porous Matrices
     ##############################################################
     porous_material_prop=[E_sol,nu_sol,ro_sol,to_por,po_por,sg_por,lambda_por,lambda_prime_por,ro_fl,visco_fl,pdtl_fl,gamma_fl,p0_fl,ce_fl]
 
-    SolvedDofP=scipy.setdiff1d(range(fluid_ndof2),Fixed_Dofs_porous)
+    SolvedDofP=np.setdiff1d(range(fluid_ndof2),Fixed_Dofs_porous)
 
     ##############################################################
     # Compute Coupling Porous-air Matrices
@@ -277,23 +277,23 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
     IIpf,JJpf,Vpf=silex_lib_porous_tet4_fortran.computecouplingporousair(fluid_nodes1,InterfaceConnectivity,po_por)
     CPF=scipy.sparse.csc_matrix( (Vpf,(IIpf,JJpf)), shape=(fluid_ndof2,fluid_ndof1) )
     #CBP=CPF[SolvedDofP,:][:,SolvedDofB].T
-    #SolvedDof = scipy.hstack([SolvedDofF,SolvedDofP+fluid_ndof1])
+    #SolvedDof = np.hstack([SolvedDofF,SolvedDofP+fluid_ndof1])
 
-    CBP=scipy.sparse.construct.bmat( [ [CPF[SolvedDofP,:][:,IdNodesS3_for_1-1],CPF[SolvedDofP,:][:,0]*0.0]]).T
+    CBP=scipy.sparse.bmat( [ [CPF[SolvedDofP,:][:,IdNodesS3_for_1-1],CPF[SolvedDofP,:][:,0]*0.0]]).T
 
 
 
     ##################################################################
     # Compute eigen modes of the fluid: internal dof I
     ##################################################################
-    tic = time.clock()
+    tic = time.process_time()
 
     eigen_values_I,eigen_vectors_I= scipy.sparse.linalg.eigsh(KFF[SolvedDofI,:][:,SolvedDofI],nb_mode_F,MFF[SolvedDofI,:][:,SolvedDofI],sigma=0,which='LM')
 
-    freq_eigv_I=list(scipy.sqrt(eigen_values_I)/(2*scipy.pi))
+    freq_eigv_I=list(np.sqrt(eigen_values_I)/(2*np.pi))
     eigen_vector_F_list=[]
     for i in range(nb_mode_F):
-        tmp=scipy.zeros((fluid_ndof1) , dtype='float')
+        tmp=np.zeros((fluid_ndof1) , dtype='float')
         tmp[SolvedDofI]=eigen_vectors_I[:,i].real
         eigen_vector_F_list.append(tmp)
 
@@ -303,18 +303,18 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
     if (flag_write_gmsh_results==1) and (rank==0):
         silex_lib_gmsh.WriteResults2(results_file+'_fluid_modes',fluid_nodes1,fluid_elements1,4,[[eigen_vector_F_list,'nodal',1,'pressure']])
 
-    toc = time.clock()
+    toc = time.process_time()
     if rank==0:
-        print ("time for computing the fluid modes:",toc-tic)
+        print ("time for computing the fluid modes: {}".format(toc-tic))
 
 
 
     ##################################################################
     # Compute Psi_IB for the fluid: Psi_IB = - KII^{-1} * KIB
     ##################################################################
-    tic = time.clock()
+    tic = time.process_time()
 
-    omega_cst=1.0*2.0*scipy.pi
+    omega_cst=1.0*2.0*np.pi
     MySolve = scipy.sparse.linalg.factorized( KFF[SolvedDofI,:][:,SolvedDofI]-(omega_cst**2)*MFF[SolvedDofI,:][:,SolvedDofI] ) # Makes LU decomposition.
 
     if rank==0:
@@ -324,7 +324,7 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
         print ("Compute PSI_IB")
 
     if rank==0:
-        Psi_IB=scipy.zeros((len(SolvedDofI),len(SolvedDofB)))
+        Psi_IB=np.zeros((len(SolvedDofI),len(SolvedDofB)))
 
     i=0
     j=0
@@ -341,9 +341,9 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
                     if k!=0:
                         if i+k<len(SolvedDofB):
                             [Xi,j]=comm.recv(source=k, tag=11)
-                            Psi_IB[:,j]=scipy.array(Xi)[:,0]
+                            Psi_IB[:,j]=np.array(Xi)[:,0]
                     else:
-                        Psi_IB[:,j]=scipy.array(Xi)[:,0]
+                        Psi_IB[:,j]=np.array(Xi)[:,0]
             i=i+nbProc
 
     if rank==0:
@@ -357,20 +357,20 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
         Psi_IB=comm.recv(source=0, tag=11)
 
     Psi_IB=scipy.sparse.csc_matrix(Psi_IB)
-    toc = time.clock()
+    toc = time.process_time()
 
     if rank==0:
-        print ("time to compute PSI_FB:",toc-tic)
+        print ("time to compute PSI_FB: {}".format(toc-tic))
     ##Mhat_BA = scipy.sparse.csc_matrix((Psi_IB.T).todense()*Mstar_IA.todense())+MFF[SolvedDofB,:][:,SolvedDofI]*Psi_IA
 
     if rank==0:
-        print ("time at the end of the computation (without the saving part):",time.ctime())
+        print ("time at the end of the computation (without the saving part): {}".format(time.ctime()))
 
 
     ##if rank==0:
     ##    eigen_vector_I_list=[]
     ##    for i in range(len(SolvedDofB)):
-    ##        tmp=scipy.zeros((fluid_ndof1) , dtype='float')
+    ##        tmp=np.zeros((fluid_ndof1) , dtype='float')
     ##        tmp[SolvedDofI]=Psi_IB[:,i].todense()
     ##        eigen_vector_I_list.append(tmp)
     ##
@@ -383,7 +383,7 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
     ##################################################################
 
     # Fluid part
-    tic = time.clock()
+    tic = time.process_time()
 
     VK_diag_mm = eigen_values_I
     VM_diag_mm = eigen_values_I/eigen_values_I
@@ -400,20 +400,20 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
 
     ##Khat_BA = KFF[SolvedDofB,:][:,SolvedDofI]*Psi_IA
 
-    toc = time.clock()
+    toc = time.process_time()
     if rank==0:
-        print ("time to compute Khat_hat:",toc-tic)
+        print ("time to compute Khat_hat: {}".format(toc-tic))
 
-    tic = time.clock()
+    tic = time.process_time()
 
     ##Mstar_IA = MFF[SolvedDofI,:][:,SolvedDofI]*Psi_IA+MAF[SolvedDofI,:][:,SolvedDofA]
     Mstar_IB = MFF[SolvedDofI,:][:,SolvedDofI]*Psi_IB+MFF[SolvedDofI,:][:,SolvedDofB]
 
-    toc = time.clock()
+    toc = time.process_time()
     if rank==0:
-        print ("time to compute Mstar:",toc-tic)
+        print ("time to compute Mstar: {}".format(toc-tic))
 
-    tic = time.clock()
+    tic = time.process_time()
 
     ##Mhat_AA = MAA[SolvedDofA,:][:,SolvedDofA]+scipy.sparse.csc_matrix((Psi_IA.T).todense()*Mstar_IA.todense())+MAF[SolvedDofA,:][:,SolvedDofI]*Psi_IA
     Mhat_BB = MFF[SolvedDofB,:][:,SolvedDofB]+scipy.sparse.csc_matrix((Psi_IB.T).todense()*Mstar_IB.todense())+MFF[SolvedDofB,:][:,SolvedDofI]*Psi_IB
@@ -424,9 +424,9 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
     #Mhat_AA = MAA[SolvedDofA,:][:,SolvedDofA]+scipy.dot((Psi_IA.T).todense(),Mstar_IA.todense())+MAF[SolvedDofA,:][:,SolvedDofI]*Psi_IA
     #Mhat_BB = MFF[SolvedDofB,:][:,SolvedDofB]+scipy.dot((Psi_IB.T).todense(),Mstar_IB.todense())+MFF[SolvedDofB,:][:,SolvedDofI]*Psi_IB
 
-    toc = time.clock()
+    toc = time.process_time()
     if rank==0:
-        print ("time to compute Mhat:",toc-tic)
+        print ("time to compute Mhat: {}".format(toc-tic))
 
     #CmP=PhiFm.T*CPF[SolvedDofP,:][:,SolvedDofF].T
     #CAP=Psi_FA.T*CPF[SolvedDofP,:][:,SolvedDofF].T
@@ -439,7 +439,7 @@ def RunPb(nbModesFluid,nbModesSolid,nbProc,rank,comm):
     ##Mhat_BA = scipy.sparse.csc_matrix((Psi_IB.T).todense()*Mstar_IA.todense())+MFF[SolvedDofB,:][:,SolvedDofI]*Psi_IA
 
     if rank==0:
-        print ("time at the end of the computation (without the saving part):",time.ctime())
+        print ("time at the end of the computation (without the saving part): {}".format(time.ctime()))
 
 
     f=open(results_file+'_offline_matrices.pck','wb')

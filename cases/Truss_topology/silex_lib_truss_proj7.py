@@ -20,7 +20,7 @@ def ElementalStiffness(X,Y,young,section):
     lx        = x2-x1
     ly        = y2-y1
 
-    lelem     = scipy.sqrt(lx**2+ly**2)
+    lelem     = np.sqrt(lx**2+ly**2)
     cos_theta = lx/lelem
     sin_theta = ly/lelem
 
@@ -28,7 +28,7 @@ def ElementalStiffness(X,Y,young,section):
     cs=young*section*(cos_theta*sin_theta)/lelem
     ss=young*section*(sin_theta*sin_theta)/lelem
 
-    ke = scipy.array([[cc,cs,-cc,-cs],
+    ke = np.array([[cc,cs,-cc,-cs],
                       [cs,ss,-cs,-ss],
                       [-cc,-cs,cc,cs],
                       [-cs,-ss,cs,ss]])
@@ -116,7 +116,7 @@ def getelementalstrainenergy(nodes,elements,material,U):
     nbelem  = elements.shape[0]
     young   = material[0]
     section = material[1]
-    StrEner = scipy.zeros(nbelem)
+    StrEner = np.zeros(nbelem)
     for e in range(nbelem):
         idnodes = elements[e,:]
         dofx    = (idnodes-1)*2
@@ -142,9 +142,9 @@ def getelementalstrainenergy(nodes,elements,material,U):
 def compute_normal_force_stress_buckling(nodes,elements,material,U):
     nbnodes = nodes.shape[0]
     nbelem  = elements.shape[0]
-    N       = scipy.zeros((nbelem))
-    sig     = scipy.zeros((nbelem))
-    fcr     = scipy.zeros((nbelem))
+    N       = np.zeros((nbelem))
+    sig     = np.zeros((nbelem))
+    fcr     = np.zeros((nbelem))
     young   = material[0]
     section = material[1]
     inertia = material[2]
@@ -173,13 +173,13 @@ def elementalnormalforces(X,Y,young,section,inertia,UX,UY):
     y2=Y[1]
     lx        = x2-x1
     ly        = y2-y1
-    lelem     = scipy.sqrt(lx**2+ly**2)
+    lelem     = np.sqrt(lx**2+ly**2)
     cos_theta = lx/lelem
     sin_theta = ly/lelem
 
     Nelem   = (young*section/lelem)*(cos_theta*(UX[1]-UX[0])+sin_theta*(UY[1]-UY[0]))
     sigelem = Nelem/section
-    fcrelem = young*inertia*scipy.pi**2/lelem**2
+    fcrelem = young*inertia*np.pi**2/lelem**2
 
     return Nelem,sigelem,fcrelem
 
@@ -188,9 +188,9 @@ def getlength(nodes,elements):
 
     nelem = elements.shape[0]
     sumL=0.0
-    length=scipy.zeros(nelem)
+    length=np.zeros(nelem)
     for e in range(nelem):
-        length[e] = scipy.sqrt((nodes[elements[e,1]-1,0]-nodes[elements[e,0]-1,0])**2+(nodes[elements[e,1]-1,1]-nodes[elements[e,0]-1,1])**2)
+        length[e] = np.sqrt((nodes[elements[e,1]-1,0]-nodes[elements[e,0]-1,0])**2+(nodes[elements[e,1]-1,1]-nodes[elements[e,0]-1,1])**2)
     sumL=sum(length)
 
     return length,sumL
@@ -318,7 +318,7 @@ def OptimalityCriteria(xe,dc,dv,volfrac,nelem):
                              scipy.maximum(xe-move,
                                            scipy.minimum(1.0,
                                                          scipy.minimum(xe+move,
-                                                                       xe*scipy.sqrt(-dc/dv/lmid)))))      
+                                                                       xe*np.sqrt(-dc/dv/lmid)))))      
         if sum(xnew) > volfrac*nelem:
             l1 = lmid
         else:

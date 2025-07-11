@@ -5,7 +5,7 @@ def turn_dof(Idnode,nodes,center):
 
     I=list(range(ndof))
     J=list(range(ndof))
-    V=list(scipy.ones(ndof))
+    V=list(np.ones(ndof))
 
     xc=center[0]
     yc=center[1]
@@ -18,7 +18,7 @@ def turn_dof(Idnode,nodes,center):
         y=nodes[nodenumber-1,1]
         lx=x-xc
         ly=y-yc
-        le=scipy.sqrt(lx**2+ly**2)
+        le=np.sqrt(lx**2+ly**2)
         costheta=lx/le
         sintheta=ly/le
 

@@ -19,7 +19,7 @@ import mumps
 print ("SILEX CODE - calcul d'une piece col de cygne - A380")
 #############################################################################
 
-tic = time.clock()
+tic = time.process_time()
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
@@ -70,8 +70,8 @@ direction = [0.0,0.0,1.0]
 F = silex_lib_elt.forceonsurface(nodes,elementsS3,press,direction)
 
 
-toc = time.clock()
-print ("time for the user part:",toc-tic)
+toc = time.process_time()
+print ("time for the user part: {}".format(toc-tic))
 
 #############################################################################
 #      EXPERT PART
@@ -86,61 +86,61 @@ print ("Number of nodes:",nnodes)
 print ("Number of elements:",nelem)
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # initialize displacement vector
-Q=scipy.zeros(ndof)
+Q=np.zeros(ndof)
 
 #############################################################################
 #      compute stiffness matrix
 #############################################################################
-tic0 = time.clock()
-tic = time.clock()
+tic0 = time.process_time()
+tic = time.process_time()
 #print silex_lib_elt.stiffnessmatrix.__doc__
 Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(nodes,elements,[Young,nu])
-toc = time.clock()
+toc = time.process_time()
 
 K=scipy.sparse.csr_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
-print ("time to compute the stiffness matrix / FORTRAN:",toc-tic)
+print ("time to compute the stiffness matrix / FORTRAN: {}".format(toc-tic))
 
 #############################################################################
 #       Solve the problem
 #############################################################################
 
-tic = time.clock()
+tic = time.process_time()
 #Q[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs], use_umfpack=True)
 Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
-toc = time.clock()
-print ("time to solve the problem:",toc-tic)
+toc = time.process_time()
+print ("time to solve the problem: {}".format(toc-tic))
 
 #############################################################################
 #       compute smooth stress and error in elements
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu],Q)
 
-toc = time.clock()
-print ("time to compute stress and error:",toc-tic)
+toc = time.process_time()
+print ("time to compute stress and error: {}".format(toc-tic))
 print ("The global error is:",ErrorGlobal)
 print ("Total time for the computational part:",toc-tic0)
 
 #############################################################################
 #         Write results to gmsh format
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 # displacement written on 3 columns:
-disp=scipy.zeros((nnodes,ndim))
+disp=np.zeros((nnodes,ndim))
 disp[range(nnodes),0]=Q[list(range(0,ndof,3))]
 disp[range(nnodes),1]=Q[list(range(1,ndof,3))]
 disp[range(nnodes),2]=Q[list(range(2,ndof,3))]
 
 # external load written on 3 columns:
-load=scipy.zeros((nnodes,ndim))
+load=np.zeros((nnodes,ndim))
 load[range(nnodes),0]=F[list(range(0,ndof,3))]
 load[range(nnodes),1]=F[list(range(1,ndof,3))]
 load[range(nnodes),2]=F[list(range(2,ndof,3))]
@@ -188,8 +188,8 @@ if flag_write_fields==1:
 # write the mesh and the results in a gmsh-format file
 silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,eltype,fields_to_write)
 
-toc = time.clock()
-print ("time to write results:",toc-tic)
+toc = time.process_time()
+print ("time to write results: {}".format(toc-tic))
 print ("----- END -----")
 
 

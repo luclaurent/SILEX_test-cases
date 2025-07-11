@@ -48,7 +48,7 @@ mycomm=comm_mumps_one_proc()
 
 import ComputePorousCavity3
 #ANGLES=[0,30,60,90,120,150,180,210,240,270,300,330]
-ANGLES=scipy.linspace(0.0, 270.0, num=4)
+ANGLES=np.linspace(0.0, 270.0, num=4)
 frf=[]
 for angle in ANGLES:
     frf.append(ComputePorousCavity3.ComputeFRF([angle]))

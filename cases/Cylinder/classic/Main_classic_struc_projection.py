@@ -83,7 +83,7 @@ fluid_damping=(1.0+0.01j)
 # Load fluid mesh
 ##############################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 fluid_nodes    = silex_lib_gmsh.ReadGmshNodes(mesh_file+'.msh',3)
 fluid_elements,tmp = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',4,1)
@@ -99,15 +99,15 @@ fluid_ndof     = fluid_nnodes
 
 
 struc_elements_old,struc_node_id = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',2,2)
-struc_nnodes   = len(scipy.unique(struc_elements_old))
+struc_nnodes   = len(np.unique(struc_elements_old))
 struc_nelem    = struc_elements_old.shape[0]
 struc_ndof     = struc_nnodes*6
 
 #struc_boun,struc_boun_id = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',1,1)
 
 # renumbering of structure nodes
-#struc_node_id=scipy.unique(struc_elements_old)
-struc_nodes=scipy.zeros((struc_nnodes,3))
+#struc_node_id=np.unique(struc_elements_old)
+struc_nodes=np.zeros((struc_nnodes,3))
 for i in range(struc_nnodes):
     struc_nodes[i,0]=fluid_nodes[struc_node_id[i]-1,0]
     struc_nodes[i,1]=fluid_nodes[struc_node_id[i]-1,1]
@@ -117,10 +117,10 @@ struc_elements=silex_lib_xfem_acou_tet4.changestructureconnectivity(struc_node_i
 
 
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("nnodes for structure=",struc_nnodes)
-    print ("time for the reading data part:",toc-tic)
+    print ("time for the reading data part: {}".format(toc-tic))
     silex_lib_gmsh.WriteResults2(results_file+'_struc_mesh',struc_nodes,struc_elements,2)
     #silex_lib_gmsh.WriteResults2(results_file+'_struc_boun_mesh',fluid_nodes,struc_boun,1)
 
@@ -128,12 +128,12 @@ if rank==0:
 # compute level set: just to make the compatible mesh
 ##################################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 LevelSet,LevelSetDist = silex_lib_xfem_acou_tet4.computelevelset(fluid_nodes,struc_nodes,struc_elements)
 
 if rank==0:
-    print ("time to compute level set:",toc-tic)
+    print ("time to compute level set: {}".format(toc-tic))
     silex_lib_gmsh.WriteResults2(results_file+'_signed_distance',fluid_nodes,fluid_elements,4,[[[LevelSet],'nodal',1,'Level set']])
 
 
@@ -182,15 +182,15 @@ FixedStrucDofRx=(FixedStrucNodes-1)*6+3
 FixedStrucDofRy=(FixedStrucNodes-1)*6+4
 FixedStrucDofRz=(FixedStrucNodes-1)*6+5
 
-FixedStrucDof=scipy.hstack([FixedStrucDofUx,FixedStrucDofUy,FixedStrucDofUz,FixedStrucDofRx,FixedStrucDofRy,FixedStrucDofRz])
-SolvedDofS=scipy.setdiff1d(range(struc_ndof),FixedStrucDof)
+FixedStrucDof=np.hstack([FixedStrucDofUx,FixedStrucDofUy,FixedStrucDofUz,FixedStrucDofRx,FixedStrucDofRy,FixedStrucDofRz])
+SolvedDofS=np.setdiff1d(range(struc_ndof),FixedStrucDof)
 #SolvedDofS=struc_ndof
 
 # To impose the load on the structure
 tmp=scipy.sparse.find(struc_nodes[:,1]==0.0)# y=0.0
 IdNodeLoadStructure=tmp[1]+1
 
-FS=scipy.zeros(struc_ndof)
+FS=np.zeros(struc_ndof)
 
 for i in range(len(IdNodeLoadStructure)-1):
     IddofLoadStructure=[(IdNodeLoadStructure[i]-1)*6]
@@ -202,7 +202,7 @@ for i in range(len(IdNodeLoadStructure)-1):
 # Compute Standard Fluid Matrices
 ##############################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 IIf,JJf,Vffk,Vffm=silex_lib_xfem_acou_tet4.globalacousticmatrices(fluid_elements,fluid_nodes,celerity,rho)
 
@@ -219,7 +219,7 @@ SolvedDofF=list(range(fluid_ndof))
 ##############################################################
 # Compute structure matrices
 ##############################################################
-tic = time.clock()
+tic = time.process_time()
 
 
 IIks,JJks,Vks,Vms=silex_lib_dkt.stiffnessmatrix(struc_nodes,struc_elements,material)
@@ -227,99 +227,99 @@ IIks,JJks,Vks,Vms=silex_lib_dkt.stiffnessmatrix(struc_nodes,struc_elements,mater
 KSS = scipy.sparse.csc_matrix( (Vks,(IIks,JJks)), shape=(struc_ndof,struc_ndof) )
 MSS = scipy.sparse.csc_matrix( (Vms,(IIks,JJks)), shape=(struc_ndof,struc_ndof) )
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
-    print ("time for computing the structure:",toc-tic)
+    print ("time for computing the structure: {}".format(toc-tic))
 
 ##################################################################
 # Compute coupling terms on interface
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 
 IIc,JJc,Vc=silex_lib_xfem_acou_tet4.computecoupling(fluid_nodes,interface_elements)
 
 CSF=scipy.sparse.csc_matrix( (Vc,(IIc,JJc)), shape=(struc_ndof,fluid_ndof) )
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
-    print ("time for computing the coupling:",toc-tic)
+    print ("time for computing the coupling: {}".format(toc-tic))
 
 
 ##################################################################
 # Compute eigen modes of the structure
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 
 eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(KSS[SolvedDofS,:][:,SolvedDofS],nb_mode_S,MSS[SolvedDofS,:][:,SolvedDofS],sigma=0,which='LM')
 
 ##################################################################
 # Add static solution to the structure basis
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 
 Static_mode_S = mumps.spsolve( KSS[SolvedDofS,:][:,SolvedDofS] , FS[SolvedDofS] ,comm=mycomm ).T
 #Static_mode_S = scipy.sparse.linalg.spsolve( KSS[SolvedDofS,:][:,SolvedDofS] , FS[SolvedDofS] ).T
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
-    print ("time for computing the structure static mode:",toc-tic)
+    print ("time for computing the structure static mode: {}".format(toc-tic))
 
 ##################################################################
 # Orthogonalisation of the static mode
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 eigen_vectors_S=scipy.sparse.csc_matrix(eigen_vectors_S)
 
 lines=list(range(len(SolvedDofS)))
 S=scipy.sparse.csc_matrix(Static_mode_S)
 
 MSS_static_S1 = scipy.dot(MSS[SolvedDofS,:][:,SolvedDofS],scipy.sparse.coo_matrix(S).T)
-staticT__MSS_static_11 = scipy.array(S*MSS_static_S1.todense())[0][0]
-S=S/(scipy.sqrt(staticT__MSS_static_11))
+staticT__MSS_static_11 = np.array(S*MSS_static_S1.todense())[0][0]
+S=S/(np.sqrt(staticT__MSS_static_11))
 
 for i in range(nb_mode_S):
     a=eigen_vectors_S[lines,:][:,i]
     b=scipy.dot(KSS[SolvedDofS,:][:,SolvedDofS],scipy.sparse.coo_matrix(S).T)
-    tmp = scipy.array(a.T*b.todense())[0][0]/eigen_values_S[i]
+    tmp = np.array(a.T*b.todense())[0][0]/eigen_values_S[i]
     S=S-tmp*a.T
     MSS_static_S1 = scipy.dot(MSS[SolvedDofS,:][:,SolvedDofS],scipy.sparse.coo_matrix(S).T)
-    staticT__MSS_static_11 = scipy.array(S*MSS_static_S1.todense())[0][0]
-    S=S/(scipy.sqrt(staticT__MSS_static_11))
+    staticT__MSS_static_11 = np.array(S*MSS_static_S1.todense())[0][0]
+    S=S/(np.sqrt(staticT__MSS_static_11))
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
-    print ("time for orthogonalization of the static mode:",toc-tic)
+    print ("time for orthogonalization of the static mode: {}".format(toc-tic))
 
 ##################################################################
 # Build and save the Structure Basis
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 
-PSn = scipy.sparse.construct.bmat( [ [scipy.sparse.coo_matrix(eigen_vectors_S),scipy.sparse.coo_matrix(S).T] ] )
+PSn = scipy.sparse.bmat( [ [scipy.sparse.coo_matrix(eigen_vectors_S),scipy.sparse.coo_matrix(S).T] ] )
 
-freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*scipy.pi))
+freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 freq_eigv_S.append(0.0)
 
 eigen_vector_S_list=[]
 for i in range(PSn.shape[1]):
-    Q=scipy.zeros(struc_ndof)
+    Q=np.zeros(struc_ndof)
     Q[SolvedDofS]=PSn.todense()[:,i]
-    disp=scipy.zeros((struc_nnodes,3))
+    disp=np.zeros((struc_nnodes,3))
     disp[range(struc_nnodes),0]=Q[list(range(0,struc_ndof,6))]
     disp[range(struc_nnodes),1]=Q[list(range(1,struc_ndof,6))]
     disp[range(struc_nnodes),2]=Q[list(range(2,struc_ndof,6))]
     eigen_vector_S_list.append(disp)
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("structure eigen frequencies : ",freq_eigv_S)
-    print ("time for computing the structure modes:",toc-tic)
+    print ("time for computing the structure modes: {}".format(toc-tic))
     silex_lib_gmsh.WriteResults2(results_file+'_structure_modes',struc_nodes,struc_elements,2,[[eigen_vector_S_list,'nodal',3,'modes']])
 
 ##################################################################
 # Compute structure damping matrix
 ##################################################################
-VDnn = 2.0*modal_damping_S*scipy.sqrt(eigen_values_S)
+VDnn = 2.0*modal_damping_S*np.sqrt(eigen_values_S)
 IIDnn = list(range(len(SolvedDofF),len(SolvedDofF)+nb_mode_S))
 JJDnn = list(range(len(SolvedDofF),len(SolvedDofF)+nb_mode_S))
 
@@ -328,21 +328,21 @@ D = scipy.sparse.coo_matrix( (VDnn,(IIDnn,JJDnn)), shape=(len(SolvedDofF)+nb_mod
 ##################################################################
 # Compute eigen modes of the fluid
 ##################################################################
-tic = time.clock()
+tic = time.process_time()
 nb_mode_F=15
 eigen_values_F,eigen_vectors_F= scipy.sparse.linalg.eigsh(KFF[SolvedDofF,:][:,SolvedDofF],nb_mode_F,MFF[SolvedDofF,:][:,SolvedDofF],sigma=0,which='LM')
 
-freq_eigv_F=list(scipy.sqrt(eigen_values_F)/(2*scipy.pi))
+freq_eigv_F=list(np.sqrt(eigen_values_F)/(2*np.pi))
 eigen_vector_F_list=[]
 for i in range(nb_mode_F):
     tmp=eigen_vectors_F[:,i].real
     eigen_vector_F_list.append(tmp[SolvedDofF])
 
-toc = time.clock()
+toc = time.process_time()
 if rank==0:
     print ("fluid eigen frequencies : ",freq_eigv_F)
     silex_lib_gmsh.WriteResults2(results_file+'_fluid_modes',fluid_nodes,fluid_elements,4,[[eigen_vector_F_list,'nodal',1,'pressure']])
-    print ("time for computing the fluid modes:",toc-tic)
+    print ("time for computing the fluid modes: {}".format(toc-tic))
 
 
 ##################################################################
@@ -357,23 +357,23 @@ K_diag_nn= scipy.sparse.csc_matrix( (VK_diag_nn,(IIDnn,JJDnn)), shape=(nb_mode_S
 M_diag_nn= scipy.sparse.csc_matrix( (VM_diag_nn,(IIDnn,JJDnn)), shape=(nb_mode_S,nb_mode_S) )
 
 KSS_static_S1 = scipy.dot(KSS[SolvedDofS,:][:,SolvedDofS],scipy.sparse.coo_matrix(S).T)
-staticT__KSS_static_11 = scipy.array(S*KSS_static_S1.todense())[0][0]
+staticT__KSS_static_11 = np.array(S*KSS_static_S1.todense())[0][0]
 
-Knn = scipy.sparse.construct.bmat( [[K_diag_nn,None],
+Knn = scipy.sparse.bmat( [[K_diag_nn,None],
                                     [None,staticT__KSS_static_11]
                                     ] )
 
-Mnn = scipy.sparse.construct.bmat( [[M_diag_nn,None],
+Mnn = scipy.sparse.bmat( [[M_diag_nn,None],
                                     [None,1.0]
                                     ] )
 
 CnF = scipy.dot(PSn.T,scipy.sparse.coo_matrix(CSF[SolvedDofS,:][:,SolvedDofF]))
 
-K=scipy.sparse.construct.bmat( [[fluid_damping*KFF[SolvedDofF,:][:,SolvedDofF],None],
+K=scipy.sparse.bmat( [[fluid_damping*KFF[SolvedDofF,:][:,SolvedDofF],None],
                                 [-CnF,Knn]
                                 ] )
 
-M=scipy.sparse.construct.bmat( [[MFF[SolvedDofF,:][:,SolvedDofF],CnF.T],
+M=scipy.sparse.bmat( [[MFF[SolvedDofF,:][:,SolvedDofF],CnF.T],
                                 [None,Mnn]
                                 ] )
 
@@ -383,10 +383,10 @@ M=scipy.sparse.construct.bmat( [[MFF[SolvedDofF,:][:,SolvedDofF],CnF.T],
 #F = csc_matrix( ([1],([0],[0])), shape=(len(SolvedDofS)+len(SolvedDofF),1) )
 
 
-FF=scipy.zeros((fluid_ndof))
+FF=np.zeros((fluid_ndof))
 F=FF[SolvedDofF]
 Fn = scipy.dot(PSn.T,scipy.sparse.coo_matrix(FS[SolvedDofS]).T)
-F=scipy.append(F,scipy.array(Fn.todense()))
+F=scipy.append(F,np.array(Fn.todense()))
 F=scipy.sparse.coo_matrix(F).T
 
 print("hello 9")
@@ -402,42 +402,42 @@ frequencies=[]
 frf=[]
 
 if (Flag_frf_analysis==1):
-    print ("Proc. ",rank," / time at the beginning of the FRF:",time.ctime())
+    print ("Proc. {} / time at the beginning of the FRF: {}".format(rank, time.ctime()))
 
     press_save=[]
     disp_save=[]
 
     for i in range(nb_freq_step_per_proc):
-    #for freq in scipy.linspace(freq_ini,freq_end,nb_freq_step):
+    #for freq in np.linspace(freq_ini,freq_end,nb_freq_step):
 
         freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
         frequencies.append(freq)
-        omega=2*scipy.pi*freq
+        omega=2*np.pi*freq
 
-        print ("proc number",rank,"frequency=",freq)
+        print ("proc number {} - frequency={}".format(rank,freq))
 
-        #sol=scipy.sparse.linalg.spsolve( scipy.sparse.csc_matrix(K-(omega*omega)*M+omega*D*1j,dtype=complex) , scipy.array(F.todense() , dtype=complex) )
-        sol = mumps.spsolve( scipy.sparse.csc_matrix(K-(omega*omega)*M+omega*D*1j,dtype='c16') , scipy.array(F.todense() , dtype='c16'), comm=mycomm )
+        #sol=scipy.sparse.linalg.spsolve( scipy.sparse.csc_matrix(K-(omega*omega)*M+omega*D*1j,dtype=complex) , np.array(F.todense() , dtype=complex) )
+        sol = mumps.spsolve( scipy.sparse.csc_matrix(K-(omega*omega)*M+omega*D*1j,dtype='c16') , np.array(F.todense() , dtype='c16'), comm=mycomm )
         
 
-        press = scipy.zeros((fluid_ndof),dtype=complex)
+        press = np.zeros((fluid_ndof),dtype=complex)
         press[SolvedDofF]=sol[list(range(len(SolvedDofF)))]
         frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements,fluid_nodes,press))
         #frf[i]=silex_lib_xfem_acou_tet4.computequadratiquepressure(fluid_elements,fluid_nodes,press)
         i=i+1
 
         if rank==0:
-            Q=scipy.zeros((struc_ndof),dtype=float)
+            Q=np.zeros((struc_ndof),dtype=float)
             tmp=sol[list(range(len(SolvedDofF),len(SolvedDofF)+PSn.shape[1],1))].real
             Q[SolvedDofS]=PSn*tmp
-            disp=scipy.zeros((struc_nnodes,3))
+            disp=np.zeros((struc_nnodes,3))
             disp[range(struc_nnodes),0]=Q[list(range(0,struc_ndof,6))]
             disp[range(struc_nnodes),1]=Q[list(range(1,struc_ndof,6))]
             disp[range(struc_nnodes),2]=Q[list(range(2,struc_ndof,6))]
             disp_save.append(disp)
             press_save.append(press.real)
 
-    #frfsave=[scipy.linspace(freq_ini,freq_end,nb_freq_step),frf]
+    #frfsave=[np.linspace(freq_ini,freq_end,nb_freq_step),frf]
     frfsave=[frequencies,frf]
     comm.send(frfsave, dest=0, tag=11)
 
@@ -445,13 +445,13 @@ if (Flag_frf_analysis==1):
         silex_lib_gmsh.WriteResults2(results_file+'_results_fluid_frf',fluid_nodes,fluid_elements,4,[[press_save,'nodal',1,'pressure']])
         silex_lib_gmsh.WriteResults2(results_file+'_results_struct_frf',struc_nodes,struc_elements,2,[[disp_save,'nodal',3,'displacement']])
 
-    print ("Proc. ",rank," / time at the end of the FRF:",time.ctime())
+    print ("Proc. {} / time at the end of the FRF: {}".format(rank, time.ctime()))
 
 
 
     # save the FRF problem
-    Allfrequencies=scipy.zeros(nb_freq_step)
-    Allfrf=scipy.zeros(nb_freq_step)
+    Allfrequencies=np.zeros(nb_freq_step)
+    Allfrf=np.zeros(nb_freq_step)
     k=0
     if rank==0:
         for i in range(nproc):
@@ -462,7 +462,7 @@ if (Flag_frf_analysis==1):
                 k=k+1
 
         Allfrequencies, Allfrf = zip(*sorted(zip(Allfrequencies, Allfrf)))
-        Allfrfsave=[scipy.array(list(Allfrequencies)),scipy.array(list(Allfrf))]
+        Allfrfsave=[np.array(list(Allfrequencies)),np.array(list(Allfrf))]
         f=open(results_file+'_results_with_damping.frf','wb')
         pickle.dump(Allfrfsave, f)
         f.close()

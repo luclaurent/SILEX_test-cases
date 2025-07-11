@@ -260,7 +260,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     toc = time.process_time()
     if rank == 0:
-        print("time to compute level set:", toc-tic)
+        print("time to compute level set: {}".format(toc-tic))
 
     if (flag_write_gmsh_results == 1) and (rank == 0):
         # silex_lib_gmsh.WriteResults2(
@@ -315,7 +315,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     toc = time.process_time()
     if rank == 0:
-        print("time to find enriched elements:", toc-tic)
+        print("time to find enriched elements: {}".format(toc-tic))
 
     tic = time.process_time()
 
@@ -343,8 +343,8 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         (Vffm, (IIf, JJf)), shape=(fluid_ndof, fluid_ndof))
 
     SolvedDofF = list(range(fluid_ndof))
-    #SolvedDofB=scipy.hstack([9-1]) # 9 : node number where acoustic source is imposed
-    #SolvedDofI=scipy.setdiff1d(SolvedDofF,SolvedDofB)
+    #SolvedDofB=np.hstack([9-1]) # 9 : node number where acoustic source is imposed
+    #SolvedDofI=np.setdiff1d(SolvedDofF,SolvedDofB)
     SolvedDofI=SolvedDofF
 
     ##################################################################
@@ -370,19 +370,19 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     toc = time.process_time()
     if rank == 0:
-        print("time to compute Heaviside enrichment:", toc-tic)
+        print("time to compute Heaviside enrichment: {}".format(toc-tic))
         
     ##################################################################
     # Compute eigen modes of the fluid: internal dof I
     ##################################################################
-    tic = time.clock()
+    tic = time.process_time()
 
     eigen_values_I,eigen_vectors_I= scipy.sparse.linalg.eigsh(KFF[SolvedDofI,:][:,SolvedDofI],nb_mode_F,MFF[SolvedDofI,:][:,SolvedDofI],sigma=0,which='LM')
 
-    freq_eigv_I=list(scipy.sqrt(eigen_values_I)/(2*scipy.pi))
+    freq_eigv_I=list(np.sqrt(eigen_values_I)/(2*np.pi))
     eigen_vector_F_list=[]
     for i in range(nb_mode_F):
-        tmp=scipy.zeros((fluid_ndof) , dtype='float')
+        tmp=np.zeros((fluid_ndof) , dtype='float')
         tmp[SolvedDofI]=eigen_vectors_I[:,i].real
         eigen_vector_F_list.append(tmp)
 
@@ -392,20 +392,20 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     if (flag_write_gmsh_results==1) and (rank==0):
         silex_lib_gmsh.WriteResults2(results_file+'_fluid_modes',fluid_nodes,fluid_elements1,4,[[eigen_vector_F_list,'nodal',1,'pressure']])
 
-    toc = time.clock()
+    toc = time.process_time()
     if rank==0:
-        print ("time for computing the fluid modes:",toc-tic)
+        print ("time for computing the fluid modes: {}".format(toc-tic))
 
     ##################################################################
     # Compute Psi_IA for the fluid: Psi_IA = - KII^{-1} * KIA
     ##################################################################
-    tic = time.clock()
+    tic = time.process_time()
 
     print ("Compute PSI_IA")
-    omega_cst=0.0*2.0*scipy.pi
+    omega_cst=0.0*2.0*np.pi
     MySolve = scipy.sparse.linalg.factorized( KFF[SolvedDofI,:][:,SolvedDofI]-(omega_cst**2)*MFF[SolvedDofI,:][:,SolvedDofI] ) # Makes LU decomposition.
     print("LU decomposition has been made")
-    Psi_IA=scipy.zeros((len(SolvedDofI),len(SolvedDofA)))
+    Psi_IA=np.zeros((len(SolvedDofI),len(SolvedDofA)))
 
 ##    i=0
 ##    j=0
@@ -413,19 +413,19 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 ##        if j<len(SolvedDofA):
 ##            One_dof=[SolvedDofA[j]]
 ##            KIA_i_column=-KAF[SolvedDofI,:][:,One_dof]
-##            #tmp=scipy.zeros(len(SolvedDofF))
+##            #tmp=np.zeros(len(SolvedDofF))
 ##            #tmp[SolvedDofI]=KIA_i_column.todense()
 ##            Xi=MySolve( KIA_i_column.todense() )
-##            Psi_IA[:,j]=scipy.array(Xi)[:,0]
+##            Psi_IA[:,j]=np.array(Xi)[:,0]
 
     for One_dof in SolvedDofA:
         KIA_i_column=-KAF[SolvedDofI,:][:,One_dof]
         Xi=MySolve( KIA_i_column.todense() )
-        Psi_IA[:,j]=scipy.array(Xi)[:,0]
+        Psi_IA[:,j]=np.array(Xi)[:,0]
 
     Psi_IA=scipy.sparse.csc_matrix(Psi_IA)
-    toc = time.clock()
-    print ("time to compute PSI_IA:",toc-tic)
+    toc = time.process_time()
+    print ("time to compute PSI_IA: {}".format(toc-tic))
 
     ##################################################################
     # Construct the whole system
@@ -446,19 +446,19 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
     Mhat_AA = MAA[SolvedDofA,:][:,SolvedDofA]+scipy.sparse.csc_matrix((Psi_IA.T).todense()*Mstar_IA.todense())+MAF[SolvedDofA,:][:,SolvedDofI]*Psi_IA
     Mhat_mA = eigen_vectors_I.T*Mstar_IA
 
-    Kreduc = scipy.sparse.construct.bmat([
+    Kreduc = scipy.sparse.bmat([
         [fluid_damping*K_diag_mm, None],
         [None                   , fluid_damping*Khat_AA]])
 
-    Mreduc = scipy.sparse.construct.bmat([
+    Mreduc = scipy.sparse.bmat([
         [M_diag_mm, Mhat_mA],
         [Mhat_mA.T, Mhat_AA]])
 
-    K = scipy.sparse.construct.bmat([
+    K = scipy.sparse.bmat([
         [fluid_damping*KFF[SolvedDofF, :][:, SolvedDofF], fluid_damping*KAF[SolvedDofF, :][:, SolvedDofA]],
         [fluid_damping*KAF[SolvedDofA, :][:, SolvedDofF], fluid_damping*KAA[SolvedDofA, :][:, SolvedDofA]]])
 
-    M = scipy.sparse.construct.bmat([
+    M = scipy.sparse.bmat([
         [MFF[SolvedDofF, :][:, SolvedDofF], MAF[SolvedDofF, :][:, SolvedDofA]],
         [MAF[SolvedDofA, :][:, SolvedDofF], MAA[SolvedDofA, :][:, SolvedDofA]]])
     
@@ -492,10 +492,10 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         dKFA_dtheta = scipy.sparse.csc_matrix( (Vfak_gradient,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
         dMFA_dtheta = scipy.sparse.csc_matrix( (Vfam_gradient,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
         #build full stiffness and mass gradient matrices
-        dK.append(scipy.sparse.construct.bmat( [
+        dK.append(scipy.sparse.bmat( [
                     [None,fluid_damping*dKFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
                     [fluid_damping*dKFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]] ))
-        dM.append(scipy.sparse.construct.bmat( [
+        dM.append(scipy.sparse.bmat( [
                     [None,dMFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
                     [dMFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]] ))
 
@@ -512,7 +512,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         frfgradient.append([])
 
     if (Flag_frf_analysis == 1):
-        print("Proc. ", rank, " / time at the beginning of the FRF:", time.ctime())
+        print("Proc. {} / time at the beginning of the FRF: {}".format(rank, time.ctime()))
 
         if rank == 0:
             print('nb of total dofs: ', len(SolvedDofF)+len(SolvedDofA))
@@ -538,14 +538,14 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             it=it+1
             #freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
             frequencies.append(freq)
-            omega = 2*scipy.pi*freq
+            omega = 2*np.pi*freq
 
-            print("Freq. step ",it,"/",itmax," proc number", rank, "frequency=", freq)
+            print("Freq. step  {}/{} - proc number {} - frequency= {}".format(it, itmax, rank, freq))
 
             tic = time.process_time()
 
             F = np.array(omega**2*UF[SolvedDof], dtype='c16')
-            Freduc = scipy.append(omega**2*Freduced_F,scipy.zeros(len(SolvedDofA) , dtype='c16'))
+            Freduc = scipy.append(omega**2*Freduced_F,np.zeros(len(SolvedDofA) , dtype='c16'))
             
             if rank>=0:
                  #print(K)
@@ -650,7 +650,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         if rank!=0:
             comm.send(frfsave, dest=0, tag=11)
 
-        print("Proc. ", rank, " / time at the end of the FRF:", time.ctime())
+        print("Proc. {} / time at the end of the FRF: {}".format(rank,time.ctime()))
 
         if (flag_write_gmsh_results == 1) and (rank == 0):
             dataW=list()

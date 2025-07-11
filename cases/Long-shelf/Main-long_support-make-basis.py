@@ -16,7 +16,7 @@ import pickle
 print('SILEX CODE - calcul d un support avec des tet4')
 #############################################################################
 
-tic = time.clock()
+tic = time.process_time()
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
@@ -69,7 +69,7 @@ IdNodesFixed_y=IdnodeS7
 IdNodesFixed_z=IdnodeS6
 
 # compute external forces from pressure
-press = 1.0/(10.0*2.0*scipy.pi*7.0) #MPa
+press = 1.0/(10.0*2.0*np.pi*7.0) #MPa
 # give the direction of the surfacic load:
 #          if [0.0,0.0,0.0] then the local normal to the surface is used
 #          otherwise, the direction is normalized to 1
@@ -94,8 +94,8 @@ F5z = silex_lib_elt.forceonsurface(nodes,elementsS5,press,direction)
 
 Fbasis=[F1x,F1y,F1z,F2x,F2y,F2z,F3x,F3y,F3z,F4x,F4y,F4z,F5x,F5y,F5z]
 
-toc = time.clock()
-print("time for the user part:",toc-tic)
+toc = time.process_time()
+print("time for the user part: {}".format(toc-tic))
 
 #############################################################################
 #      EXPERT PART
@@ -110,23 +110,23 @@ print("Number of nodes:",nnodes)
 print("Number of elements:",nelem)
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
+Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # initialize displacement vector
-Q=scipy.zeros(ndof)
+Q=np.zeros(ndof)
 
 #############################################################################
 #      compute stiffness matrix
 #############################################################################
-tic0 = time.clock()
-tic = time.clock()
+tic0 = time.process_time()
+tic = time.process_time()
 #print silex_lib_elt.stiffnessmatrix.__doc__
 Ik,Jk,Vk=silex_lib_elt.stiffnessmatrix(nodes,elements,[Young,nu])
-toc = time.clock()
-print("time to compute the stiffness matrix / FORTRAN:",toc-tic)
+toc = time.process_time()
+print("time to compute the stiffness matrix / FORTRAN: {}".format(toc-tic))
 
 K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
 MySolve = scipy.sparse.linalg.factorized(K[SolvedDofs,:][:,SolvedDofs]) # Makes LU decomposition
@@ -138,13 +138,13 @@ print("COMPUTE BASIS Q")
 Qbasis=[]
 i=1
 for F in Fbasis:
-    tic = time.clock()
+    tic = time.process_time()
     print('basis ',i)
-    Q=scipy.zeros(ndof)
+    Q=np.zeros(ndof)
     Q[SolvedDofs] = MySolve( F[SolvedDofs] )
     Qbasis.append(Q)
-    toc = time.clock()
-    print("time to solve one basis problem:",toc-tic)
+    toc = time.process_time()
+    print("time to solve one basis problem: {}".format(toc-tic))
     i=i+1
 
 print("---------------------")
@@ -157,13 +157,13 @@ print("COMPUTE STRESS")
 Sigmabasis=[]
 i=1
 for Q in Qbasis:
-    tic = time.clock()
-    SigmaNodes=scipy.zeros((nnodes))
+    tic = time.process_time()
+    SigmaNodes=np.zeros((nnodes))
     SigmaElem,SigmaNodes,EpsilonElem,EpsilonNodes,ErrorElem,ErrorGlobal=silex_lib_elt.compute_stress_strain_error(nodes,elements,[Young,nu],Q)
     Sigmabasis.append(SigmaNodes)
-    toc = time.clock()
+    toc = time.process_time()
     print('basis ',i)
-    print("time to compute stres and error:",toc-tic)
+    print("time to compute stres and error: {}".format(toc-tic))
     print("The global error is:",ErrorGlobal)
     i=i+1
 
@@ -174,18 +174,18 @@ print("---------------------")
 #############################################################################
 print("WRITE RESULTS")
 for i in range(len(Qbasis)):
-    tic = time.clock()
+    tic = time.process_time()
     print("basis ",i+1)
     # displacement written on 3 columns:
     Q=Qbasis[i]
-    disp=scipy.zeros((nnodes,ndim))
+    disp=np.zeros((nnodes,ndim))
     disp[range(nnodes),0]=Q[list(range(0,ndof,3))]
     disp[range(nnodes),1]=Q[list(range(1,ndof,3))]
     disp[range(nnodes),2]=Q[list(range(2,ndof,3))]
 
     # external load written on 3 columns:
     F=Fbasis[i]
-    load=scipy.zeros((nnodes,ndim))
+    load=np.zeros((nnodes,ndim))
     load[range(nnodes),0]=F[list(range(0,ndof,3))]
     load[range(nnodes),1]=F[list(range(1,ndof,3))]
     load[range(nnodes),2]=F[list(range(2,ndof,3))]
@@ -200,8 +200,8 @@ for i in range(len(Qbasis)):
     # write the mesh and the results in a gmsh-format file
     silex_lib_gmsh.WriteResults(ResultsFileName+'_'+str(i+1),nodes,elements,eltype,fields_to_write)
 
-    toc = time.clock()
-    print("time to write results:",toc-tic)
+    toc = time.process_time()
+    print("time to write results: {}".format(toc-tic))
 
 print("WRITE BASIS")
 f=open(ResultsFileName+'_basis','wb')

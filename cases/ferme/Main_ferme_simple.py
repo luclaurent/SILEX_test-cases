@@ -12,7 +12,7 @@ print("SILEX CODE - calcul d'une ferme de charpente")
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
 
-nodes=scipy.array([[0.0  ,	   0.0	],
+nodes=np.array([[0.0  ,	   0.0	],
                     [7.0/4.0  , 0.0	],
                     [7.0/2.0   , 0.0	],
                     [3.0*7.0/4  , 0.0],
@@ -21,7 +21,7 @@ nodes=scipy.array([[0.0  ,	   0.0	],
                     [7.0/2.0    , 1.5],
                     [3.0*7.0/4   , 0.75]])
 
-elements=scipy.array([[     1 ,	 2],
+elements=np.array([[     1 ,	 2],
                           [     2 ,	 3],
                           [     3 ,	 4],
                           [     4 ,	 5],
@@ -46,16 +46,16 @@ ndof   = nnodes*2
 nelem  = 13
 
 # define fixed dof
-Fixed_Dofs = scipy.array([0, 8, 1, 9])
+Fixed_Dofs = np.array([0, 8, 1, 9])
 
 # define free dof
-SolvedDofs = scipy.array([ 2,  3,  4,  5,  6,  7, 10, 11, 12, 13, 14, 15])
+SolvedDofs = np.array([ 2,  3,  4,  5,  6,  7, 10, 11, 12, 13, 14, 15])
 
 # initialize displacement vector
-Q=scipy.zeros(ndof)
+Q=np.zeros(ndof)
 
 # initialize force vector
-F=scipy.array([    0.   ,     0.   ,     0.   ,     0.   ,     0.   ,     0.   ,
+F=np.array([    0.   ,     0.   ,     0.   ,     0.   ,     0.   ,     0.   ,
            0.   ,     0.   ,     0.   ,     0.   ,     0.   , -3403.755,
            0.   , -3403.755,     0.   , -3403.755])
 
@@ -63,7 +63,7 @@ F=scipy.array([    0.   ,     0.   ,     0.   ,     0.   ,     0.   ,     0.   ,
 #      compute stiffness matrix
 #############################################################################
 
-K=scipy.zeros((ndof,ndof))
+K=np.zeros((ndof,ndof))
 
 for e in range(nelem):
     idnode1 = elements[e,0]
@@ -82,7 +82,7 @@ for e in range(nelem):
     lx        = x2-x1
     ly        = y2-y1
 
-    lelem     = scipy.sqrt(lx**2+ly**2)
+    lelem     = np.sqrt(lx**2+ly**2)
     cos_theta = lx/lelem
     sin_theta = ly/lelem
 

@@ -135,21 +135,21 @@ print (" ")
 nvisu = 13
 visu_dir = 1   # x = 0 | y = 1 | z = 2
 
-elements = scipy.vstack([elemV1,elemV2])
+elements = np.vstack([elemV1,elemV2])
 
 #################################################################################
 #               BUILD THE R MATRIX                                              #
 #################################################################################
 
 R1 = silex_lib_extra.rigidify_surface(IdnodS1,nodes,[0.0,0.104,0.0])
-dofS1 = scipy.hstack([(IdnodS1-1)*3,(IdnodS1-1)*3+1,(IdnodS1-1)*3+2])
+dofS1 = np.hstack([(IdnodS1-1)*3,(IdnodS1-1)*3+1,(IdnodS1-1)*3+2])
 
 R2 = silex_lib_extra.rigidify_surface(IdnodS2,nodes,[0.0,0.0,0.0])
-dofS2 = scipy.hstack([(IdnodS2-1)*3,(IdnodS2-1)*3+1,(IdnodS2-1)*3+2])
+dofS2 = np.hstack([(IdnodS2-1)*3,(IdnodS2-1)*3+1,(IdnodS2-1)*3+2])
 
-sparse_ones = scipy.sparse.csc_matrix( (list(scipy.ones(ndof)),(list(range(ndof)),list(range(ndof)))), shape=(ndof,ndof) )
+sparse_ones = scipy.sparse.csc_matrix( (list(np.ones(ndof)),(list(range(ndof)),list(range(ndof)))), shape=(ndof,ndof) )
 
-R = scipy.sparse.construct.bmat( [ [ sparse_ones
+R = scipy.sparse.bmat( [ [ sparse_ones
                                      +R1[list(range(ndof)),:][:,list(range(ndof))]
                                      +R2[list(range(ndof)),:][:,list(range(ndof))]
                                      ,R1[:,list(range(ndof,ndof+6,1))]
@@ -173,7 +173,7 @@ R = scipy.sparse.construct.bmat( [ [ sparse_ones
 #################################################################################################################
 
 # load calculation
-Fprime = scipy.zeros(ndof+6+6)
+Fprime = np.zeros(ndof+6+6)
 # FACE 1 superieure:
 Fprime[ndof+0]=100.0 # Newton / x
 Fprime[ndof+1]=100.0 # Newton / y
@@ -187,29 +187,29 @@ Fprime[ndof+5]=1.0 # Newton.metre / MZ
 #################################################################################################################
 
 # Global initialization
-Q          = scipy.zeros(ndof)
-Qprime     = scipy.zeros(ndof+6+6)
+Q          = np.zeros(ndof)
+Qprime     = np.zeros(ndof+6+6)
 
 #################################################################################################################
 #                                                 EXPERT PART                                                   #
 #################################################################################################################
 
 # define fixed dof
-#Fixed_Dofs = scipy.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
+#Fixed_Dofs = np.hstack([(IdNodesFixed_x-1)*3,(IdNodesFixed_y-1)*3+1,(IdNodesFixed_z-1)*3+2])
 
 # define free dof
-#SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+#SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
-#SolvedDofsPrime = scipy.hstack([SolvedDofs,list(range(ndof,ndof+6))])
+#SolvedDofsPrime = np.hstack([SolvedDofs,list(range(ndof,ndof+6))])
 
-#SolvedDofsPrime = scipy.setdiff1d(SolvedDofsPrime,dofS1)
+#SolvedDofsPrime = np.setdiff1d(SolvedDofsPrime,dofS1)
 
-SolvedDofsPrime = scipy.setdiff1d(list(range(ndof+6+6)),dofS1)
-SolvedDofsPrime = scipy.setdiff1d(SolvedDofsPrime,dofS2)
+SolvedDofsPrime = np.setdiff1d(list(range(ndof+6+6)),dofS1)
+SolvedDofsPrime = np.setdiff1d(SolvedDofsPrime,dofS2)
 
 Fixed_DofsPrime = list(range(ndof+6,ndof+6+6))
 
-SolvedDofsPrime = scipy.setdiff1d(SolvedDofsPrime,Fixed_DofsPrime)
+SolvedDofsPrime = np.setdiff1d(SolvedDofsPrime,Fixed_DofsPrime)
 
 K1_i,K1_j,K1_v = silex_lib_elt.ktan_dd(nodes,elemV1,Q,flag1,param1)
 K1 = scipy.sparse.csc_matrix((K1_v,(K1_i,K1_j)),shape=(ndof,ndof))
@@ -223,32 +223,32 @@ Kprime=scipy.sparse.csc_matrix(R.T*K*R)
 #       Solve the problem
 #############################################################################
 
-tic = time.clock()
+tic = time.process_time()
 #Q[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 Qprime[SolvedDofsPrime] = mumps.spsolve(Kprime[SolvedDofsPrime,:][:,SolvedDofsPrime],Fprime[SolvedDofsPrime])
-toc = time.clock()
-print("time to solve the problem:",toc-tic)
+toc = time.process_time()
+print("time to solve the problem: {}".format(toc-tic))
 
 Q=R*Qprime
 
 #############################################################################
 #       Make the SUPER BEAM ELEMENT
 #############################################################################
-tic = time.clock()
-Dofs_n = scipy.setdiff1d(list(range(ndof)),dofS1)
-Dofs_n = scipy.setdiff1d(Dofs_n,dofS2)
+tic = time.process_time()
+Dofs_n = np.setdiff1d(list(range(ndof)),dofS1)
+Dofs_n = np.setdiff1d(Dofs_n,dofS2)
 
 Dofs_s = list(range(ndof,ndof+12))
 
-Knninv_Kns=scipy.zeros((len(Dofs_n),12))
+Knninv_Kns=np.zeros((len(Dofs_n),12))
 
 MySolve = scipy.sparse.linalg.factorized(Kprime[Dofs_n,:][:,Dofs_n])
 for i in range(12):
     One_dof = [ndof+i]
-    #Kns_column = scipy.zeros(ndof)
+    #Kns_column = np.zeros(ndof)
     Kns_column = Kprime[Dofs_n,:][:,One_dof].todense()
     tmp = MySolve( Kns_column )
-    Knninv_Kns[:,[i]]= scipy.array(tmp)
+    Knninv_Kns[:,[i]]= np.array(tmp)
 
 Ksuper=Kprime[Dofs_s,:][:,Dofs_s]-Kprime[Dofs_s,:][:,Dofs_n]*Knninv_Kns
 
@@ -256,17 +256,17 @@ f=open('Ksuper.pkl','wb')
 pickle.dump(Ksuper, f)
 f.close()
 
-toc = time.clock()
-print("time to make the SUPER BEAM ELEMENT:",toc-tic)
+toc = time.process_time()
+print("time to make the SUPER BEAM ELEMENT: {}".format(toc-tic))
 
 
 #############################################################################
 #         Write results to gmsh format
 #############################################################################
-tic = time.clock()
+tic = time.process_time()
 
 # displacement written on 3 columns:
-disp=scipy.zeros((nnodes,3))
+disp=np.zeros((nnodes,3))
 disp[range(nnodes),0]=Q[list(range(0,ndof,3))]
 disp[range(nnodes),1]=Q[list(range(1,ndof,3))]
 disp[range(nnodes),2]=Q[list(range(2,ndof,3))]
@@ -278,8 +278,8 @@ if flag_write_fields==0:
 # write the mesh and the results in a gmsh-format file
 silex_lib_gmsh.WriteResults(ResultsFileName,nodes,elements,5,fields_to_write)
 
-toc = time.clock()
-print("time to write results:",toc-tic)
+toc = time.process_time()
+print("time to write results: {}".format(toc-tic))
 print("----- END -----")
 
 

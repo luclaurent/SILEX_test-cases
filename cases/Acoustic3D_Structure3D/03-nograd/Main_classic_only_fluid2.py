@@ -1,32 +1,76 @@
 import string
 import time
+import numpy as np
 import scipy
 import scipy.sparse
 import scipy.sparse.linalg
+import scipy.io
+import getopt
+from pathlib import Path
+from loguru import logger
 
-#import os
 import pylab as pl
 import pickle
 
+
+import pymumps
+
 import sys
-sys.path.append('../../../librairies')
+from meshRW import msh, msh2
+from SILEXlib import silex_lib_fem, silex_lib_xfem
+from SILEXlib import MeshField
 
-import silex_lib_xfem_acou_tet4
-import silex_lib_dkt_fortran
-import silex_lib_gmsh
+# load classes
+acousticsFEM = silex_lib_fem.LinearAcousticsTET4()
+acousticsXFEM = silex_lib_xfem.LinearAcousticsTET4()
+structureFEM = silex_lib_fem.DKT()
 
-import mumps
 
 from mpi4py import MPI
+
 comm = MPI.COMM_WORLD
-nproc=comm.Get_size()
+
+nproc = comm.Get_size()
 rank = comm.Get_rank()
+log_format = (
+    "<cyan> R{extra[rank]}</cyan> |"
+    "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+    "<level>{level: <8}</level> | "
+    "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
+    "<level>{message}</level>"
+)
+
+logger.remove()
+logger.configure(extra={"rank": 0})  # Default values
+logger.add(
+    sys.stdout,
+    level="DEBUG",
+    format=log_format,
+    colorize=True,
+    backtrace=True,
+    diagnose=True,
+)
+logger = logger.bind(rank=rank)
+
+# mpirun -np 2 python Main_xfem.py
+logger.info("START")
+
+
+def mpiInfo():
+    comm = MPI.COMM_WORLD
+    nproc = comm.Get_size()
+    rank = comm.Get_rank()
+    return nproc, rank, comm
+
 
 class comm_mumps_one_proc:
     rank = 0
+
     def py2f(self):
         return 0
-mycomm=comm_mumps_one_proc()
+
+
+mycomm = comm_mumps_one_proc()
 
 # To run it in parallel for several frequencies:
 # export OPENBLAS_NUM_THREADS=1
@@ -46,7 +90,7 @@ mycomm=comm_mumps_one_proc()
 #results_file='results/cavity2_damping'
 
 import MakeCavityMesh3
-angle=scipy.pi/8
+angle=np.pi/8
 MakeCavityMesh3.WriteGmshGeoFileAndMakeTheMesh('cavity3',[angle,1.5,2.0,3.0])
 
 mesh_file='cavity3'
@@ -69,12 +113,12 @@ fluid_damping=(1.0+0.002j)
 # Load fluid mesh
 ##############################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 fluid_nodes    = silex_lib_gmsh.ReadGmshNodes(mesh_file+'.msh',3)
 fluid_elements1,tmp = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',4,1)
 fluid_elements2,tmp = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',4,2)
-fluid_elements=scipy.vstack([fluid_elements1,fluid_elements2])
+fluid_elements=np.vstack([fluid_elements1,fluid_elements2])
 #fluid_elements_S2,IdNodesS2 = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',2,2)
 
 fluid_nnodes   = fluid_nodes.shape[0]
@@ -91,7 +135,7 @@ print ("Number of fluid elements:",fluid_nelem)
 # Compute Standard Fluid Matrices
 ##############################################################
 
-tic = time.clock()
+tic = time.process_time()
 
 IIf,JJf,Vffk,Vffm=silex_lib_xfem_acou_tet4.globalacousticmatrices(fluid_elements,fluid_nodes,celerity,rho)
 
@@ -112,7 +156,7 @@ M=MFF[SolvedDofF,:][:,SolvedDofF]
 # node number 1 is at (0,-ly/2,0)
 #F = csc_matrix( ([1],([0],[0])), shape=(len(SolvedDofS)+len(SolvedDofF),1) )
 
-P=scipy.zeros((fluid_ndof))
+P=np.zeros((fluid_ndof))
 P[13-1]=1.0
 #print(silex_lib_xfem_acou_tet4.forceonsurface.__doc__)
 #P = silex_lib_xfem_acou_tet4.forceonsurface(fluid_nodes,fluid_elements_S2,1.0)
@@ -129,30 +173,30 @@ frequencies=[]
 frf=[]
 
 if (Flag_frf_analysis==1):
-    print ("Proc. ",rank," / time at the beginning of the FRF:",time.ctime())
+    print ("Proc. {} / time at the beginning of the FRF: {}".format(rank, time.ctime()))
 
     press_save=[]
     disp_save=[]
 
     for i in range(nb_freq_step_per_proc):
-    #for freq in scipy.linspace(freq_ini,freq_end,nb_freq_step):
+    #for freq in np.linspace(freq_ini,freq_end,nb_freq_step):
 
         freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
         frequencies.append(freq)
-        omega=2*scipy.pi*freq
+        omega=2*np.pi*freq
 
-        print ("proc number",rank,"frequency=",freq)
+        print ("proc number {} - frequency={}".format(rank,freq))
 
-        F=scipy.array(omega**2*P , dtype='c16')
-        #F=scipy.array(P , dtype='c16')
+        F=np.array(omega**2*P , dtype='c16')
+        #F=np.array(P , dtype='c16')
 
-        #sol=scipy.sparse.linalg.spsolve( scipy.sparse.csc_matrix(K-(omega*omega)*M+omega*D*1j,dtype=complex) , scipy.array(F.todense() , dtype=complex) )
+        #sol=scipy.sparse.linalg.spsolve( scipy.sparse.csc_matrix(K-(omega*omega)*M+omega*D*1j,dtype=complex) , np.array(F.todense() , dtype=complex) )
         sol = mumps.spsolve( scipy.sparse.csc_matrix(fluid_damping*K-(omega**2)*M,dtype='c16') , F , comm=mycomm )
         #sol = mumps.spsolve( scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='float') , F , comm=mycomm )
         
 
-        #press = scipy.zeros((fluid_ndof),dtype=float)
-        press = scipy.zeros((fluid_ndof),dtype=complex)
+        #press = np.zeros((fluid_ndof),dtype=float)
+        press = np.zeros((fluid_ndof),dtype=complex)
         press[SolvedDofF]=sol[list(range(len(SolvedDofF)))]
         frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements2,fluid_nodes,press))
         #frf[i]=silex_lib_xfem_acou_tet4.computequadratiquepressure(fluid_elements,fluid_nodes,press)
@@ -167,11 +211,11 @@ if (Flag_frf_analysis==1):
     if rank==0:
         silex_lib_gmsh.WriteResults2(results_file+'_results_fluid_frf',fluid_nodes,fluid_elements,4,[[press_save,'nodal',1,'pressure']])
 
-    print ("Proc. ",rank," / time at the end of the FRF:",time.ctime())
+    print ("Proc. {} / time at the end of the FRF: {}".format(rank, time.ctime()))
 
     # save the FRF problem
-    Allfrequencies=scipy.zeros(nb_freq_step)
-    Allfrf=scipy.zeros(nb_freq_step)
+    Allfrequencies=np.zeros(nb_freq_step)
+    Allfrf=np.zeros(nb_freq_step)
     k=0
     if rank==0:
         for i in range(nproc):
@@ -182,7 +226,7 @@ if (Flag_frf_analysis==1):
                 k=k+1
 
         Allfrequencies, Allfrf = zip(*sorted(zip(Allfrequencies, Allfrf)))
-        Allfrfsave=[scipy.array(list(Allfrequencies)),scipy.array(list(Allfrf))]
+        Allfrfsave=[np.array(list(Allfrequencies)),np.array(list(Allfrf))]
         f=open(results_file+'_results.frf','wb')
         pickle.dump(Allfrfsave, f)
         f.close()

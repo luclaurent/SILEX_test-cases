@@ -16,7 +16,7 @@ import silex_lib_gmsh
 print("SILEX CODE - calcul d'un assemblage - Analyse Modale")
 #############################################################################
 
-tic = time.clock()
+tic = time.process_time()
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
@@ -66,7 +66,7 @@ silex_lib_gmsh.WriteResults(ResultsFileName+'_vol10',nodes,elementV10,5)
 silex_lib_gmsh.WriteResults(ResultsFileName+'_vol11',nodes,elementV11,5)
 silex_lib_gmsh.WriteResults(ResultsFileName+'_vol12',nodes,elementV12,5)
 
-elements=scipy.vstack([elementV10,elementV11,elementV12])
+elements=np.vstack([elementV10,elementV11,elementV12])
 
 silex_lib_gmsh.WriteResults(ResultsFileName+'_complet',nodes,elements,5)
 
@@ -125,15 +125,15 @@ param3 = [mu3,Lambda3,0.0,0.0,0.0,0.0,0.0,0.0]  # Material parameter in a vector
 nb_modes = 100
 
 # Boundary conditions
-##IdNodesFixed_x=scipy.hstack([IdnodeS1,IdnodeS3])
-##IdNodesFixed_y=scipy.hstack([IdnodeS1,IdnodeS3])
-##IdNodesFixed_z=scipy.hstack([IdnodeS1,IdnodeS3])
-IdNodesFixed_x=scipy.hstack([IdnodeS1,IdnodeS3])
-IdNodesFixed_y=scipy.hstack([IdnodeS1,IdnodeS3])
-IdNodesFixed_z=scipy.hstack([IdnodeS1,IdnodeS3])
+##IdNodesFixed_x=np.hstack([IdnodeS1,IdnodeS3])
+##IdNodesFixed_y=np.hstack([IdnodeS1,IdnodeS3])
+##IdNodesFixed_z=np.hstack([IdnodeS1,IdnodeS3])
+IdNodesFixed_x=np.hstack([IdnodeS1,IdnodeS3])
+IdNodesFixed_y=np.hstack([IdnodeS1,IdnodeS3])
+IdNodesFixed_z=np.hstack([IdnodeS1,IdnodeS3])
 
-toc = time.clock()
-print("time for the user part:",toc-tic)
+toc = time.process_time()
+print("time for the user part: {}".format(toc-tic))
 
 #############################################################################
 #      EXPERT PART
@@ -158,22 +158,22 @@ print("")
 
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([
-    (scipy.array(IdNodesFixed_x)-1)*3,
-    (scipy.array(IdNodesFixed_y)-1)*3+1,
-    (scipy.array(IdNodesFixed_z)-1)*3+2])
+Fixed_Dofs = np.hstack([
+    (np.array(IdNodesFixed_x)-1)*3,
+    (np.array(IdNodesFixed_y)-1)*3+1,
+    (np.array(IdNodesFixed_z)-1)*3+2])
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # initialize displacement vector
-Q=scipy.zeros(ndof)
+Q=np.zeros(ndof)
 
 #############################################################################
 #      compute stiffness matrix
 #############################################################################
-tic0 = time.clock()
-tic = time.clock()
+tic0 = time.process_time()
+tic = time.process_time()
 
 K1_i,K1_j,K1_v = silex_lib_elt.ktan_dd(nodes,elementV10,Q,flag1,param1)
 K1 = scipy.sparse.csc_matrix((K1_v,(K1_i,K1_j)),shape=(ndof,ndof))
@@ -191,8 +191,8 @@ Ik3,Jk3,Vk3,Vm3=silex_lib_elt.stiffnessmatrix(nodes,elementV12,[1,1,rho3])
 M3=scipy.sparse.csc_matrix( (Vm3,(Ik3,Jk3)), shape=(ndof,ndof) )
 M = M1 + M2 + M3
 
-toc = time.clock()
-print("time to compute the stiffness and mass matrix :",toc-tic)
+toc = time.process_time()
+print("time to compute the stiffness and mass matrix : {}".format(toc-tic))
 
 #############################################################################
 #       Eigen value problem
@@ -202,21 +202,21 @@ print("time to compute the stiffness and mass matrix :",toc-tic)
 
 eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(K[SolvedDofs,:][:,SolvedDofs],nb_modes,M[SolvedDofs,:][:,SolvedDofs],sigma=0,which='LM')
 
-freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*scipy.pi))
+freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
 eigen_vector_S_list=[]
 for i in range(eigen_values_S.shape[0]):
-    Q=scipy.zeros(ndof)
+    Q=np.zeros(ndof)
     Q[SolvedDofs]=eigen_vectors_S[:,i]
-    disp=scipy.zeros((nnodes,3))
+    disp=np.zeros((nnodes,3))
     disp[range(nnodes),0]=Q[list(range(0,ndof,3))]
     disp[range(nnodes),1]=Q[list(range(1,ndof,3))]
     disp[range(nnodes),2]=Q[list(range(2,ndof,3))]
     eigen_vector_S_list.append(disp)
 
-toc = time.clock()
+toc = time.process_time()
 print ("structure eigen frequencies : ",freq_eigv_S)
-print ("time for computing the structure modes:",toc-tic)
+print ("time for computing the structure modes: {}".format(toc-tic))
 #############################################################################
 #         Write results to gmsh format
 #############################################################################

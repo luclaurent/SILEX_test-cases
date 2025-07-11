@@ -16,7 +16,7 @@ import silex_lib_gmsh
 print("SILEX CODE - calcul d'un cubesat")
 #############################################################################
 
-tic = time.clock()
+tic = time.process_time()
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
@@ -59,7 +59,7 @@ silex_lib_gmsh.WriteResults(ResultsFileName+'_surf4',nodes,elementsS4,2)
 elementsS20,IdnodeS20=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',eltype,20)
 silex_lib_gmsh.WriteResults(ResultsFileName+'_pour_la_visu',nodes,elementsS20,2)
 
-#elements=scipy.vstack([elementsS10,elementsS1,elementsS2,elementsS3,elementsS4])
+#elements=np.vstack([elementsS10,elementsS1,elementsS2,elementsS3,elementsS4])
 elements=elementsS10
 
 silex_lib_gmsh.WriteResults(ResultsFileName+'_complet',nodes,elements,2)
@@ -72,16 +72,16 @@ rho       = 2800.0 # kg/m3
 thickness = 2e-3
 
 # Boundary conditions
-IdNodesFixed_x=scipy.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
-IdNodesFixed_y=scipy.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
-IdNodesFixed_z=scipy.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
-IdNodesFixed_rotx=scipy.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
-IdNodesFixed_roty=scipy.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
-IdNodesFixed_rotz=scipy.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
+IdNodesFixed_x=np.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
+IdNodesFixed_y=np.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
+IdNodesFixed_z=np.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
+IdNodesFixed_rotx=np.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
+IdNodesFixed_roty=np.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
+IdNodesFixed_rotz=np.hstack([IdnodeS1,IdnodeS2,IdnodeS3,IdnodeS4])
 
 
-toc = time.clock()
-print("time for the user part:",toc-tic)
+toc = time.process_time()
+print("time for the user part: {}".format(toc-tic))
 
 
 #############################################################################
@@ -98,39 +98,39 @@ print("Number of nodes:",nnodes)
 print("Number of elements:",nelem)
 
 #      CLEAN MESH
-Id_nodes_used=scipy.unique(elements)
-Id_nodes_nonused=scipy.setdiff1d(range(1,nnodes),Id_nodes_used)
-IdNodesFixed_x=scipy.unique(scipy.hstack([IdNodesFixed_x,Id_nodes_nonused]))
-IdNodesFixed_y=scipy.unique(scipy.hstack([IdNodesFixed_y,Id_nodes_nonused]))
-IdNodesFixed_z=scipy.unique(scipy.hstack([IdNodesFixed_z,Id_nodes_nonused]))
-IdNodesFixed_rotx=scipy.unique(scipy.hstack([IdNodesFixed_rotx,Id_nodes_nonused]))
-IdNodesFixed_roty=scipy.unique(scipy.hstack([IdNodesFixed_roty,Id_nodes_nonused]))
-IdNodesFixed_rotz=scipy.unique(scipy.hstack([IdNodesFixed_rotz,Id_nodes_nonused]))
+Id_nodes_used=np.unique(elements)
+Id_nodes_nonused=np.setdiff1d(range(1,nnodes),Id_nodes_used)
+IdNodesFixed_x=np.unique(np.hstack([IdNodesFixed_x,Id_nodes_nonused]))
+IdNodesFixed_y=np.unique(np.hstack([IdNodesFixed_y,Id_nodes_nonused]))
+IdNodesFixed_z=np.unique(np.hstack([IdNodesFixed_z,Id_nodes_nonused]))
+IdNodesFixed_rotx=np.unique(np.hstack([IdNodesFixed_rotx,Id_nodes_nonused]))
+IdNodesFixed_roty=np.unique(np.hstack([IdNodesFixed_roty,Id_nodes_nonused]))
+IdNodesFixed_rotz=np.unique(np.hstack([IdNodesFixed_rotz,Id_nodes_nonused]))
 
 # define fixed dof
-Fixed_Dofs = scipy.hstack([
-    (scipy.array(IdNodesFixed_x)-1)*6,
-    (scipy.array(IdNodesFixed_y)-1)*6+1,
-    (scipy.array(IdNodesFixed_z)-1)*6+2,
-    (scipy.array(IdNodesFixed_rotx)-1)*6+3,
-    (scipy.array(IdNodesFixed_roty)-1)*6+4,
-    (scipy.array(IdNodesFixed_rotz)-1)*6+5])
+Fixed_Dofs = np.hstack([
+    (np.array(IdNodesFixed_x)-1)*6,
+    (np.array(IdNodesFixed_y)-1)*6+1,
+    (np.array(IdNodesFixed_z)-1)*6+2,
+    (np.array(IdNodesFixed_rotx)-1)*6+3,
+    (np.array(IdNodesFixed_roty)-1)*6+4,
+    (np.array(IdNodesFixed_rotz)-1)*6+5])
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(range(ndof),Fixed_Dofs)
 
 # initialize displacement vector
-Q=scipy.zeros(ndof)
+Q=np.zeros(ndof)
 
 #############################################################################
 #      compute stiffness matrix
 #############################################################################
-tic0 = time.clock()
-tic = time.clock()
+tic0 = time.process_time()
+tic = time.process_time()
 #print (silex_lib_elt.stiffnessmatrix.__doc__)
 Ik,Jk,Vk,Vm=silex_lib_elt.stiffnessmatrix(nodes,elements,[Young,nu,thickness,rho])
-toc = time.clock()
-print("time to compute the stiffness matrix / FORTRAN:",toc-tic)
+toc = time.process_time()
+print("time to compute the stiffness matrix / FORTRAN: {}".format(toc-tic))
 
 K=scipy.sparse.csc_matrix( (Vk,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
 
@@ -145,21 +145,21 @@ M=scipy.sparse.csc_matrix( (Vm,(Ik,Jk)), shape=(ndof,ndof) ,dtype=float)
 
 eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(K[SolvedDofs,:][:,SolvedDofs],10,M[SolvedDofs,:][:,SolvedDofs],sigma=0,which='LM')
 #eigen_values_S,eigen_vectors_S= scipy.linalg.eig(K[SolvedDofs,:][:,SolvedDofs],M[SolvedDofs,:][:,SolvedDofs])
-freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*scipy.pi))
+freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
 eigen_vector_S_list=[]
 for i in range(eigen_values_S.shape[0]):
-    Q=scipy.zeros(ndof)
+    Q=np.zeros(ndof)
     Q[SolvedDofs]=eigen_vectors_S[:,i]
-    disp=scipy.zeros((nnodes,3))
+    disp=np.zeros((nnodes,3))
     disp[range(nnodes),0]=Q[list(range(0,ndof,6))]
     disp[range(nnodes),1]=Q[list(range(1,ndof,6))]
     disp[range(nnodes),2]=Q[list(range(2,ndof,6))]
     eigen_vector_S_list.append(disp)
 
-toc = time.clock()
+toc = time.process_time()
 print ("structure eigen frequencies : ",freq_eigv_S)
-print ("time for computing the structure modes:",toc-tic)
+print ("time for computing the structure modes: {}".format(toc-tic))
 #############################################################################
 #         Write results to gmsh format
 #############################################################################

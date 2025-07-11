@@ -25,7 +25,7 @@ mycomm=comm_mumps_one_proc()
 print("SILEX CODE - calcul d'un assemblage - faces rigides")
 #############################################################################
 
-tic = time.clock()
+tic = time.process_time()
 #############################################################################
 #      USER PART: Import mesh, boundary conditions and material
 #############################################################################
@@ -61,42 +61,42 @@ elementV12,IdnodeV12=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',eltype,
 
 # face du bas: pied 1 : SUPER-NODE 1
 elementS101,IdnodeS101=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,101)
-dofS101=scipy.hstack([(IdnodeS101-1)*3,(IdnodeS101-1)*3+1,(IdnodeS101-1)*3+2])
+dofS101=np.hstack([(IdnodeS101-1)*3,(IdnodeS101-1)*3+1,(IdnodeS101-1)*3+2])
 # face du bas: pied 2 : SUPER-NODE 2
 elementS102,IdnodeS102=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,102)
-dofS102=scipy.hstack([(IdnodeS102-1)*3,(IdnodeS102-1)*3+1,(IdnodeS102-1)*3+2])
+dofS102=np.hstack([(IdnodeS102-1)*3,(IdnodeS102-1)*3+1,(IdnodeS102-1)*3+2])
 # face du bas: pied 3 : SUPER-NODE 3
 elementS103,IdnodeS103=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,103)
-dofS103=scipy.hstack([(IdnodeS103-1)*3,(IdnodeS103-1)*3+1,(IdnodeS103-1)*3+2])
+dofS103=np.hstack([(IdnodeS103-1)*3,(IdnodeS103-1)*3+1,(IdnodeS103-1)*3+2])
 # face du bas: pied 4 : SUPER-NODE 4
 elementS104,IdnodeS104=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,104)
-dofS104=scipy.hstack([(IdnodeS104-1)*3,(IdnodeS104-1)*3+1,(IdnodeS104-1)*3+2])
+dofS104=np.hstack([(IdnodeS104-1)*3,(IdnodeS104-1)*3+1,(IdnodeS104-1)*3+2])
 
 # face du haut: pied 1 : SUPER-NODE 5
 elementS201,IdnodeS201=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,201)
-dofS201=scipy.hstack([(IdnodeS201-1)*3,(IdnodeS201-1)*3+1,(IdnodeS201-1)*3+2])
+dofS201=np.hstack([(IdnodeS201-1)*3,(IdnodeS201-1)*3+1,(IdnodeS201-1)*3+2])
 # face du haut: pied 2 : SUPER-NODE 6
 elementS202,IdnodeS202=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,202)
-dofS202=scipy.hstack([(IdnodeS202-1)*3,(IdnodeS202-1)*3+1,(IdnodeS202-1)*3+2])
+dofS202=np.hstack([(IdnodeS202-1)*3,(IdnodeS202-1)*3+1,(IdnodeS202-1)*3+2])
 # face du haut: pied 3 : SUPER-NODE 7
 elementS203,IdnodeS203=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,203)
-dofS203=scipy.hstack([(IdnodeS203-1)*3,(IdnodeS203-1)*3+1,(IdnodeS203-1)*3+2])
+dofS203=np.hstack([(IdnodeS203-1)*3,(IdnodeS203-1)*3+1,(IdnodeS203-1)*3+2])
 # face du haut: pied 4 : SUPER-NODE 8
 elementS204,IdnodeS204=silex_lib_gmsh.ReadGmshElements(MeshFileName+'.msh',3,204)
-dofS204=scipy.hstack([(IdnodeS204-1)*3,(IdnodeS204-1)*3+1,(IdnodeS204-1)*3+2])
+dofS204=np.hstack([(IdnodeS204-1)*3,(IdnodeS204-1)*3+1,(IdnodeS204-1)*3+2])
 
 # SUPER BEAM ELEMENTS : bas-haut
-elementBeam = scipy.array([[1,5],[2,6],[3,7],[4,8]])
+elementBeam = np.array([[1,5],[2,6],[3,7],[4,8]])
 B = 100.0e-3     # hauteur de la liaison, sans les plaques en metal
 E = 2.0e-3       # epaisseur des plaques dessus et dessous
 L1 = 600.0e-3    # entraxe entre les diabolos
 L2 = 1000.0e-3   # entraxe entre les diabolos
 
-SuperNodes = scipy.array([[0.0,0.0,0.0],[L1,0.0,0.0],[L1,0.0,L2],[0.0,0.0,L2],
+SuperNodes = np.array([[0.0,0.0,0.0],[L1,0.0,0.0],[L1,0.0,L2],[0.0,0.0,L2],
                           [0.0,B+2.0*E,0.0],[L1,B+2.0*E,0.0],[L1,B+2.0*E,L2],[0.0,B+2.0*E,L2]])
 
-IdSuperNodesDown  = scipy.array([1,2,3,4])
-IdSuperNodesUp    = scipy.array([5,6,7,8])
+IdSuperNodesDown  = np.array([1,2,3,4])
+IdSuperNodesUp    = np.array([5,6,7,8])
 
 
 IdSuperNodesFixed_x = IdSuperNodesDown
@@ -121,7 +121,7 @@ silex_lib_gmsh.WriteResults(ResultsFileName+'_surf204',nodes,elementS204,3)
 silex_lib_gmsh.WriteResults(ResultsFileName+'_vol12',nodes,elementV12,5)
 silex_lib_gmsh.WriteResults(ResultsFileName+'_SUPER_NODES',SuperNodes,elementBeam,1)
 
-elements=scipy.vstack([elementV10,elementV11,elementV12])
+elements=np.vstack([elementV10,elementV11,elementV12])
 silex_lib_gmsh.WriteResults(ResultsFileName+'_complet',nodes,elements,5)
 
 mytype='float'
@@ -192,11 +192,11 @@ flag3  = 2                                      # flag for Neo Hooke hyperelasti
 param3 = [mu3,Lambda3,0.0,0.0,0.0,0.0,0.0,0.0]  # Material parameter in a vector
 
 # Boundary conditions
-Fixed_Dofs = scipy.hstack([ndof+(IdSuperNodesFixed_x-1)*6,ndof+(IdSuperNodesFixed_y-1)*6+1,ndof+(IdSuperNodesFixed_z-1)*6+2,ndof+(IdSuperNodesFixed_rotx-1)*6+3,ndof+(IdSuperNodesFixed_roty-1)*6+4,ndof+(IdSuperNodesFixed_rotz-1)*6+5])
+Fixed_Dofs = np.hstack([ndof+(IdSuperNodesFixed_x-1)*6,ndof+(IdSuperNodesFixed_y-1)*6+1,ndof+(IdSuperNodesFixed_z-1)*6+2,ndof+(IdSuperNodesFixed_rotx-1)*6+3,ndof+(IdSuperNodesFixed_roty-1)*6+4,ndof+(IdSuperNodesFixed_rotz-1)*6+5])
 
 # DEFINE LOAD : ON SUPER NODE 1, 2, 3, 4 IN x,y DIRECTION
-Fprime = scipy.zeros(ndof+6*SuperNodes.shape[0])
-##load_on_one_super_node=0.5411961001461978 #50e-3**2*scipy.pi*1.0e2
+Fprime = np.zeros(ndof+6*SuperNodes.shape[0])
+##load_on_one_super_node=0.5411961001461978 #50e-3**2*np.pi*1.0e2
 ##Fprime[ndof+(1-1)*6+0]=load_on_one_super_node
 ##Fprime[ndof+(1-1)*6+2]=load_on_one_super_node
 ##Fprime[ndof+(2-1)*6+0]=load_on_one_super_node
@@ -207,12 +207,12 @@ Fprime = scipy.zeros(ndof+6*SuperNodes.shape[0])
 ##Fprime[ndof+(4-1)*6+2]=load_on_one_super_node
 
 # frequency range
-frequencies=scipy.linspace(0,500,500)
+frequencies=np.linspace(0,500,500)
 
 flag_damping=0
 
-toc = time.clock()
-print("time for the user part:",toc-tic)
+toc = time.process_time()
+print("time for the user part: {}".format(toc-tic))
 
 
 #############################################################################
@@ -228,12 +228,12 @@ print("Number of elements:",nelem)
 print("")
 
 # define free dof
-SolvedDofs = scipy.setdiff1d(range(ndof+6*SuperNodes.shape[0]),Fixed_Dofs)
-SolvedDofs = scipy.setdiff1d(SolvedDofs,scipy.hstack([dofS101,dofS102,dofS103,dofS104,dofS201,dofS202,dofS203,dofS204]))
+SolvedDofs = np.setdiff1d(range(ndof+6*SuperNodes.shape[0]),Fixed_Dofs)
+SolvedDofs = np.setdiff1d(SolvedDofs,np.hstack([dofS101,dofS102,dofS103,dofS104,dofS201,dofS202,dofS203,dofS204]))
 
 # initialize displacement vector
-Qprime=scipy.zeros(ndof+6*SuperNodes.shape[0],dtype='float')
-Q=scipy.zeros(ndof,dtype='float')
+Qprime=np.zeros(ndof+6*SuperNodes.shape[0],dtype='float')
+Q=np.zeros(ndof,dtype='float')
 
 Qprime[ndof+(1-1)*6+0]=1.0e-4
 Qprime[ndof+(1-1)*6+2]=1.0e-4
@@ -248,14 +248,14 @@ Qprime[ndof+(4-1)*6+2]=1.0e-4
 #############################################################################
 #      compute stiffness matrix
 #############################################################################
-tic0 = time.clock()
-tic = time.clock()
+tic0 = time.process_time()
+tic = time.process_time()
 
-K1_i,K1_j,K1_v = silex_lib_elt.ktan_dd(nodes,elementV10,scipy.zeros(ndof,dtype='float'),flag1,param1)
+K1_i,K1_j,K1_v = silex_lib_elt.ktan_dd(nodes,elementV10,np.zeros(ndof,dtype='float'),flag1,param1)
 K1 = scipy.sparse.csc_matrix((K1_v,(K1_i,K1_j)),shape=(ndof,ndof))
 K2_i,K2_j,K2_v = silex_lib_elt.ktan_dd(nodes,elementV11,Q,flag2,param2)
 K2 = scipy.sparse.csc_matrix((K2_v,(K2_i,K2_j)),shape=(ndof,ndof))           
-K3_i,K3_j,K3_v = silex_lib_elt.ktan_dd(nodes,elementV12,scipy.zeros(ndof,dtype='float'),flag3,param3)
+K3_i,K3_j,K3_v = silex_lib_elt.ktan_dd(nodes,elementV12,np.zeros(ndof,dtype='float'),flag3,param3)
 K3 = scipy.sparse.csc_matrix((K3_v,(K3_i,K3_j)),shape=(ndof,ndof))
 
 
@@ -273,8 +273,8 @@ K = K1 + K2 + K3
 
 M = M1 + M2 + M3
 
-toc = time.clock()
-print("time to compute the stiffness and mass matrix :",toc-tic)
+toc = time.process_time()
+print("time to compute the stiffness and mass matrix : {}".format(toc-tic))
 
 
 #################################################################################
@@ -297,9 +297,9 @@ R203 = silex_lib_extra.rigidify_surface(IdnodeS203,nodes,SuperNodes[6])
 
 R204 = silex_lib_extra.rigidify_surface(IdnodeS204,nodes,SuperNodes[7])
 
-sparse_ones = scipy.sparse.csc_matrix( (list(scipy.ones(ndof)),(list(range(ndof)),list(range(ndof)))), shape=(ndof,ndof) )
+sparse_ones = scipy.sparse.csc_matrix( (list(np.ones(ndof)),(list(range(ndof)),list(range(ndof)))), shape=(ndof,ndof) )
 
-R = scipy.sparse.construct.bmat( [[sparse_ones
+R = scipy.sparse.bmat( [[sparse_ones
                                   +R101[list(range(ndof)),:][:,list(range(ndof))]
                                   +R102[list(range(ndof)),:][:,list(range(ndof))]
                                   +R103[list(range(ndof)),:][:,list(range(ndof))]
@@ -335,27 +335,27 @@ M =R.T*M*R
 
 #Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 ##if flag_damping==1:
-##    Q=scipy.zeros(ndof,dtype=mytype)
+##    Q=np.zeros(ndof,dtype=mytype)
 
 if 1==0:
     eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(K[SolvedDofs,:][:,SolvedDofs],20,M[SolvedDofs,:][:,SolvedDofs],sigma=0,which='LM')
 
-    freq_eigv_S=list(scipy.sqrt(eigen_values_S)/(2*scipy.pi))
+    freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
     eigen_vector_S_list=[]
     for i in range(eigen_values_S.shape[0]):
-        Qprime=scipy.zeros(ndof+6*SuperNodes.shape[0])
+        Qprime=np.zeros(ndof+6*SuperNodes.shape[0])
         Qprime[SolvedDofs]=eigen_vectors_S[:,i]
         tmp=R*Qprime
-        disp=scipy.zeros((nnodes,3))
+        disp=np.zeros((nnodes,3))
         disp[range(nnodes),0]=tmp[list(range(0,ndof,3))].real
         disp[range(nnodes),1]=tmp[list(range(1,ndof,3))].real
         disp[range(nnodes),2]=tmp[list(range(2,ndof,3))].real
         eigen_vector_S_list.append(disp)
 
-    toc = time.clock()
+    toc = time.process_time()
     print ("structure eigen frequencies : ",freq_eigv_S)
-    print ("time for computing the structure modes:",toc-tic)
+    print ("time for computing the structure modes: {}".format(toc-tic))
     silex_lib_gmsh.WriteResults2(ResultsFileName+'_structure_modes',nodes,elements,5,[[eigen_vector_S_list,'nodal',3,'modes']])
 
 #############################################################################
@@ -369,7 +369,7 @@ disp_save=[]
 for i in range(len(frequencies)):
 
     freq = frequencies[i]
-    omega=2*scipy.pi*freq
+    omega=2*np.pi*freq
 
     print ("frequency=",freq)
 
@@ -378,14 +378,14 @@ for i in range(len(frequencies)):
 ##        Gstar=(G0+Ginf*(1j*omega*tau)**alpha)/(1+(1j*omega*tau)**alpha)
 ##        K = K1 + K2*Gstar/G0 + K3
 
-    Qprime[SolvedDofs] = mumps.spsolve( scipy.sparse.csc_matrix(K[SolvedDofs,:][:,SolvedDofs]-(omega*omega)*M[SolvedDofs,:][:,SolvedDofs],dtype=mytype) , scipy.array(Fprime[SolvedDofs],dtype=mytype)-(K[SolvedDofs,:][:,Fixed_Dofs]-(omega*omega)*M[SolvedDofs,:][:,Fixed_Dofs])*Qprime[Fixed_Dofs], comm=mycomm).T
+    Qprime[SolvedDofs] = mumps.spsolve( scipy.sparse.csc_matrix(K[SolvedDofs,:][:,SolvedDofs]-(omega*omega)*M[SolvedDofs,:][:,SolvedDofs],dtype=mytype) , np.array(Fprime[SolvedDofs],dtype=mytype)-(K[SolvedDofs,:][:,Fixed_Dofs]-(omega*omega)*M[SolvedDofs,:][:,Fixed_Dofs])*Qprime[Fixed_Dofs], comm=mycomm).T
 
     Q = R*Qprime
     
-    #frf.append(scipy.sqrt(Q[(187-1)*3]**2+Q[(187-1)*3+1]**2+Q[(187-1)*3+2]**2))
-    frf.append(scipy.linalg.norm(scipy.array([Q[(187-1)*3],Q[(187-1)*3+1],Q[(187-1)*3+2]])))
+    #frf.append(np.sqrt(Q[(187-1)*3]**2+Q[(187-1)*3+1]**2+Q[(187-1)*3+2]**2))
+    frf.append(scipy.linalg.norm(np.array([Q[(187-1)*3],Q[(187-1)*3+1],Q[(187-1)*3+2]])))
     
-    disp=scipy.zeros((nnodes,3),dtype='float')
+    disp=np.zeros((nnodes,3),dtype='float')
     disp[range(nnodes),0]=Q[list(range(0,ndof,3))].real
     disp[range(nnodes),1]=Q[list(range(1,ndof,3))].real
     disp[range(nnodes),2]=Q[list(range(2,ndof,3))].real

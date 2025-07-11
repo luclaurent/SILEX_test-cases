@@ -259,7 +259,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     toc = time.process_time()
     if rank == 0:
-        print("time to compute level set:", toc-tic)
+        print("time to compute level set: {}".format(toc-tic))
 
     if (flag_write_gmsh_results == 1) and (rank == 0):
         # silex_lib_gmsh.WriteResults2(
@@ -314,7 +314,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     toc = time.process_time()
     if rank == 0:
-        print("time to find enriched elements:", toc-tic)
+        print("time to find enriched elements: {}".format(toc-tic))
 
     tic = time.process_time()
 
@@ -367,17 +367,17 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
 
     toc = time.process_time()
     if rank == 0:
-        print("time to compute Heaviside enrichment:", toc-tic)
+        print("time to compute Heaviside enrichment: {}".format(toc-tic))
 
     ##################################################################
     # Construct the whole system
     #################################################################
 
-    K = scipy.sparse.construct.bmat([
+    K = scipy.sparse.bmat([
         [fluid_damping*KFF[SolvedDofF, :][:, SolvedDofF], fluid_damping*KAF[SolvedDofF, :][:, SolvedDofA]],
         [fluid_damping*KAF[SolvedDofA, :][:, SolvedDofF], fluid_damping*KAA[SolvedDofA, :][:, SolvedDofA]]])
 
-    M = scipy.sparse.construct.bmat([
+    M = scipy.sparse.bmat([
         [MFF[SolvedDofF, :][:, SolvedDofF], MAF[SolvedDofF, :][:, SolvedDofA]],
         [MAF[SolvedDofA, :][:, SolvedDofF], MAA[SolvedDofA, :][:, SolvedDofA]]])
 
@@ -408,10 +408,10 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         dKFA_dtheta = scipy.sparse.csc_matrix( (Vfak_gradient,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
         dMFA_dtheta = scipy.sparse.csc_matrix( (Vfam_gradient,(IIf,JJf)), shape=(fluid_ndof,fluid_ndof) )
         #build full stiffness and mass gradient matrices
-        dK.append(scipy.sparse.construct.bmat( [
+        dK.append(scipy.sparse.bmat( [
                     [None,fluid_damping*dKFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
                     [fluid_damping*dKFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]] ))
-        dM.append(scipy.sparse.construct.bmat( [
+        dM.append(scipy.sparse.bmat( [
                     [None,dMFA_dtheta[SolvedDofF,:][:,SolvedDofA]],
                     [dMFA_dtheta[SolvedDofA,:][:,SolvedDofF],None]] ))
 
@@ -427,7 +427,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         frfgradient.append([])
 
     if (Flag_frf_analysis == 1):
-        print("Proc. ", rank, " / time at the beginning of the FRF:", time.ctime())
+        print("Proc. {} / time at the beginning of the FRF: {}".format(rank, time.ctime()))
 
         if rank == 0:
             print('nb of total dofs: ', len(SolvedDofF)+len(SolvedDofA))
@@ -453,9 +453,9 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
             it=it+1
             #freq = freq_ini+i*nproc*deltafreq+rank*deltafreq
             frequencies.append(freq)
-            omega = 2*scipy.pi*freq
+            omega = 2*np.pi*freq
 
-            print("Freq. step ",it,"/",itmax," proc number", rank, "frequency=", freq)
+            print("Freq. step  {}/{} - proc number {} - frequency= {}".format(it, itmax, rank, freq))
 
             tic = time.process_time()
 
@@ -544,7 +544,7 @@ def RunPb(freqMin, freqMax, nbStep, nbProc, rank, comm, paraVal,gradValRequire=[
         if rank!=0:
             comm.send(frfsave, dest=0, tag=11)
 
-        print("Proc. ", rank, " / time at the end of the FRF:", time.ctime())
+        print("Proc. {} / time at the end of the FRF: {}".format(rank,time.ctime()))
 
         if (flag_write_gmsh_results == 1) and (rank == 0):
             dataW=list()
