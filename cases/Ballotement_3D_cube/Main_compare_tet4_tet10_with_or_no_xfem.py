@@ -60,15 +60,15 @@ ly = 0.8
 lz = 0.6
 
 # Baffle position and geom
-lx_baffle = 0.31
-lz_baffle = 0.27
+lx_baffle = 0.455
+lz_baffle = 0.255
 thickness_baffle = 0.002 # only for classic conforming mesh
-lx_baffle_shift_up = 0.18
-lx_baffle_shift_down = 0.08
+lx_baffle_shift_up = 0.0
+lx_baffle_shift_down = 0.0
 
 
 #size of elements
-h_fluid_elts =  lx/15
+h_fluid_elts =  lx/20
 
 # parallepipedic cavity with plane structure
 mesh_file_fluid_tet10       =Path(__file__).parent / 'cube_xfem_sloshing_Fluid_and_Tank_tet10'
@@ -88,8 +88,8 @@ results_file_tet4_classic   =Path(__file__).parent / 'cube_sloshing_with_stiffen
 silex_lib_cube_tank_gmsh_geometry.xfem_fluid_and_tank(lx,ly,lz,h_fluid_elts,2,mesh_file_fluid_tet10)
 silex_lib_cube_tank_gmsh_geometry.xfem_fluid_and_tank(lx,ly,lz,h_fluid_elts,1,mesh_file_fluid_tet4)
 silex_lib_cube_tank_gmsh_geometry.Stiffener_DKT(lx,ly,lz,lx_baffle,lx_baffle_shift_up,lx_baffle_shift_down,lz_baffle,h_fluid_elts*0.5,1,mesh_file_stiffener)
-silex_lib_cube_tank_gmsh_geometry.classic_fluid_and_tank(lx,ly,lz,lx_baffle,lx_baffle_shift_up,lx_baffle_shift_down,lz_baffle,thickness_baffle,h_fluid_elts,2,mesh_file_tet10_classic)
-silex_lib_cube_tank_gmsh_geometry.classic_fluid_and_tank(lx,ly,lz,lx_baffle,lx_baffle_shift_up,lx_baffle_shift_down,lz_baffle,thickness_baffle,h_fluid_elts,1,mesh_file_tet4_classic)
+#silex_lib_cube_tank_gmsh_geometry.classic_fluid_and_tank(lx,ly,lz,lx_baffle,lx_baffle_shift_up,lx_baffle_shift_down,lz_baffle,thickness_baffle,h_fluid_elts,2,mesh_file_tet10_classic)
+#silex_lib_cube_tank_gmsh_geometry.classic_fluid_and_tank(lx,ly,lz,lx_baffle,lx_baffle_shift_up,lx_baffle_shift_down,lz_baffle,thickness_baffle,h_fluid_elts,1,mesh_file_tet4_classic)
 
 
 dataPb['freq_ini'] = 0.5
@@ -101,8 +101,9 @@ dataPb['nb_freq_step'] = 3
 dataPb['U_dot_dot_imposed'] = np.array([1.0,0.0,0.0])
 
 # Flags
-dataPb['flag_eigen_vectors'] = 0
-dataPb['flag_FRF'] = 1
+dataPb['flag_eigen_vectors'] = 1
+dataPb['flag_nb_eigen_modes'] = 10
+dataPb['flag_FRF'] = 0
 dataPb['flag_write_gmsh_results'] = 1
 
 # fluid

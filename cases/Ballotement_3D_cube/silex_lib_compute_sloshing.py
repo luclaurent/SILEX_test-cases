@@ -408,13 +408,15 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
     if dataPb['flag_eigen_vectors']==1:
 
         eigen_values,eigen_vectors= scipy.sparse.linalg.eigsh(H,
-                                                                10,
+                                                                dataPb['flag_nb_eigen_modes'],
                                                                 S,
                                                                 sigma=0,which='LM')
 
         freq_eigv_S=list(np.sqrt(eigen_values)/(2*np.pi))
         print('XFEM eigen frequencies : ',freq_eigv_S)
         eigen_vector_list=[]
+        presslist=[]
+        pressenrichlist=[]
         for i in range(eigen_values.shape[0]):
             #Q=np.zeros(fluid_ndof)
             #Q=eigen_vectors[SolvedDofF,i]
@@ -423,6 +425,10 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
             press[SolvedDofF] = Q[SolvedDofF]
             enrichment = np.zeros(fluid_ndof)
             enrichment[SolvedDofA]= Q[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA),1))]
+            
+            presslist.append(press)
+            pressenrichlist.append(enrichment)
+            
             CorrectedPressure=np.array(press)
             CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA].T+np.array(enrichment[SolvedDofA]*np.sign(Stiffener_LS[SolvedDofA]).T)
             eigen_vector_list.append(CorrectedPressure)
@@ -441,7 +447,45 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
                                     datafluidmesh['nodes'],
                                     datafluidmesh['fluid_volume_elts'],
                                     11,
-                                    [[eigen_vector_list,'nodal',1,'modes']])
+                                    [[eigen_vector_list,'nodal',1,'modes'],
+                                     [presslist,'nodal',1,'press classic'],
+                                     [pressenrichlist,'nodal',1,'press enrich']])
+            silex_lib_gmsh.WriteResults2(results_file.as_posix() +'_results_fluid_eigenmodes_on_tet4mesh',
+                                    datafluidmesh['nodes'],
+                                    elemtet4,
+                                    4,
+                                    [[eigen_vector_list,'nodal',1,'pressure']]
+                                    )
+
+            objMesh = lib.MeshField(nodes=datafluidmesh['nodes'], 
+                                    elems=elemtet4, 
+                                    leveset=Stiffener_LS, 
+                                    levelsetTg=Stiffener_tangent_LS)
+            objMesh.addField(uncorrectedField=np.vstack(presslist).transpose(),
+                             enrichmentField=np.vstack(pressenrichlist).transpose())
+            datameshfield = objMesh.getData()
+            
+            # prepare fields
+            dataW = []
+            dataW.append({'data':datameshfield['LS'],'type':'nodal', 'name':'levelset'})
+            dataW.append({'data':datameshfield['LST'],'type':'nodal','name':'tangent levelset'})
+            # for it in range(len(press)):
+            #     dataW.append({'data':datameshfield['fields'][:,it],'type':'nodal','name':'field '+str(it)+' (levelset)'})
+            dataW = {
+                'name': 'press',
+                'nbsteps': len(presslist),
+                'type': 'nodal',
+                'data': datameshfield['fields']
+            }
+#            # export mesh
+            msh2.mshWriter(
+                filename= results_file.as_posix() +'_results_fluid_eigenmodes_meshfield3D.msh',
+                nodes=datameshfield['nodes'],
+                elements=[{'type':'TET4','connectivity':datameshfield['TET4']},
+                        {'type':'PRI6','connectivity':datameshfield['PRI6']}],
+                fields=dataW,
+                append=True
+                )
 
     ##############################################################
     # Compute FRF
@@ -861,7 +905,7 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
     if dataPb['flag_eigen_vectors']==1:
 
         eigen_values,eigen_vectors= scipy.sparse.linalg.eigsh(H,
-                                                                20,
+                                                                dataPb['flag_nb_eigen_modes'],
                                                                 S,
                                                                 sigma=0,which='LM')
 
@@ -1110,7 +1154,7 @@ def sloshing_rigid_baffle_tet4(dataPb,dataFluid,mesh_file,results_file):
     if dataPb['flag_eigen_vectors']==1:
 
         eigen_values,eigen_vectors= scipy.sparse.linalg.eigsh(HFF,
-                                                                20,
+                                                                dataPb['flag_nb_eigen_modes'],
                                                                 SFF,
                                                                 sigma=0,which='LM')
 
@@ -1326,7 +1370,7 @@ def sloshing_rigid_baffle_tet10(dataPb,dataFluid,mesh_file,results_file):
     if dataPb['flag_eigen_vectors']==1:
 
         eigen_values,eigen_vectors= scipy.sparse.linalg.eigsh(HFF,
-                                                                20,
+                                                                dataPb['flag_nb_eigen_modes'],
                                                                 SFF,
                                                                 sigma=0,which='LM')
 
@@ -1676,7 +1720,7 @@ def sloshing_flexible_baffle_tet10_xfem(dataPb,dataFluid,dataStructure,mesh_file
     if dataPb['flag_eigen_vectors']==1:
 
         # Fluid
-        eigen_values_F,eigen_vectors_F= scipy.sparse.linalg.eigsh(HFF,20,SFF,sigma=0,which='LM')
+        eigen_values_F,eigen_vectors_F= scipy.sparse.linalg.eigsh(HFF,dataPb['flag_nb_eigen_modes'],SFF,sigma=0,which='LM')
 
         freq_eigv_F=list(np.sqrt(eigen_values_F)/(2*np.pi))
         print('XFEM eigen frequencies : ',freq_eigv_F)
@@ -1695,7 +1739,7 @@ def sloshing_flexible_baffle_tet10_xfem(dataPb,dataFluid,dataStructure,mesh_file
                                     [[eigen_vector_list_F,'nodal',1,'modes']])
 
         # stiffener, flexible baffle
-        eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(KSS[SolvedDofS,:][:,SolvedDofS],20,MSS[SolvedDofS,:][:,SolvedDofS],sigma=0,which='LM')
+        eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(KSS[SolvedDofS,:][:,SolvedDofS],dataPb['flag_nb_eigen_modes'],MSS[SolvedDofS,:][:,SolvedDofS],sigma=0,which='LM')
 
         freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
