@@ -71,7 +71,7 @@ class solve:
         self.dataPb["nb_freq_step"] = 10
 
         # Imposed acceleration on tank and stiffener surfaces
-        self.dataPb["U_dot_dot_imposed"] = np.array([1.0, 1.0, 0.0])*np.sqrt(2.0)  
+        self.dataPb["U_dot_dot_imposed"] = np.array([1.0e-3, 1.0e-3, 0.0])/np.sqrt(2.0)  
 
         # Flags
         self.dataPb["flag_eigen_vectors"] = 0
