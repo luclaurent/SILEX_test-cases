@@ -33,6 +33,16 @@ val_f = frf_tet4_xfem[3].reshape((nbval, nbval))
 fig, (ax1,ax2) = plt.subplots(2,subplot_kw=dict(projection='3d'))
 
 ls = LightSource(270, 45)
+
+#for i in range(len(val_f)):
+#   for j in range(len(val_f[i])):
+#      print(val_f[i][j])
+#      if val_f[i][j]>30000:
+#         val_f[i][j]=0.5*(val_f[i][j-1]+val_f[i][j+1])
+#         if val_f[i][j]>30000:
+#            val_f[i][j]=0.5*(val_f[i][j-1]+val_f[i][j+2])
+#         print('corrigee= ',val_f[i][j])
+
 # To use a custom hillshading mode, override the built-in shading and pass
 # in the rgb colors of the shaded surface calculated from "shade".
 # rgb = ls.shade(val, cmap=cm.gist_earth, vert_exag=0.1, blend_mode='soft')

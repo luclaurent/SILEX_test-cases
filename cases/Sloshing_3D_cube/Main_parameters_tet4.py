@@ -11,7 +11,7 @@ import pickle
 import sys
 from pathlib import Path
 
-sys.path.append("/home/legay/Codes/SILEXGIT/SILEXlib/SILEXlib/tests/")
+#sys.path.append("/home/legay/Codes/SILEXGIT/SILEXlib/SILEXlib/tests/")
 
 
 import silex_lib_compute_sloshing
@@ -86,7 +86,7 @@ class solve:
 
 
         # size of elements
-        self.h_fluid_elts = self.lx / 20
+        self.h_fluid_elts = self.lx / 17
 
         # # parallepipedic cavity with plane structure
         # mesh_file_fluid_tet10       =Path(__file__).parent / 'cube_xfem_sloshing_Fluid_and_Tank_tet10'
@@ -149,7 +149,7 @@ obj = solve()
 # log.info(f"Test run completed with value: {valtest}")
 
 # X = np.linspace()
-nb_val = 10
+nb_val = 11
 lup = np.linspace(-0.21, 0.21, nb_val)
 ldown = np.linspace(-0.21, 0.21, nb_val)
 X, Y = np.meshgrid(lup, ldown)
@@ -158,6 +158,7 @@ val_f = np.zeros(nb_val * nb_val)
 
 for i,(xs,ys) in enumerate(zip(X.flatten(), Y.flatten())):
     log.info(f"Running for {xs:.2f} and {ys:.2f}")
+    # return de run() : meanQI, maxQI, meanforce, maxforce
     val_p[i],_, val_f[i],_ = obj.run([xs, ys])
     log.info(f"Results: {val_p[i]}Pa and {val_f[i]}N")
     if val_p[i] > 1e12 or val_f[i] > 1e12:

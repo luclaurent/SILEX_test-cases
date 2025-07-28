@@ -1051,9 +1051,24 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
 
             enrichpress.append(soltmp)
             torseur = CSA@soltmp
-            fx = np.sum(torseur[0::6])
-            fy = np.sum(torseur[1::6])
-            fz = np.sum(torseur[2::6])
+            
+            fxnodes=torseur[0::6]
+            fynodes=torseur[1::6]
+            fznodes=torseur[2::6]
+            for kk in range(100):
+                fxnodes[np.argmax(fxnodes)]=0.0
+                fxnodes[np.argmin(fxnodes)]=0.0
+                fynodes[np.argmax(fynodes)]=0.0
+                fynodes[np.argmin(fynodes)]=0.0            
+                fznodes[np.argmax(fznodes)]=0.0
+                fznodes[np.argmin(fznodes)]=0.0                
+            #print(max(fxnodes))
+            #titi=np.argmax(fxnodes)
+            #print(titi)
+            #print(fxnodes[titi])
+            fx = np.sum(fxnodes)
+            fy = np.sum(fynodes)
+            fz = np.sum(fznodes)
             #
             force.append(np.linalg.norm(np.array([fx,fy,fz])))
             
@@ -1514,6 +1529,9 @@ def sloshing_rigid_baffle_tet10(dataPb,dataFluid,mesh_file,results_file):
                                         11,
                                         [[eigen_vector_list,'nodal',1,'modes']])
 
+        f=open(results_file.as_posix() +'_eigen_frequencies.pck','wb')
+        pickle.dump(freq_eigv_S, f)
+        f.close()
 
 
     ##############################################################
