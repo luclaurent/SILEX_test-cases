@@ -60,11 +60,23 @@ surfb = ax2.plot_surface(X, Y, val_f
                     #    shade=False
                        )
 
+
+
+# plt.show()
+force_limit = 8e3
+fig, ax1 = plt.subplots(1)
+masked_val = np.ma.masked_where(val_f < force_limit, val_f*0.0)
+ctf = ax1.contourf(X, Y, val_f )
+ax1.contourf(X, Y, masked_val, levels=50,cmap="Greys", alpha=1)
+
+# surf = ax1.imshow((val_f<force_limit).astype(int),  
+#                   alpha=1,
+#                   extent=(X.min(),X.max(),Y.min(),Y.max()),
+#                   origin="upper", 
+#                   cmap="Greys", 
+#                   aspect='auto', 
+#                   interpolation = 'hanning')
 plt.show()
-
-
-
-
 
 # Z = griddata((x,y),z,(X,Y), method='cubic')
 

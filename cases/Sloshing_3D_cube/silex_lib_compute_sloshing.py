@@ -1142,7 +1142,7 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
         f=open(results_file.as_posix() +'_results.frf','wb')
         pickle.dump(frfsave, f)
         f.close()
-    return meanQI, maxQI, meanforce, maxforce
+    return meanQI, maxQI, meanforce, maxforce, QuantityOfInterest, force
 
 def sloshing_rigid_baffle_tet4(dataPb,dataFluid,mesh_file,results_file):
     ##############################################################

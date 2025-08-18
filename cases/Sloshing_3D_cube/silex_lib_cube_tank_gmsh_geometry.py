@@ -116,7 +116,7 @@ def Stiffener_DKT(lx1,ly1,lz1,lxa,lxashift_up,lxashift_down,lza,h,ElementOrder,f
     gmsh.model.addPhysicalGroup(1, [16], 70, "Stiffener baffle base edge to impose acceleration, velocity or displacement")
 
     gmsh.model.geo.synchronize() 
-    gmsh.model.mesh.generate(3)
+    gmsh.model.mesh.generate(2)
     file_name_save=file_name
     gmsh.option.setNumber("Mesh.MshFileVersion",2.2)   
     gmsh.write(file_name_save.as_posix()+'.msh')
