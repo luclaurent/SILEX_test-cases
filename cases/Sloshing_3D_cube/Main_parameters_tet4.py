@@ -162,36 +162,6 @@ if __name__ == "__main__":
     # valtest = obj.run([0.09666666666666668, -0.1933333333333333])  # Run once to initialize the mesh and results
     # log.info(f"Test run completed with value: {valtest}")
 
-<<<<<<< HEAD
-# X = np.linspace()
-nb_val = 5
-lup = np.linspace(-0.21, 0.21, nb_val)
-ldown = np.linspace(-0.21, 0.21, nb_val)
-X, Y = np.meshgrid(lup, ldown)
-val_p = np.zeros(nb_val * nb_val)
-val_f = np.zeros(nb_val * nb_val)
-all_frf = []
-all_forces = []
-
-for i,(xs,ys) in enumerate(zip(X.flatten(), Y.flatten())):
-    log.info(f"Running for {xs:.2f} and {ys:.2f} (case: {i+1}/{nb_val*nb_val})")
-    # return de run() : meanQI, maxQI, meanforce, maxforce
-    val_p[i],_, val_f[i],_,QI,force = obj.run([xs, ys])
-    all_frf.append(QI)
-    all_forces.append(force)
-    log.info(f"Results: {val_p[i]}Pa and {val_f[i]}N")
-    if val_p[i] > 1e12 or val_f[i] > 1e12:
-        log.error(f"Error in computation for parameters {xs}, {ys}")
-        raise ValueError(f"Computation failed for parameters {xs}, {ys}")
-    
-
-
-    
-results_file = Path(__file__).parent / "results_parametric_tet4.pck"
-log.info(f"Saving results to {results_file}")
-with open(results_file, "wb") as f:
-    pickle.dump((X, Y, val_p, val_f, all_frf, all_forces), f)
-=======
     # X = np.linspace()
     nb_val = 11
     lup = np.linspace(-0.21, 0.21, nb_val)
@@ -216,4 +186,3 @@ with open(results_file, "wb") as f:
     log.info(f"Saving results to {results_file}")
     with open(results_file, "wb") as f:
         pickle.dump((X, Y, val_p, val_f), f)
->>>>>>> devel-AL
