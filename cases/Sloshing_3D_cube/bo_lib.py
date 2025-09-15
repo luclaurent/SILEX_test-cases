@@ -211,6 +211,8 @@ def execute_CBO(gp_obj_current,
     bounds_BO = torch.tensor(bounds, dtype=torch.float64)
     GP_obj_at_grid = list()
     acq_values_opt = list()
+    best_candidates = list()
+    X_best_candidates = list()
     if cbo_activated:
         GP_cons_at_grid = [list()]*len(fun_cons)
     #
@@ -236,7 +238,10 @@ def execute_CBO(gp_obj_current,
         else:
             Z= ZC_multi
         # get best candidate
-        best_candidate,_,_ = find_best_candidate(X, Z, Cval=C, constraints_bounds=constraints_bounds)
+        best_candidate,_,X_best = find_best_candidate(X, Z, Cval=C, constraints_bounds=constraints_bounds)
+        best_candidates.append(dataStdizeZ.unstdize(best_candidate.unsqueeze(0).detach()))
+        X_best_candidates.append(dataStdizeX.unstdize(X_best.unsqueeze(0).detach()))
+        
         # initialize acquisition function
         if constraints_bounds is None:
             acq_func = botorch.acquisition.ExpectedImprovement(gp_obj_current,
@@ -332,6 +337,21 @@ def execute_CBO(gp_obj_current,
                 C_GP_at_samples = ZC_GP_at_samples[ic+1]
                 logger.info(f'{ic} C maxi interpolation error {(ZC_update[:,ic+1].flatten()-C_GP_at_samples).double().abs().max()}')
     if not cbo_activated:
-        return X_update, Z_update, gp_obj_current, GP_obj_at_grid, acq_at_grid, torch.tensor(acq_values_opt, dtype=torch.float64)
+        return X_update, \
+            Z_update, \
+                gp_obj_current, \
+                    GP_obj_at_grid, \
+                        acq_at_grid, \
+                            torch.tensor(acq_values_opt, dtype=torch.float64), \
+                                torch.tensor(best_candidates, dtype=torch.float64), \
+                                    torch.vstack(X_best_candidates)
     else:
-        return X_update, ZC_update, gp_obj_current, GP_obj_at_grid, GP_cons_at_grid, acq_at_grid, torch.tensor(acq_values_opt, dtype=torch.float64)
+        return X_update,\
+            ZC_update,\
+                gp_obj_current,\
+                    GP_obj_at_grid,\
+                        GP_cons_at_grid,\
+                            acq_at_grid,\
+                                torch.tensor(acq_values_opt, dtype=torch.float64),\
+                                    torch.tensor(best_candidates, dtype=torch.float64),\
+                                        torch.vstack(X_best_candidates)
