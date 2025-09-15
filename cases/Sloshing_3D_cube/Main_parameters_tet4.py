@@ -58,7 +58,7 @@ class solve:
 
         # Baffle position and geom
         self.lx_baffle = 0.53333333333
-        self.lz_baffle = 0.522223333
+        self.lz_baffle = 0.422223333
         self.thickness_baffle = 0.002  # only for classic conforming mesh
         self.lx_baffle_shift_up = 0.18
         self.lx_baffle_shift_down = 0.08
@@ -155,6 +155,56 @@ class solve:
         # silex_lib_compute_sloshing.sloshing_rigid_baffle_tet4(dataPb,dataFluid,mesh_file_tet4_classic,results_file_tet4_classic)
         # silex_lib_compute_sloshing.sloshing_rigid_baffle_tet10(dataPb,dataFluid,mesh_file_tet10_classic,results_file_tet10_classic)
 
+    def run_bis(self, parameters):
+        
+        # default values
+        lx_baffle = self.lx_baffle
+        ly_baffle = self.ly
+        lz_baffle = self.lz_baffle
+        lx_baffle_shift_up = self.lx_baffle_shift_up
+        lx_baffle_shift_down = self.lx_baffle_shift_down
+        lz_baffle = self.lz_baffle
+        h_baffle = self.h_fluid_elts * 0.5
+        
+        if len(parameters)<6:
+            log.error("You must provide exactly 6 parameters")
+            raise ValueError("You must provide exactly 6 parameters")
+        
+        lxashift_up_A = parameters[0]
+        lxashift_down_A = parameters[1]
+        lxashift_up_B = parameters[2]
+        lxashift_down_B = parameters[3]
+        lzashift_up_A = 0.0
+        lzashift_up_B = 0.0
+        if len(parameters)>4:
+            lzashift_up_A = parameters[4]
+        if len(parameters)>5:
+            lzashift_up_B = parameters[5]
+        
+        silex_lib_cube_tank_gmsh_geometry.Stiffener_DKT_bis(
+            lx_baffle,
+            ly_baffle,
+            lz_baffle,
+            lxashift_up_A,
+            lxashift_down_A,
+            lxashift_up_B,
+            lxashift_down_B,
+            lzashift_up_A,
+            lzashift_up_B,
+            h_baffle,
+            1,
+            self.mesh_file_stiffener,
+        )
+        # silex_lib_cube_tank_gmsh_geometry.classic_fluid_and_tank(lx,ly,lz,lx_baffle,lx_baffle_shift_up,lx_baffle_shift_down,lz_baffle,thickness_baffle,h_fluid_elts,2,mesh_file_tet10_classic)
+        # silex_lib_cube_tank_gmsh_geometry.classic_fluid_and_tank(lx,ly,lz,lx_baffle,lx_baffle_shift_up,lx_baffle_shift_down,lz_baffle,thickness_baffle,h_fluid_elts,1,mesh_file_tet4_classic)
+
+
+
+        return silex_lib_compute_sloshing.sloshing_rigid_baffle_tet4_xfem(self.dataPb, 
+                                                                          self.dataFluid,
+                                                                          self.mesh_file_fluid_tet4,
+                                                                          self.mesh_file_stiffener, 
+                                                                          self.results_file_tet4)
 
 if __name__ == "__main__":
 

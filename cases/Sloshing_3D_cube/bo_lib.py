@@ -80,7 +80,7 @@ class stdize:
         pass
     
 def lhs_distrib(bounds, nbs = default_values().get('nb_samples')):
-    ndim = len(bounds)
+    ndim = len(bounds[0])
     raw_samples = doe.lhs(ndim, samples=nbs, criterion='maximin', iterations=1000)
     # scale samples
     sample_points = torch.zeros((nbs, ndim), dtype=torch.float64)
@@ -276,12 +276,18 @@ def execute_CBO(gp_obj_current,
         new_X_un = dataStdizeX.unstdize(new_X)    
         # filter/enforce new sample point in bounds
         new_X_un = torch.clamp(new_X_un, min=bounds_BO[0], max=bounds_BO[1])
-        new_Z_un = torch.tensor(fun_obj(new_X_un), dtype=torch.float64)
+        new_Z_tmp = fun_obj(new_X_un)
+        if len(new_Z_tmp.shape)==0:
+            new_Z_tmp = new_Z_tmp.reshape(1)
+        new_Z_un = torch.tensor(new_Z_tmp, dtype=torch.float64)
         new_Z = dataStdizeZ.stdize(new_Z_un)    
         if cbo_activated:
             new_C_un = list()
             for fun_cons_i in fun_cons:
-                new_C_un.append(torch.tensor(fun_cons_i(new_X_un), dtype=torch.float64))
+                new_C_tmp = fun_cons_i(new_X_un)
+                if len(new_C_tmp.shape)==0:
+                    new_C_tmp = new_C_tmp.reshape(1)
+                new_C_un.append(torch.tensor(new_C_tmp, dtype=torch.float64))
             new_C_un = torch.tensor(new_C_un, dtype=torch.float64)
             new_C = dataStdizeC.stdize(new_C_un) 
         if verbose>0:
