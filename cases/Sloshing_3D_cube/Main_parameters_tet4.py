@@ -76,7 +76,7 @@ class solve:
         # Flags
         self.dataPb["flag_eigen_vectors"] = 0
         self.dataPb["flag_FRF"] = 1
-        self.dataPb["flag_write_gmsh_results"] = 0
+        self.dataPb["flag_write_gmsh_results"] = 1
 
         # fluid
         self.dataFluid = dict()
