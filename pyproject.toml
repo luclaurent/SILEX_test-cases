@@ -1,7 +1,7 @@
 [project]
-name = "silex-test-cases"
+name = "SILEX_test-cases"
 version = "0.1.0"
-description = "Add your description here"
+description = "Python package for managing and running SILEX test cases."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -9,4 +9,8 @@ dependencies = [
     "numpy>=2.3.5",
     "pyvista>=0.46.4",
     "scipy>=1.16.3",
+    "silexlib",
 ]
+
+[tool.uv.sources]
+silexlib = { git = "ssh://git@github.com/luclaurent/SILEXlib", rev = "devel" }
