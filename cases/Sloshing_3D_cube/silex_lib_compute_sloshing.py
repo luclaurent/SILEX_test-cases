@@ -12,7 +12,7 @@ import csv
 
 import sys
 from pathlib import Path
-#sys.path.append('/home/legay/Codes/SILEXGIT/SILEXlib/SILEXlib/tests/')
+
 import pymumps as mumps
 import gmsh
 # import utils as u
@@ -69,6 +69,14 @@ mycomm=comm_mumps_one_proc()
 # export OPENBLAS_NUM_THREADS=10
 # python3.4 Main_toto.py
 #
+
+def solve_linear(method, A, b, mycomm=None):
+    if method == 'mumps':
+        x = mumps.spsolve(A, b, comm=mycomm)
+    elif method == 'scipy':
+        x = spla.spsolve(A, b)
+    return x
+
 
 def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_stiffener,results_file):
     
@@ -2027,6 +2035,9 @@ class compute_sloshing():
     @property
     def fluid_ndof(self):
         return len(self.fluid_nodes)
+    @property
+    def enrich(self):
+        return len(self.enriched_nodes)>0
         
     @utils.timeit('Load fluid mesh')
     def load_fluid(self):        
