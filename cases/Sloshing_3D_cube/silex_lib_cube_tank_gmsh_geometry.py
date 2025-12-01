@@ -86,54 +86,6 @@ def xfem_fluid_and_tank(lx1,ly1,lz1,h,ElementOrder,file_name):
     gmsh.finalize()
     return
 
-def Stiffener_DKT_bis(lx_nominal,
-                      ly_nominal,
-                      lz_nominal,
-                      lxashift_up_A,
-                      lxashift_down_A,
-                      lxashift_up_B,
-                      lxashift_down_B,
-                      lzashift_up_A,
-                      lzashift_up_B,
-                      h,ElementOrder,file_name):
-
-    #// h : size of elements
-
-    gmsh.initialize()
-    gmsh.model.add('titi')
-    gmsh.option.setNumber("Mesh.ElementOrder",ElementOrder)
-
-    #// 
-    gmsh.model.geo.addPoint(lx_nominal + lxashift_down_A,   0  , 0             , h,10   )
-    gmsh.model.geo.addPoint(lx_nominal + lxashift_up_A,   0  , lz_nominal+lzashift_up_A           , h,12   )  
-    gmsh.model.geo.addPoint(lx_nominal + lxashift_down_B,    ly_nominal, 0   , h,20)
-    gmsh.model.geo.addPoint(lx_nominal + lxashift_up_B,    ly_nominal, lz_nominal+lzashift_up_B , h,22)
-
-    gmsh.model.geo.addLine(10, 12,13)
-    gmsh.model.geo.addLine(12, 22,14)
-    gmsh.model.geo.addLine(22, 20,15)
-    gmsh.model.geo.addLine(20, 10,16)
-
-    gmsh.model.geo.addCurveLoop([16, 13, 14, 15],1)
-    #gmsh.model.geo.addSurfaceFilling([1],1)
-    gmsh.model.geo.addSurfaceFilling([1],1)
-
-    gmsh.model.addPhysicalGroup(2, [1], 50, "Stiffener baffle surface")
-
-    gmsh.model.addPhysicalGroup(1, [14], 60, "Stiffener baffle edge")
-
-    gmsh.model.addPhysicalGroup(1, [16], 70, "Stiffener baffle base edge to impose acceleration, velocity or displacement")
-
-    gmsh.model.geo.synchronize() 
-    gmsh.model.mesh.generate(2)
-    file_name_save=file_name
-    gmsh.option.setNumber("Mesh.MshFileVersion",2.2)   
-    gmsh.write(file_name_save.as_posix()+'.msh')
-    
-    gmsh.finalize()
-
-    return
-
 def Stiffener_DKT(lx1,ly1,lz1,lxa,lxashift_up,lxashift_down,lza,h,ElementOrder,file_name):
 
     #// h : size of elements
@@ -164,7 +116,7 @@ def Stiffener_DKT(lx1,ly1,lz1,lxa,lxashift_up,lxashift_down,lza,h,ElementOrder,f
     gmsh.model.addPhysicalGroup(1, [16], 70, "Stiffener baffle base edge to impose acceleration, velocity or displacement")
 
     gmsh.model.geo.synchronize() 
-    gmsh.model.mesh.generate(2)
+    gmsh.model.mesh.generate(3)
     file_name_save=file_name
     gmsh.option.setNumber("Mesh.MshFileVersion",2.2)   
     gmsh.write(file_name_save.as_posix()+'.msh')

@@ -13,10 +13,10 @@ import pickle
 import sys
 from pathlib import Path
 sys.path.append('/home/legay/Codes/SILEXGIT/SILEXlib/SILEXlib/tests/')
-import mumps
+import pymumps as mumps
 import gmsh
-import utils as u
-import utils_acoustics as ua
+#import utils as u
+#import utils_acoustics as ua
 
 import silex_lib_compute_sloshing
 import silex_lib_cube_tank_gmsh_geometry
@@ -84,7 +84,7 @@ h_fluid_elts =  lx/12
 dataPb['freq_ini'] = 0.5
 #dataPb['freq_ref'] = 0.5
 dataPb['freq_end'] = 1.5
-dataPb['nb_freq_step'] = 150
+dataPb['nb_freq_step'] = 5 # 150
 
 # Imposed acceleration on tank and stiffener surfaces 
 dataPb['U_dot_dot_imposed'] = np.array([1.0,0.0,0.0])
@@ -107,13 +107,13 @@ mesh_file_stiffener         =Path(__file__).parent / 'cube_xfem_sloshing_Stiffen
 
 results_file_tet10          =Path(__file__).parent / 'cube_xfem_one_param_tmp'
 
-results_file_one_parameter  =Path(__file__).parent / 'cube_xfem_one_param'
+results_file_one_parameter  =Path(__file__).parent / 'cube_xfem_one_param_tmptest'
 
 silex_lib_cube_tank_gmsh_geometry.xfem_fluid_and_tank(lx,ly,lz,h_fluid_elts,2,mesh_file_fluid_tet10)
 
 param_min=0.11
 param_max=0.51
-nb_param_steps=20
+nb_param_steps=3
 
 results=[]
 results.append(np.linspace(param_min,param_max,nb_param_steps))

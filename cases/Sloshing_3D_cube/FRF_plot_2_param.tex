@@ -1,0 +1,49 @@
+\pgfplotstableread[col sep=comma]{FRF_2_param_aachen.csv}\datatable
+\begin{tikzpicture}
+\begin{semilogyaxis}[
+    % title={FRF Cube Sloshing with Rigid Stiffener - Aachen Case},
+    xlabel={Frequency [\unit{\hertz}]},
+    ylabel={\(\delta_A/\|\ddot{\mathbf{u}}_0\|\) [\unit{\meter\per\meter\cdot\second^{-2}}]}, %Point \(A\) elevation
+    enlarge x limits=false,
+    xmin=0.4, 
+    xmax=1.5,    
+    % legend pos=south west,
+    grid=both,
+    legend style={
+        legend cell align=left,
+        legend pos=outer north east,
+        },
+    cycle multiindex list={
+    exotic\nextlist
+    linestyles\nextlist}%,
+        % colormap name=viridis,
+        % cycle list={[of colormap]},%,
+    % cycle from colormap manual style
+]
+\begin{scope}[no markers,  thick, smooth]
+% \addplot table[x index=1, y index=2]{\datatable};
+% \addlegendentry{\(x_\text{up}=\SI{0}{\meter}\), \(x_\text{down}=\SI{0}{\meter}\)}
+% \addplot table[x index=3, y index=4]{\datatable};
+% \addlegendentry{\(x_\text{up}=\SI{+0.2}{\meter}\), \(x_\text{down}=\SI{+0.2}{\meter}\)}
+% \addplot table[x index=5, y index=6]{\datatable};
+% \addlegendentry{\(x_\text{up}=\SI{-0.2}{\meter}\), \(x_\text{down}=\SI{0.2}{\meter}\)}
+% \addplot table[x index=7, y index=8]{\datatable};
+% \addlegendentry{\(x_\text{up}=\SI{-0.2}{\meter}\), \(x_\text{down}=\SI{-0.2}{\meter}\)}
+% \addplot table[x index=9, y index=10]{\datatable};
+% \addlegendentry{\(x_\text{up}=\SI{0.2}{\meter}\), \(x_\text{down}=\SI{-0.2}{\meter}\)}
+
+
+\addplot table[x index=1, y expr={\thisrowno{2}/(\thisrowno{1}*\thisrowno{1}*1e-3)}]{\datatable};
+\addlegendentry{\(x_\text{up}=\SI{0}{\meter}\), \(x_\text{down}=\SI{0}{\meter}\)}
+\addplot table[x index=3, y expr={\thisrowno{4}/(\thisrowno{3}*\thisrowno{3}*1e-3)}]{\datatable};
+\addlegendentry{\(x_\text{up}=\SI{+0.2}{\meter}\), \(x_\text{down}=\SI{+0.2}{\meter}\)}
+\addplot table[x index=5, y expr={\thisrowno{6}/(\thisrowno{5}*\thisrowno{5}*1e-3)}]{\datatable};
+\addlegendentry{\(x_\text{up}=\SI{-0.2}{\meter}\), \(x_\text{down}=\SI{0.2}{\meter}\)}
+\addplot table[x index=7, y expr={\thisrowno{8}/(\thisrowno{7}*\thisrowno{7}*1e-3)}]{\datatable};
+\addlegendentry{\(x_\text{up}=\SI{-0.2}{\meter}\), \(x_\text{down}=\SI{-0.2}{\meter}\)}
+\addplot table[x index=9, y expr={\thisrowno{10}/(\thisrowno{9}*\thisrowno{9}*1e-3)}]{\datatable};
+\addlegendentry{\(x_\text{up}=\SI{0.2}{\meter}\), \(x_\text{down}=\SI{-0.2}{\meter}\)}
+
+\end{scope}
+\end{semilogyaxis}
+\end{tikzpicture}

@@ -607,6 +607,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pymumps"
+version = "0.6.0"
+source = { git = "https://github.com/luclaurent/pymumps?rev=devel#58b85148a07f491c4960ac822aa3e92e14304f5e" }
+dependencies = [
+    { name = "numpy" },
+    { name = "scipy" },
+]
+
+[[package]]
 name = "pyparsing"
 version = "3.2.5"
 source = { registry = "https://pypi.org/simple" }
@@ -774,11 +783,12 @@ requires-dist = [
 [[package]]
 name = "silexlib"
 version = "0.6.0"
-source = { git = "ssh://git@github.com/luclaurent/SILEXlib?rev=devel#c15bd7d07b9681ef2abdd46585422e9ade21a255" }
+source = { git = "ssh://git@github.com/luclaurent/SILEXlib?rev=devel#cef61778b0e015338b9f458e83fc131ff15932ba" }
 dependencies = [
     { name = "loguru" },
     { name = "meshrw" },
     { name = "numpy" },
+    { name = "pymumps" },
     { name = "scipy" },
 ]
 

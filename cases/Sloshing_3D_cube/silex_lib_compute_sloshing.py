@@ -2,21 +2,25 @@ import string
 import time
 import numpy as np
 import scipy
-import scipy.sparse
-import scipy.sparse.linalg
-import scipy.sparse.construct
+import scipy.sparse as sps
+import sps.linalg  as spla
+from loguru import logger
 
 import pylab as pl
 import pickle
+import csv
 
 import sys
 from pathlib import Path
-sys.path.append('/home/legay/Codes/SILEXGIT/SILEXlib/SILEXlib/tests/')
+#sys.path.append('/home/legay/Codes/SILEXGIT/SILEXlib/SILEXlib/tests/')
 import pymumps as mumps
 import gmsh
 # import utils as u
 # import utils_acoustics as ua
 from meshRW import msh2
+
+# useful tools
+from SILEXrun import utils as misc_utils
 
 # for tet10
 from SILEXlib import silex_lib_acou_tet10 as libF_tet10
@@ -35,6 +39,9 @@ from SILEXlib import silex_lib_xfem_acou_tet4 as libF_levelset
 
 # for post-processing XFEM results
 from SILEXlib import MeshField as lib
+
+# tools
+from SILEXlib import utils
 
 
 # for DKT
@@ -256,8 +263,8 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
                                                                         Stiffener_tangent_LS*0.0-1.0,
                                                                         1.0,1.0)
 
-    HAA=scipy.sparse.csc_matrix( (Vkaa,(IIxf,JJxf)), shape=(fluid_ndof, fluid_ndof) )
-    HFA=scipy.sparse.csc_matrix( (Vkfa,(IIxf,JJxf)), shape=(fluid_ndof, fluid_ndof) )
+    HAA=sps.csc_matrix( (Vkaa,(IIxf,JJxf)), shape=(fluid_ndof, fluid_ndof) )
+    HFA=sps.csc_matrix( (Vkfa,(IIxf,JJxf)), shape=(fluid_ndof, fluid_ndof) )
 
 
     ##############################################################
@@ -273,7 +280,7 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
                                                     1.0) # we put 1 for celerity and 1 for density
 
 
-    HFF=scipy.sparse.csc_matrix( (Vffk,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )
+    HFF=sps.csc_matrix( (Vffk,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )
 
     ##############################################################
     # Compute Standard Fluid Matrices : FREE SURFACE
@@ -285,7 +292,7 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
                                                                 datafluidmesh['nodes'][:,[0,1]],
                                                                 1.0,1.0)
 
-    SFF=scipy.sparse.csc_matrix( (VSFF,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )/9.81
+    SFF=sps.csc_matrix( (VSFF,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )/9.81
 
     ##############################################################
     # Compute XFEM Fluid Matrices : FREE SURFACE
@@ -297,7 +304,7 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
                                                                 datafluidmesh['nodes'][:,[0,1]],
                                                                 1.0,1.0)
 
-    SFF=scipy.sparse.csc_matrix( (VSFF,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )/9.81
+    SFF=sps.csc_matrix( (VSFF,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )/9.81
 
     ##############################################################
     # Compute Standard Fluid load : rigid body motion of tank
@@ -377,16 +384,16 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
     SolvedDofF=list(range(fluid_ndof))
     SolvedDofA=Enrichednodes-1
 
-    H=scipy.sparse.construct.bmat( [ [HFF[SolvedDofF,:][:,SolvedDofF],HFA[SolvedDofF,:][:,SolvedDofA]],
+    H=sps.construct.bmat( [ [HFF[SolvedDofF,:][:,SolvedDofF],HFA[SolvedDofF,:][:,SolvedDofA]],
                                     [HFA[SolvedDofA,:][:,SolvedDofF],HAA[SolvedDofA,:][:,SolvedDofA]]
                                     ] )
     maxS = np.abs(SFF.max())    
-    S=scipy.sparse.construct.bmat( [ [SFF[SolvedDofF,:][:,SolvedDofF],None],
+    S=sps.construct.bmat( [ [SFF[SolvedDofF,:][:,SolvedDofF],None],
                                      [None,np.zeros((len(SolvedDofA),len(SolvedDofA)))]] )
     # matdense= SFF[SolvedDofF,:][:,SolvedDofF].todense()
     # matdenseAA = HAA[SolvedDofA,:][:,SolvedDofA].todense()*0.0
     # matdenseFA = HFA[SolvedDofF,:][:,SolvedDofA].todense()*0.0
-    # S=scipy.sparse.construct.bmat( [ [matdense+maxS/100,matdenseFA+maxS/100],
+    # S=sps.construct.bmat( [ [matdense+maxS/100,matdenseFA+maxS/100],
     #                                  [matdenseFA.transpose()+maxS/100,matdenseAA+maxS/100]])
     
 
@@ -427,7 +434,7 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
 
     if dataPb['flag_eigen_vectors']==1:
 
-        eigen_values,eigen_vectors= scipy.sparse.linalg.eigsh(H,
+        eigen_values,eigen_vectors= spla.eigsh(H,
                                                                 dataPb['flag_nb_eigen_modes'],
                                                                 S,
                                                                 sigma=0,which='LM')
@@ -530,10 +537,10 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
             omega=2*np.pi*f
             #forceType ='float'
 
-        #    sol = scipy.sparse.linalg.spsolve(KFF-omega**2*MFF,FF)
+        #    sol = spla.spsolve(KFF-omega**2*MFF,FF)
             C = np.array([*CF[SolvedDofF]*(-omega**2), *CA[SolvedDofA]*(-omega**2)])
-            # sol = mumps.spsolve( H-omega**2*S , C , comm=mycomm )
-            sol = scipy.sparse.linalg.spsolve(H-omega**2*S, C)
+            sol = mumps.spsolve( H-omega**2*S , C , comm=mycomm )
+            # sol = spla.spsolve(H-omega**2*S, C)
             
             CorrectedPressure = np.zeros(fluid_ndof)
             UncorrectedPressure = np.zeros(fluid_ndof)
@@ -546,8 +553,9 @@ def sloshing_rigid_baffle_tet10_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_
             CorrectedPressure=CorrectedPressure+np.array(enrichment*np.sign(Stiffener_LS).T)
             Correctedpress.append(CorrectedPressure)
             
-            sol = scipy.sparse.linalg.spsolve(HFF-omega**2*SFF, CF[SolvedDofF]*(-omega**2))
-            press_no_baffle.append(sol)
+            # sol = spla.spsolve(HFF-omega**2*SFF, CF[SolvedDofF]*(-omega**2))
+            # sol = mumps.spsolve( HFF-omega**2*SFF, CF[SolvedDofF]*(-omega**2), comm=mycomm )
+            # press_no_baffle.append(sol)
             # soltmp = np.zeros(fluid_ndof) #np.zeros_like(sol[SolvedDofF])
             # soltmp[SolvedDofA] = sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA),1))].copy()
             # soltmp[SpecialTet4nodes-1] = 0.0
@@ -863,8 +871,8 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
                                     Stiffener_tangent_LS,
                                     1.0,1.0)
 
-    HAA=scipy.sparse.csc_matrix( (Vkaa,(IIxf,JJxf)), shape=(fluid_ndof, fluid_ndof) )
-    HFA=scipy.sparse.csc_matrix( (Vkfa,(IIxf,JJxf)), shape=(fluid_ndof, fluid_ndof) )
+    HAA=sps.csc_matrix( (Vkaa,(IIxf,JJxf)), shape=(fluid_ndof, fluid_ndof) )
+    HFA=sps.csc_matrix( (Vkfa,(IIxf,JJxf)), shape=(fluid_ndof, fluid_ndof) )
 
     ##############################################################
     # Compute Standard Fluid Matrices : VOLUME
@@ -879,7 +887,7 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
                                                     1.0) # we put 1 for celerity and 1 for density
 
 
-    HFF=scipy.sparse.csc_matrix( (Vffk,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )
+    HFF=sps.csc_matrix( (Vffk,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )
 
     ##############################################################
     # Compute Standard Fluid Matrices : FREE SURFACE
@@ -891,7 +899,7 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
                                                                 datafluidmesh['nodes'][:,[0,1]],
                                                                 1.0,1.0)
 
-    SFF=scipy.sparse.csc_matrix( (VSFF,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )/9.81
+    SFF=sps.csc_matrix( (VSFF,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )/9.81
 
 
 
@@ -954,7 +962,7 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
                                                       EnrichedElements)
     #IIc2,JJc2,Vc2=libF_tet10_xfem.computexfemcoupling2(fluid_nodes1,struc_nodes,fluid_elements1,struc_elements,EnrichedElements,LevelSet)
     stiffener_ndof = dataXfemStiffener['nodes'].shape[0]*6
-    CSA=scipy.sparse.csc_matrix( (Vc1,(IIc1,JJc1)), shape=(stiffener_ndof,fluid_ndof) ) 
+    CSA=sps.csc_matrix( (Vc1,(IIc1,JJc1)), shape=(stiffener_ndof,fluid_ndof) ) 
     
     ##############################################################
     # Compute Standard Strcuture Matrices
@@ -981,11 +989,11 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
     SolvedDofF=list(range(fluid_ndof))
     SolvedDofA=Enrichednodes-1
 
-    H=scipy.sparse.construct.bmat( [ [HFF[SolvedDofF,:][:,SolvedDofF],HFA[SolvedDofF,:][:,SolvedDofA]],
+    H=sps.construct.bmat( [ [HFF[SolvedDofF,:][:,SolvedDofF],HFA[SolvedDofF,:][:,SolvedDofA]],
                                     [HFA[SolvedDofA,:][:,SolvedDofF],HAA[SolvedDofA,:][:,SolvedDofA]]
                                     ] )
             
-    S=scipy.sparse.construct.bmat( [ [SFF[SolvedDofF,:][:,SolvedDofF],None],
+    S=sps.construct.bmat( [ [SFF[SolvedDofF,:][:,SolvedDofF],None],
                                     [None,HAA[SolvedDofA,:][:,SolvedDofA]*0.0]
                                     ] )
     #C = np.array([*CF[SolvedDofF], *CA[SolvedDofA]])
@@ -995,7 +1003,7 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
 
     if dataPb['flag_eigen_vectors']==1:
 
-        eigen_values,eigen_vectors= scipy.sparse.linalg.eigsh(H,
+        eigen_values,eigen_vectors= spla.eigsh(H,
                                                                 dataPb['flag_nb_eigen_modes'],
                                                                 S,
                                                                 sigma=0,which='LM')
@@ -1019,6 +1027,10 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
     ##############################################################
     # Compute FRF
     ##############################################################
+    meanQI=0
+    maxQI=0
+    meanforce=0
+    maxforce=0
     if dataPb['flag_FRF']==1:
         Correctedpress=[]
         press=[]
@@ -1039,7 +1051,7 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
             omega=2*np.pi*f
             forceType ='float'
 
-        #    sol = scipy.sparse.linalg.spsolve(KFF-omega**2*MFF,FF)
+        #    sol = spla.spsolve(KFF-omega**2*MFF,FF)
             C = np.array([*CF[SolvedDofF]*(-omega**2), *CA[SolvedDofA]*(-omega**2)])
             sol = mumps.spsolve( H-omega**2*S , C , comm=mycomm )
             
@@ -1142,7 +1154,7 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
         f=open(results_file.as_posix() +'_results.frf','wb')
         pickle.dump(frfsave, f)
         f.close()
-    return meanQI, maxQI, meanforce, maxforce, QuantityOfInterest, force
+    return meanQI, maxQI, meanforce, maxforce
 
 def sloshing_rigid_baffle_tet4(dataPb,dataFluid,mesh_file,results_file):
     ##############################################################
@@ -1150,6 +1162,8 @@ def sloshing_rigid_baffle_tet4(dataPb,dataFluid,mesh_file,results_file):
     ##############################################################
 
     tic = time.process_time()
+    
+    results_file.parent.mkdir(parents=True, exist_ok=True)
 
     fluid_nodes=silex_lib_gmsh.ReadGmshNodes(mesh_file.as_posix()+'.msh',3)
     fluid_volume_elements,Idfluid_volume_elements=silex_lib_gmsh.ReadGmshElements(mesh_file.as_posix()+'.msh',4,10)
@@ -1228,7 +1242,7 @@ def sloshing_rigid_baffle_tet4(dataPb,dataFluid,mesh_file,results_file):
 
     fluid_ndof = datafluidmesh['nodes'].shape[0]
 
-    HFF=scipy.sparse.csc_matrix( (Vffk,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )
+    HFF=sps.csc_matrix( (Vffk,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )
 
     ##############################################################
     # Compute Standard Fluid Matrices : FREE SURFACE
@@ -1240,7 +1254,7 @@ def sloshing_rigid_baffle_tet4(dataPb,dataFluid,mesh_file,results_file):
                                                                 datafluidmesh['nodes'][:,[0,1]],
                                                                 1.0,1.0)
 
-    SFF=scipy.sparse.csc_matrix( (VSFF,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )/9.81
+    SFF=sps.csc_matrix( (VSFF,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )/9.81
 
 
 
@@ -1291,7 +1305,7 @@ def sloshing_rigid_baffle_tet4(dataPb,dataFluid,mesh_file,results_file):
 
     if dataPb['flag_eigen_vectors']==1:
 
-        eigen_values,eigen_vectors= scipy.sparse.linalg.eigsh(HFF,
+        eigen_values,eigen_vectors= spla.eigsh(HFF,
                                                                 dataPb['flag_nb_eigen_modes'],
                                                                 SFF,
                                                                 sigma=0,which='LM')
@@ -1334,7 +1348,7 @@ def sloshing_rigid_baffle_tet4(dataPb,dataFluid,mesh_file,results_file):
             omega=2*np.pi*f
             forceType ='float'
 
-        #    sol = scipy.sparse.linalg.spsolve(KFF-omega**2*MFF,FF)
+        #    sol = spla.spsolve(KFF-omega**2*MFF,FF)
             sol = mumps.spsolve( HFF-omega**2*SFF , CF*(-omega**2) , comm=mycomm )
             press.append(sol.copy())
 
@@ -1442,7 +1456,7 @@ def sloshing_rigid_baffle_tet10(dataPb,dataFluid,mesh_file,results_file):
 
     fluid_ndof = datafluidmesh['nodes'].shape[0]
 
-    HFF=scipy.sparse.csc_matrix( (Vffk,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )
+    HFF=sps.csc_matrix( (Vffk,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )
 
     ##############################################################
     # Compute Standard Fluid Matrices : FREE SURFACE
@@ -1454,7 +1468,7 @@ def sloshing_rigid_baffle_tet10(dataPb,dataFluid,mesh_file,results_file):
                                                                 datafluidmesh['nodes'][:,[0,1]],
                                                                 1.0,1.0)
 
-    SFF=scipy.sparse.csc_matrix( (VSFF,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )/9.81
+    SFF=sps.csc_matrix( (VSFF,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )/9.81
 
 
 
@@ -1507,7 +1521,7 @@ def sloshing_rigid_baffle_tet10(dataPb,dataFluid,mesh_file,results_file):
 
     if dataPb['flag_eigen_vectors']==1:
 
-        eigen_values,eigen_vectors= scipy.sparse.linalg.eigsh(HFF,
+        eigen_values,eigen_vectors= spla.eigsh(HFF,
                                                                 dataPb['flag_nb_eigen_modes'],
                                                                 SFF,
                                                                 sigma=0,which='LM')
@@ -1555,7 +1569,7 @@ def sloshing_rigid_baffle_tet10(dataPb,dataFluid,mesh_file,results_file):
             omega=2*np.pi*f
             forceType ='float'
 
-        #    sol = scipy.sparse.linalg.spsolve(KFF-omega**2*MFF,FF)
+        #    sol = spla.spsolve(KFF-omega**2*MFF,FF)
             sol = mumps.spsolve( HFF-omega**2*SFF , CF*(-omega**2) , comm=mycomm )
             press.append(sol.copy())
 
@@ -1685,8 +1699,8 @@ def sloshing_flexible_baffle_tet10_xfem(dataPb,dataFluid,dataStructure,mesh_file
                                                                         Stiffener_tangent_LS,
                                                                         1.0,1.0)
 
-    HAA=scipy.sparse.csc_matrix( (Vkaa,(IIxf,JJxf)), shape=(fluid_ndof, fluid_ndof) )
-    HFA=scipy.sparse.csc_matrix( (Vkfa,(IIxf,JJxf)), shape=(fluid_ndof, fluid_ndof) )
+    HAA=sps.csc_matrix( (Vkaa,(IIxf,JJxf)), shape=(fluid_ndof, fluid_ndof) )
+    HFA=sps.csc_matrix( (Vkfa,(IIxf,JJxf)), shape=(fluid_ndof, fluid_ndof) )
 
 
     ##############################################################
@@ -1702,7 +1716,7 @@ def sloshing_flexible_baffle_tet10_xfem(dataPb,dataFluid,dataStructure,mesh_file
                                                     1.0) # we put 1 for celerity and 1 for density
 
 
-    HFF=scipy.sparse.csc_matrix( (Vffk,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )
+    HFF=sps.csc_matrix( (Vffk,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )
 
     ##############################################################
     # Compute Standard Fluid Matrices : FREE SURFACE
@@ -1712,7 +1726,7 @@ def sloshing_flexible_baffle_tet10_xfem(dataPb,dataFluid,dataStructure,mesh_file
                                                                 datafluidmesh['nodes'][:,[0,1]],
                                                                 1.0,1.0)
 
-    SFF=scipy.sparse.csc_matrix( (VSFF,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )/9.81
+    SFF=sps.csc_matrix( (VSFF,(IIf,JJf)), shape=(fluid_ndof, fluid_ndof) )/9.81
 
     ZEROSAA=HAA*0.0
 
@@ -1774,8 +1788,8 @@ def sloshing_flexible_baffle_tet10_xfem(dataPb,dataFluid,dataStructure,mesh_file
                                            dataXfemStiffener['stiffener_surface_elements'],
                                            [dataStructure['young'],dataStructure['nu'],dataStructure['thickness'],dataStructure['rho']])
     
-    KSS=scipy.sparse.csc_matrix( (Vks,(IIs,JJs)), shape=(stiffener_ndof,stiffener_ndof) ,dtype=float)
-    MSS=scipy.sparse.csc_matrix( (Vms,(IIs,JJs)), shape=(stiffener_ndof,stiffener_ndof) ,dtype=float)
+    KSS=sps.csc_matrix( (Vks,(IIs,JJs)), shape=(stiffener_ndof,stiffener_ndof) ,dtype=float)
+    MSS=sps.csc_matrix( (Vms,(IIs,JJs)), shape=(stiffener_ndof,stiffener_ndof) ,dtype=float)
 
 
     
@@ -1833,7 +1847,7 @@ def sloshing_flexible_baffle_tet10_xfem(dataPb,dataFluid,dataStructure,mesh_file
                                                        EnrichedElements)
     #IIc2,JJc2,Vc2=libF_tet10_xfem.computexfemcoupling2(fluid_nodes1,struc_nodes,fluid_elements1,struc_elements,EnrichedElements,LevelSet)
 
-    CSA=scipy.sparse.csc_matrix( (Vc1,(IIc1,JJc1)), shape=(stiffener_ndof,fluid_ndof) ) 
+    CSA=sps.csc_matrix( (Vc1,(IIc1,JJc1)), shape=(stiffener_ndof,fluid_ndof) ) 
     CAS=CSA.T*dataFluid['rho']
     
     ##############################################################
@@ -1843,12 +1857,12 @@ def sloshing_flexible_baffle_tet10_xfem(dataPb,dataFluid,dataStructure,mesh_file
     SolvedDofF=list(range(fluid_ndof))
     SolvedDofA=Enrichednodes-1
 
-#    H=scipy.sparse.construct.bmat( [  [HFF[SolvedDofF,:][:,SolvedDofF],HFA[SolvedDofF,:][:,SolvedDofA],None],
+#    H=sps.construct.bmat( [  [HFF[SolvedDofF,:][:,SolvedDofF],HFA[SolvedDofF,:][:,SolvedDofA],None],
 #                                        [HFA[SolvedDofA,:][:,SolvedDofF],HAA[SolvedDofA,:][:,SolvedDofA],None],
 #                                        [None,-CSA[SolvedDofS,:][:,SolvedDofA],KSS[SolvedDofS,:][:,SolvedDofS]]
 #                                    ] )
 #            
-#    S=scipy.sparse.construct.bmat( [ [SFF[SolvedDofF,:][:,SolvedDofF],  None,   None],
+#    S=sps.construct.bmat( [ [SFF[SolvedDofF,:][:,SolvedDofF],  None,   None],
 #                                     [None,HAA[SolvedDofA,:][:,SolvedDofA]*0.0,CAS[SolvedDofA,:][:,SolvedDofS]],
 #                                     [None,None,MSS[SolvedDofS,:][:,SolvedDofS]]
 #                                    ] )
@@ -1861,7 +1875,7 @@ def sloshing_flexible_baffle_tet10_xfem(dataPb,dataFluid,dataStructure,mesh_file
     if dataPb['flag_eigen_vectors']==1:
 
         # Fluid
-        eigen_values_F,eigen_vectors_F= scipy.sparse.linalg.eigsh(HFF,dataPb['flag_nb_eigen_modes'],SFF,sigma=0,which='LM')
+        eigen_values_F,eigen_vectors_F= spla.eigsh(HFF,dataPb['flag_nb_eigen_modes'],SFF,sigma=0,which='LM')
 
         freq_eigv_F=list(np.sqrt(eigen_values_F)/(2*np.pi))
         print('XFEM eigen frequencies : ',freq_eigv_F)
@@ -1880,7 +1894,7 @@ def sloshing_flexible_baffle_tet10_xfem(dataPb,dataFluid,dataStructure,mesh_file
                                     [[eigen_vector_list_F,'nodal',1,'modes']])
 
         # stiffener, flexible baffle
-        eigen_values_S,eigen_vectors_S= scipy.sparse.linalg.eigsh(KSS[SolvedDofS,:][:,SolvedDofS],dataPb['flag_nb_eigen_modes'],MSS[SolvedDofS,:][:,SolvedDofS],sigma=0,which='LM')
+        eigen_values_S,eigen_vectors_S= spla.eigsh(KSS[SolvedDofS,:][:,SolvedDofS],dataPb['flag_nb_eigen_modes'],MSS[SolvedDofS,:][:,SolvedDofS],sigma=0,which='LM')
 
         freq_eigv_S=list(np.sqrt(eigen_values_S)/(2*np.pi))
 
@@ -1926,12 +1940,12 @@ def sloshing_flexible_baffle_tet10_xfem(dataPb,dataFluid,dataStructure,mesh_file
             omega=2*np.pi*f
             forceType ='float'
 
-            H=scipy.sparse.construct.bmat( [  [HFF[SolvedDofF,:][:,SolvedDofF],HFA[SolvedDofF,:][:,SolvedDofA],None],
+            H=sps.construct.bmat( [  [HFF[SolvedDofF,:][:,SolvedDofF],HFA[SolvedDofF,:][:,SolvedDofA],None],
                                                 [HFA[SolvedDofA,:][:,SolvedDofF],HAA[SolvedDofA,:][:,SolvedDofA],None],
                                                 [None,CSA[SolvedDofS,:][:,SolvedDofA],KSS[SolvedDofS,:][:,SolvedDofS]]
                                             ] )
 
-            S=scipy.sparse.construct.bmat( [ [SFF[SolvedDofF,:][:,SolvedDofF],  None,   None],
+            S=sps.construct.bmat( [ [SFF[SolvedDofF,:][:,SolvedDofF],  None,   None],
                                              [None,ZEROSAA[SolvedDofA,:][:,SolvedDofA],-CAS[SolvedDofA,:][:,SolvedDofS]],
                                              [None,None,MSS[SolvedDofS,:][:,SolvedDofS]]
                                             ] )
@@ -1942,7 +1956,7 @@ def sloshing_flexible_baffle_tet10_xfem(dataPb,dataFluid,dataStructure,mesh_file
             #print(US_Imposed_acc)
             
 
-            #sol = scipy.sparse.linalg.spsolve(KFF-omega**2*MFF,FF)
+            #sol = spla.spsolve(KFF-omega**2*MFF,FF)
             sol = mumps.spsolve( H-omega**2*S , C , comm=mycomm )
             
             press      = np.zeros(fluid_ndof)
@@ -1993,3 +2007,378 @@ def sloshing_flexible_baffle_tet10_xfem(dataPb,dataFluid,dataStructure,mesh_file
         f.close()
     return
 
+
+
+class compute_sloshing():
+    def __init__(self, dataPb, dataFluid, mesh_files, results_files):        
+        self.dataPb = dataPb
+        self.dataFluid = dataFluid
+        self.mesh_file_struct = mesh_files.get('struct', None)
+        self.mesh_file_fluid = mesh_files.get('fluid', None)
+        self.results_file = results_files.get('results', None)
+        #
+        self.fluid_nodes = []
+        self.fluid_elements = []
+        self.fluid_id_elements = []
+        self.struct_nodes = []
+        self.struct_elements = []
+        self.struct_id_elements = []
+    
+    @property
+    def fluid_ndof(self):
+        return len(self.fluid_nodes)
+        
+    @utils.timeit('Load fluid mesh')
+    def load_fluid(self):        
+        self.fluid_nodes = silex_lib_gmsh.ReadGmshNodes(self.mesh_file_fluid.as_posix()+'.msh',3)
+        data = silex_lib_gmsh.ReadGmshElements(self.mesh_file_fluid.as_posix()+'.msh',11,10)
+        self.fluid_elements, self.fluid_id_elements = data
+        data = silex_lib_gmsh.ReadGmshElements(self.mesh_file_fluid.as_posix()+'.msh',9,30)
+        self.free_fluid_elements, self.free_fluid_id_elements = data
+        data = silex_lib_gmsh.ReadGmshNodes(self.mesh_file_fluid.as_posix()+'.msh',3)
+        self.fluid_bounds_elements, self.fluid_bounds_id_elements = data
+        pass
+    
+    @utils.timeit('Load structure mesh')
+    def load_struct(self):
+        self.struct_nodes=silex_lib_gmsh.ReadGmshNodes(self.mesh_file_struct.as_posix()+'.msh',3)
+        data=silex_lib_gmsh.ReadGmshElements(self.mesh_file_struct.as_posix()+'.msh',2,50)
+        self.struct_elements, self.struct_id_elements = data
+        data=silex_lib_gmsh.ReadGmshElements(self.mesh_file_struct.as_posix()+'.msh',1,60)
+        self.struct_edge_elements, self.struct_edge_id_elements = data
+        pass
+        
+    def show_data(self):
+        logger.info('Nb fluid nodes: {}'.format(len(self.fluid_nodes)))
+        logger.info('Nb fluid elements: {}'.format(len(self.fluid_elements)))
+        logger.info('Nb structure nodes: {}'.format(len(self.structure_nodes)))
+        logger.info('Nb structure elements: {}'.format(len(self.structure_elements)))
+        logger.info('Nb free fluid elements: {}'.format(len(self.free_fluid_elements)))
+        pass
+    
+    def export(self,kind='fluid'):
+        if isinstance(kind,str):
+            kind=[kind]
+        for k in kind:
+            if k=='fluid':
+                silex_lib_gmsh.WriteResults(self.results_file.as_posix()+'_Mesh_Fluid_volume',self.fluid_nodes,self.fluid_elements,11)
+                silex_lib_gmsh.WriteResults(self.results_file.as_posix()+'_Mesh_Tank_surfaces',self.fluid_bounds_nodes,self.fluid_bounds_elements,9)
+            elif k=='free_surface':
+                silex_lib_gmsh.WriteResults(self.results_file.as_posix()+'_Mesh_Fluid_Free_surface',self.fluid_nodes,self.free_fluid_elements,9)
+            elif k=='structure':
+                silex_lib_gmsh.WriteResults(self.results_file.as_posix()+'_Mesh_Stiffener_surface',
+                                            self.struct_nodes,
+                                            self.structure_elements,2)
+            elif k=='levelset':
+                silex_lib_gmsh.WriteResults2(self.results_file.as_posix()+'_LevelSet',
+                                            self.fluid_nodes,
+                                            self.fluid_elements,
+                                            11,
+                                            [[[self.struct_LS],'nodal',1,'Level set'],
+                                            [[self.struct_LS_tangent],'nodal',1,'Tangent Level set']])
+                silex_lib_gmsh.WriteResults(self.results_file.as_posix()+'_Enriched_Fluid_Elements',
+                                            self.fluid_nodes,
+                                            self.fluid_elements,11)
+                silex_lib_gmsh.WriteResults(self.results_file.as_posix()+'_Enriched_Fluid_Elements',
+                                            self.fluid_nodes,
+                                            self.fluid_elements[self.enriched_elements-1],11)
+                silex_lib_gmsh.WriteResults(self.results_file.as_posix()+'_Mesh_Normal_to_stiffener',
+                                self.struct_nodes,
+                                self.struct_elements,
+                                2,
+                                [[self.vecNormalEltsA,'elemental',3,'Normal to stiffener elements']])
+            elif k=='TET10toTET4':
+                silex_lib_gmsh.WriteResults(self.results_file.as_posix()+'_Mesh_Fluid_volume_tet10TOtet4',
+                                            self.fluid_nodes,
+                                            self.dataTET10toTET4['elements'],4)
+                silex_lib_gmsh.WriteResults(self.results_file.as_posix()+'_Enriched_Fluid_Elements_tet10TOtet4',
+                                            self.fluid_nodes,
+                                            self.dataTET10toTET4['elements'][self.dataTET10toTET4['enriched_elements']-1],4)
+            elif k=='eigenfrequencies':
+                # write csv file
+                with open(self.results_file.as_posix()+'_eigen_frequencies.csv', mode='w', newline='') as csvfile:
+                    writer = csv.writer(csvfile, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    writer.writerow(['#Mode number', 'Frequency (Hz)'])
+                    for i,freq in enumerate(self.eigen_frequencies):
+                        writer.writerow([i+1, freq])
+                # write pickle
+                with open(self.results_file.as_posix()+'_eigen_frequencies.pkl', 'wb') as f:
+                    pickle.dump(self.eigen_frequencies, f)
+            elif k=='eigenmodes':
+                silex_lib_gmsh.WriteResults2(self.results_file.as_posix()+'_Eigen_modes',
+                                             self.fluid_nodes,
+                                             self.fluid_elements,
+                                             11,
+                                             [[self.eigen_vectors,'nodal',1,'modes'],
+                                              [self.eigen_vectors_uncorrected,'nodal',1,'press classic'],
+                                              [self.eigen_vectors_enrichment,'nodal',1,'press enrich']])
+                silex_lib_gmsh.WriteResults2(self.results_file.as_posix() +'_results_fluid_eigenmodes_on_tet4mesh',
+                                             self.fluid_nodes,
+                                             self.dataTET10toTET4['elements'],
+                                             4,
+                                             [[self.eigen_vectors,'nodal',1,'pressure']]
+                                             )
+
+                objMesh = lib.MeshField(nodes=self.fluid_nodes, 
+                                        elems=self.dataTET10toTET4['elements'], 
+                                        leveset=self.struct_LS, 
+                                        levelsetTg=self.struct_LS_tangent)
+                objMesh.addField(uncorrectedField=self.eigen_vectors_uncorrected,
+                                enrichmentField=self.eigen_vectors_enrichment)
+                datameshfield = objMesh.getData()
+            
+                # prepare fields
+                dataW = []
+                dataW.append({'data':self.struct_LS,'type':'nodal', 'name':'levelset'})
+                dataW.append({'data':self.struct_LS_tangent,'type':'nodal','name':'tangent levelset'})
+                # 
+                dataW.append({
+                    'name': 'press',
+                    'nbsteps': self.eigen_vectors.shape[1],
+                    'type': 'nodal',
+                    'data': datameshfield['fields']
+                })
+                dataW.append({
+                    'name': 'uncorrected press',
+                    'nbsteps': self.eigen_vectors.shape[1],
+                    'type': 'nodal',
+                    'data': datameshfield['uncorrected']
+                })
+                dataW.append({
+                    'name': 'correction press',
+                    'nbsteps': self.eigen_vectors.shape[1],
+                    'type': 'nodal',
+                    'data': datameshfield['correction']
+                })
+                # export mesh
+                msh2.mshWriter(
+                    filename= results_file.as_posix() +'_results_fluid_eigenmodes_meshfield3D.msh',
+                    nodes=datameshfield['nodes'],
+                    elements=[{'type': 'TET4', 'connectivity': datameshfield['TET4']},
+                              {'type': 'PRI6', 'connectivity': datameshfield['PRI6']}],
+                    fields=dataW,
+                    append=True
+                    )
+        else:
+            pass
+        pass
+    
+    @utils.timeit('Compute Level Set')
+    def compute_LS(self):
+        # compute LS
+        data = libF_levelset.computelevelset(self.fluid_nodes,
+                                             self.struct_nodes,
+                                             self.struct_elements)
+        self.struct_LS, self.struct_distance = data
+        # compute tangent LS
+        data = libF_levelset.buildtangentedgemesh(self.struct_nodes,
+                                                  self.struct_elements,
+                                                  self.struct_edge_elements)
+        self.struct_LS_tangent_nodes, self.struct_LS_tangent_elements = data
+        # compute tangent LS to edge
+        data = libF_levelset.computelevelset(self.fluid_nodes,
+                                             self.struct_LS_tangent_nodes,
+                                             self.struct_LS_tangent_elements)
+        self.struct_LS_tangent, _ = data
+        # Get enriched nodes and elements directly from the stiffener surface mesh
+        data = libF_levelset.getsurfenrichedelements(self.struct_nodes,
+                                                     self.struct_elements,
+                                                     self.fluid_nodes,
+                                                     self.fluid_elements[:,0:4])
+        enriched_elements_tmp, nb_enriched_elements = data
+        self.enriched_elements = np.unique(enriched_elements_tmp[list(range(nb_enriched_elements))]) # here, start with 1 (fortran indexing)
+        self.enriched_nodes = np.unique(self.fluid_elements[self.enriched_elements-1])
+    
+    @utils.timeit('Enforce computation of TET4 from TET10')
+    def compute_LS_TET1OtoTET4(self):
+        self.dataTET10toTET4['elements'] = libF_tet10_xfem.tet10totet4(self.fluid_nodes,
+                                                                        self.fluid_elements)
+            
+        # Get enriched nodes and elements directly from the stiffener surface mesh
+        data =libF_levelset.getsurfenrichedelements(self.struct_nodes,
+                                                    self.struct_elements,
+                                                    self.fluid_nodes,
+                                                    self.dataTET10toTET4['elements'])
+        EnrichedElementstet4tmp1,NbEnrichedElementstet4= data
+        self.dataTET10toTET4['enriched_elements'] = np.unique(EnrichedElementstet4tmp1[list(range(NbEnrichedElementstet4))])  # here, start with 1 (fortran indexing)
+        self.dataTET10toTET4['enriched_nodes'] = np.unique(self.dataTET10toTET4['elements'][self.dataTET10toTET4['enriched_elements']-1])
+        # nodes enriched for tet10 / but no enriched for tet4
+        self.dataTET10toTET4['special_nodes'] = np.setdiff1d(self.enriched_nodes,
+                                                             self.dataTET10toTET4['enriched_nodes']) 
+    
+    @utils.timeit('Compute XFEM operators')
+    def compute_xfem_operators(self):
+        
+        data = lib_XFEM.globalxfemacousticmatrices(self.fluid_elements,
+                                                   self.fluid_node,
+                                                   self.struct_LS,
+                                                   self.struct_LS_tangent*0.0-1.0, # enforce all elements are considered
+                                                   1.0,1.0)
+        IIxf,JJxf,Vkaa,Vmaa,Vkfa,Vmfa = data
+        # build matrices
+        self.op['HAA'] = sps.csc_matrix( (Vkaa,(IIxf,JJxf)), shape=(self.fluid_ndof, self.fluid_ndof) )
+        self.op['HFA'] = sps.csc_matrix( (Vkfa,(IIxf,JJxf)), shape=(self.fluid_ndof, self.fluid_ndof) )                                                 
+                            
+    @utils.timeit('Compute FEM operators')
+    def compute_operators(self):
+        ## compute volume matrix
+        data = libFEM.globalacousticmatrices(self.fluid_elements,
+                                                    self.fluid_nodes,
+                                                    1.0,
+                                                    1.0) # we put 1 for celerity and 1 for density
+        IIf,JJf,Vffk,Vffm = data
+        # build matrix
+        self.op['HFF']=sps.csc_matrix( (Vffk,(IIf,JJf)), shape=(self.fluid_ndof, self.fluid_ndof) )
+        
+        ## compute free surface matrix
+        data = self.libFreeSurf.globalacousticmatrices(self.free_fluid_elements,
+                                                       self.fluid_nodes[:,[0,1]],
+                                                       1.0,1.0)
+        IIf,JJf,_,VSFF= data
+        # build matrix
+        self.op['SFF']=1/self.dataPb['g']*sps.csc_matrix( (VSFF,(IIf,JJf)), shape=(self.fluid_ndof, self.fluid_ndof) )
+    
+    @utils.timeit('Compute loads operators')
+    def compute_loads(self):
+        # Standard Fluid load : rigid body motion of tank
+        data = libFEM.sloshimposedacc(self.fluid_nodes,
+                                      self.fluid_bounds_elements,
+                                      self.dataPb['U_dot_dot_imposed'])
+        CF,self.vecNormalEltsF = data
+        self.op['CF'] = CF*self.dataFluid['rho']
+        
+    @utils.timeit('Compute XFEM loads operators')
+    def compute_xfem_loads(self):
+        # XFEM Fluid load : rigid body motion of tank
+        data = lib_XFEM.sloshimposedacc_xfem1(
+                            np.array(self.fluid_nodes),
+                            np.array(self.struct_nodes),
+                            np.array(self.fluid_elements),
+                            np.array(self.struct_elements),
+                            self.enriched_elements,
+                            self.dataPb['U_dot_dot_imposed'],
+                            self.dataPb['flag_write_quadrature_points_in_a_file'])
+        CA,self.vecNormalEltsA = data
+        self.op[CA]=CA*self.dataFluid['rho']
+        
+    @utils.timeit('Assemble system')
+    def assemble(self):
+        self.op['H'] = sps.construct.bmat([[self.op['HFF'][self.SolvedDofF,:][:,self.SolvedDofF],
+                                            self.op['HFA'][self.SolvedDofF,:][:,self.SolvedDofA]],
+                                           [self.op['HFA'][self.SolvedDofA,:][:,self.SolvedDofF],
+                                            self.op['HAA'][self.SolvedDofA,:][:,self.SolvedDofA]]])
+        self.op['S'] = sps.construct.bmat([[SFF[self.SolvedDofF,:][:,self.SolvedDofF],None],
+                                           [None,np.zeros((self.nbSolvedDofA,self.nbSolvedDofA))]])
+    
+    @utils.timeit('Compute eigen modes')
+    def compute_eigenmodes(self):
+        # compute eigen values and modes
+        self.eigen_values, self.raw_eigen_vectors = compute_eigen(self.op['H'],
+                                                              self.dataPb['flag_nb_eigen_modes'],
+                                                              self.op['S'],
+                                                              sigma=0,
+                                                              which='LM')
+        # compute frequencies
+        self.eigen_frequencies = np.sqrt(self.eigen_values)/(2*np.pi)
+        logger.info('Eigen frequencies: {}/{}/{}/{} (min/avg/max/nb)'.format(self.eigen_frequencies.min(),
+                                                                      self.eigen_frequencies.mean(),
+                                                                      self.eigen_frequencies.max(),
+                                                                      len(self.eigen_frequencies)))
+        #
+        self.eigen_vectors = np.zeros((self.fluid_ndof, len(self.eigen_values)))
+        self.eigen_vectors_uncorrected = self.eigen_vectors.copy()
+        self.eigen_vectors_enrichment = self.eigen_vectors.copy()
+        # compute eigenvectors 
+        self.eigen_vectors_uncorrected[self.SolvedDofF,:] = self.raw_eigen_vectors[self.SolvedDofF,:]
+        self.eigen_vectors_enrichment[self.SolvedDofA,:] = self.raw_eigen_vectors[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA),1)),:]
+        self.eigen_vectors = self.eigen_vectors_uncorrected.copy()
+        self.eigen_vectors[self.SolvedDofA,:] = self.eigen_vectors[self.SolvedDofA,:] \
+            + np.sign(self.struct_LS[self.SolvedDofA])*self.eigen_vectors_enrichment[self.SolvedDofA,:]
+        
+    
+    def run_parametric(self, param_list=None):
+        if isintance(param_list,dict):
+            para_val = param_list.get('values', None)
+            para_names = param_list.get('names', None)
+            freq_list = param_list.get('freq_list', None)
+        
+        if not isinstance(param_list, np.ndarray):
+            para_val = np.vstack(param_list)
+            para_names = ['p_{}'.format(i) for i in range(para_val.shape[1])]
+        logger.info('Run parametric study for {} parameters and {} sets'.format(para_val.shape[1], para_val.shape[0]))
+        # run along each parameter set
+        results = []
+        for i,pset in enumerate(para_val):
+            logger.info('Run parametric set {}/{}: {}'.format(i+1, para_val.shape[0], pset))
+            # set parameters
+            for j,pname in enumerate(para_names):
+                setattr(self.dataPb, pname, pset[j])
+            # run frequencies
+            data = self.run_frequencies(freq_list=freq_list)
+            results.append(data)
+        return results
+
+    
+    @utils.timeit('Run computation of FRF')
+    def run_frequencies(self, freq_list=None):
+        # get the list of frequencies
+        if freq_list is None:
+            freq_list = np.linspace(self.dataPb['freq_ini'],
+                                    self.dataPb['freq_end'],
+                                    self.dataPb['nb_freq_step'])
+        press = []
+        QoI = []
+        for it,f in enumerate(freq_list):
+            logger.info('Solve freq {}/{}: {} Hz'.format(it+1,len(freq_list),f))
+            data = self.run_one_freq(f)
+            press.append(data[0])
+            QoI.append(data[1])
+        self.press = np.vstack(press).T
+        self.QoI = np.reshape(np.array(QoI),shape=(len(QoI[0]),len(QoI)))
+        return {'press': self.press,
+                'QoI': self.QoI}
+        
+    def pre_process(self):
+        # prepare data for post-processing
+        self.dataPb['post-processing'] = {}
+        # find id of QoI node(s)
+        if self.dataPb.get('QoI_node_ids', None):
+            self.dataPb['post-processing']['QoI_node_ids'] = self.dataPb.get('QoI_node_ids', [8])
+        if self.dataPb.get('QoI_nodes_bbx', None):
+            idNodes = misc_utils.getNodesBBX(self.fluid_nodes, self.dataPb['QoI_nodes_bbx'])
+            self.dataPb['post-processing']['QoI_node_ids'] = idNodes
+        pass
+        
+    def post_process(self, freq, sol, ):
+        # extract QoI
+        idNodes = self.dataPb['post-processing']['QoI_node_ids']
+        QoI = sol[np.array(idNodes)]
+        return QoI
+        
+    def run_one_freq(self, freq):
+        #
+        omega=2*np.pi*f
+        forceType ='float'
+        # solve linear system                
+        sol = solve_linear(self.method_sl, 
+                            self.op['H']-omega**2*self.op['S'], 
+                            self.op['C'] , comm=mycomm )
+        if self.enrich:
+            press      = np.zeros(self.fluid_ndof)
+            press[self.SolvedDofF] = sol[self.SolvedDofF].copy()
+            enrichment = np.zeros(self.fluid_ndof)
+            enrichment[self.SolvedDofA]= sol[list(range(len(self.SolvedDofF),len(self.SolvedDofF)+len(self.SolvedDofA),1))].copy()
+            CorrectedPressure=np.array(press)
+            CorrectedPressure[self.SolvedDofA]=CorrectedPressure[self.SolvedDofA].T+np.array(enrichment[self.SolvedDofA]*np.sign(self.struct_LS[self.SolvedDofA]).T)
+            press = CorrectedPressure
+        else:
+            press = np.zeros(self.fluid_ndof)
+            press[self.SolvedDofF] = sol[self.SolvedDofF].copy()
+        self.press = sol.copy()
+        # run post-processing
+        QoI = self.post_process(f,sol)
+        
+        return press,QoI
+            
+        
+       

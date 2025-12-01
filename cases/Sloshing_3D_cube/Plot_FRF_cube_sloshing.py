@@ -8,7 +8,6 @@ import pickle
 
 import sys
 from pathlib import Path
-sys.path.append('/home/legay/Codes/SILEXGIT/SILEXlib/SILEXlib/tests/')
 
 #
 filename = Path(__file__).parent / 'cube_ballotement_tet4_results.frf'
