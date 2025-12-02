@@ -3,7 +3,7 @@ import time
 import numpy as np
 import scipy
 import scipy.sparse as sps
-import sps.linalg  as spla
+import scipy.sparse.linalg  as spla
 from loguru import logger
 
 import pylab as pl
@@ -41,7 +41,7 @@ from SILEXlib import silex_lib_xfem_acou_tet4 as libF_levelset
 from SILEXlib import MeshField as lib
 
 # tools
-from SILEXlib import utils
+from SILEXlib.utils import utils
 
 
 # for DKT
@@ -49,6 +49,8 @@ from SILEXlib import silex_lib_dkt as libDKT
 
 #from SILEXlib import silex_lib_dkt as libS
 from SILEXlib import silex_lib_gmsh
+
+import silex_lib_cube_tank_gmsh_geometry as mesher_cube_tank
 
 from mpi4py import MPI
 comm = MPI.COMM_WORLD
@@ -70,9 +72,9 @@ mycomm=comm_mumps_one_proc()
 # python3.4 Main_toto.py
 #
 
-def solve_linear(method, A, b, mycomm=None):
+def solve_linear(method, A, b, comm=None):
     if method == 'mumps':
-        x = mumps.spsolve(A, b, comm=mycomm)
+        x = mumps.spsolve(A, b, comm=comm)
     elif method == 'scipy':
         x = spla.spsolve(A, b)
     return x
@@ -2018,26 +2020,121 @@ def sloshing_flexible_baffle_tet10_xfem(dataPb,dataFluid,dataStructure,mesh_file
 
 
 class compute_sloshing():
-    def __init__(self, dataPb, dataFluid, mesh_files, results_files):        
+    def __init__(self, dataPb, dataFluid, files):        
         self.dataPb = dataPb
         self.dataFluid = dataFluid
-        self.mesh_file_struct = mesh_files.get('struct', None)
-        self.mesh_file_fluid = mesh_files.get('fluid', None)
-        self.results_file = results_files.get('results', None)
+        self.mesh_file_struct = files.get('struct', None)
+        self.mesh_file_fluid = files.get('fluid', None)
+        self.results_file = files.get('results', None)
+        self.results_file_basis = self.results_file
         #
+        self._SolvedDofF = []
+        self._SolvedDofA = []
         self.fluid_nodes = []
         self.fluid_elements = []
         self.fluid_id_elements = []
         self.struct_nodes = []
         self.struct_elements = []
         self.struct_id_elements = []
+        # 
+        self.op = dict()
+        
+        self._init()
+        
+    def _init(self):
+        self.create_dir()
+        # generate geometry and mesh files 
+        self.load_fluid()
+        # pre-processing
+        self.pre_process()
+        # compute offline operators
+        self.compute_operators()
+        # compute loads
+        self.compute_loads()
+        # 
+        self.show_data()
     
+    @property
+    def SolvedDofF(self):
+        if len(self._SolvedDofF) == 0:
+            self._SolvedDofF = list(range(self.fluid_ndof))
+        return self._SolvedDofF
+    @property
+    def SolvedDofA(self):
+        if len(self._SolvedDofA) == 0:
+            self._SolvedDofA = list(range(self.fluid_ndof))
+        return self._SolvedDofA
+    @property
+    def nbSolvedDofF(self):
+        return len(self.SolvedDofF)
+    @property
+    def nbSolvedDofA(self):
+        return len(self.SolvedDofA)
     @property
     def fluid_ndof(self):
         return len(self.fluid_nodes)
+    
+    @property
+    def shell_order(self):
+        db = {'TRI3': 1, 'TRI6': 2}
+        return db.get(self.dataPb.get('shell_element'))
+    
+    @property
+    def fluid_order(self):
+        db = {'TET4': 1, 'TET10': 2}
+        return db.get(self.dataPb.get('fluid_element'))
+    
+    @property
+    def method_sl(self):
+        loadsolver = self.dataPb.get('method_sloshing', None)
+        if loadsolver is None:
+            loadsolver = 'mumps'
+        return loadsolver
+    
+    @property
+    def libFEM(self):
+        if self.fluid_order == 1:
+            return libF_tet4
+        elif self.fluid_order == 2:
+            return libF_tet10
+        else:
+            raise ValueError('Unsupported fluid element type')
+    @property
+    def libXFEM(self):
+        if self.fluid_order == 1:
+            return libF_tet4_xfem
+        elif self.fluid_order == 2:
+            return libF_tet10_xfem
+        else:
+            raise ValueError('Unsupported fluid element type')
+    @property
+    def libLS(self):
+        if self.fluid_order == 1 or self.fluid_order == 2:
+            return libF_tet4_xfem
+        else:
+            raise ValueError('Unsupported fluid element type')    
+    
+            
+    @property
+    def libFreeSurf(self):
+        if self.fluid_order == 1:
+            return libFreeSurf_tet4
+        elif self.fluid_order == 2:
+            return libFreeSurf_tet10
+        else:
+            raise ValueError('Unsupported fluid element type')
+
     @property
     def enrich(self):
-        return len(self.enriched_nodes)>0
+        return self.dataPb.get('enrichment', False)
+    
+    def create_dir(self):
+        if self.mesh_file_struct:
+            self.mesh_file_struct.parent.mkdir(parents=True, exist_ok=True)
+        if self.mesh_file_fluid:
+            self.mesh_file_fluid.parent.mkdir(parents=True, exist_ok=True)
+        if self.results_file_basis:
+            self.results_file_basis.parent.mkdir(parents=True, exist_ok=True)
         
     @utils.timeit('Load fluid mesh')
     def load_fluid(self):        
@@ -2046,7 +2143,7 @@ class compute_sloshing():
         self.fluid_elements, self.fluid_id_elements = data
         data = silex_lib_gmsh.ReadGmshElements(self.mesh_file_fluid.as_posix()+'.msh',9,30)
         self.free_fluid_elements, self.free_fluid_id_elements = data
-        data = silex_lib_gmsh.ReadGmshNodes(self.mesh_file_fluid.as_posix()+'.msh',3)
+        data = silex_lib_gmsh.ReadGmshElements(self.mesh_file_fluid.as_posix()+'.msh',9,20)
         self.fluid_bounds_elements, self.fluid_bounds_id_elements = data
         pass
     
@@ -2062,9 +2159,11 @@ class compute_sloshing():
     def show_data(self):
         logger.info('Nb fluid nodes: {}'.format(len(self.fluid_nodes)))
         logger.info('Nb fluid elements: {}'.format(len(self.fluid_elements)))
-        logger.info('Nb structure nodes: {}'.format(len(self.structure_nodes)))
-        logger.info('Nb structure elements: {}'.format(len(self.structure_elements)))
         logger.info('Nb free fluid elements: {}'.format(len(self.free_fluid_elements)))
+        logger.info('Nb fluid boundary elements: {}'.format(len(self.fluid_bounds_elements)))
+        if self.enrich and self.struct_nodes:
+            logger.info('Nb structure nodes: {}'.format(len(self.structure_nodes)))
+            logger.info('Nb structure elements: {}'.format(len(self.structure_elements)))
         pass
     
     def export(self,kind='fluid'):
@@ -2177,7 +2276,7 @@ class compute_sloshing():
     @utils.timeit('Compute Level Set')
     def compute_LS(self):
         # compute LS
-        data = libF_levelset.computelevelset(self.fluid_nodes,
+        data = self.libLS.computelevelset(self.fluid_nodes,
                                              self.struct_nodes,
                                              self.struct_elements)
         self.struct_LS, self.struct_distance = data
@@ -2218,10 +2317,10 @@ class compute_sloshing():
                                                              self.dataTET10toTET4['enriched_nodes']) 
     
     @utils.timeit('Compute XFEM operators')
-    def compute_xfem_operators(self):
+    def compute_operators_online(self):
         
-        data = lib_XFEM.globalxfemacousticmatrices(self.fluid_elements,
-                                                   self.fluid_node,
+        data = self.libXFEM.globalxfemacousticmatrices(self.fluid_elements,
+                                                   self.fluid_nodes,
                                                    self.struct_LS,
                                                    self.struct_LS_tangent*0.0-1.0, # enforce all elements are considered
                                                    1.0,1.0)
@@ -2233,7 +2332,7 @@ class compute_sloshing():
     @utils.timeit('Compute FEM operators')
     def compute_operators(self):
         ## compute volume matrix
-        data = libFEM.globalacousticmatrices(self.fluid_elements,
+        data = self.libFEM.globalacousticmatrices(self.fluid_elements,
                                                     self.fluid_nodes,
                                                     1.0,
                                                     1.0) # we put 1 for celerity and 1 for density
@@ -2252,7 +2351,7 @@ class compute_sloshing():
     @utils.timeit('Compute loads operators')
     def compute_loads(self):
         # Standard Fluid load : rigid body motion of tank
-        data = libFEM.sloshimposedacc(self.fluid_nodes,
+        data = self.libFEM.sloshimposedacc(self.fluid_nodes,
                                       self.fluid_bounds_elements,
                                       self.dataPb['U_dot_dot_imposed'])
         CF,self.vecNormalEltsF = data
@@ -2261,25 +2360,28 @@ class compute_sloshing():
     @utils.timeit('Compute XFEM loads operators')
     def compute_xfem_loads(self):
         # XFEM Fluid load : rigid body motion of tank
-        data = lib_XFEM.sloshimposedacc_xfem1(
+        data = self.libXFEM.sloshimposedacc_xfem1(
                             np.array(self.fluid_nodes),
                             np.array(self.struct_nodes),
                             np.array(self.fluid_elements),
                             np.array(self.struct_elements),
                             self.enriched_elements,
                             self.dataPb['U_dot_dot_imposed'],
-                            self.dataPb['flag_write_quadrature_points_in_a_file'])
+                            self.dataPb['flag_write_quadrature_points'])
         CA,self.vecNormalEltsA = data
-        self.op[CA]=CA*self.dataFluid['rho']
+        self.op['CA']=CA*self.dataFluid['rho']
         
     @utils.timeit('Assemble system')
     def assemble(self):
+        
         self.op['H'] = sps.construct.bmat([[self.op['HFF'][self.SolvedDofF,:][:,self.SolvedDofF],
                                             self.op['HFA'][self.SolvedDofF,:][:,self.SolvedDofA]],
                                            [self.op['HFA'][self.SolvedDofA,:][:,self.SolvedDofF],
                                             self.op['HAA'][self.SolvedDofA,:][:,self.SolvedDofA]]])
-        self.op['S'] = sps.construct.bmat([[SFF[self.SolvedDofF,:][:,self.SolvedDofF],None],
+        self.op['S'] = sps.construct.bmat([[self.op['SFF'][self.SolvedDofF,:][:,self.SolvedDofF],None],
                                            [None,np.zeros((self.nbSolvedDofA,self.nbSolvedDofA))]])
+        self.op['C'] = np.hstack([self.op['CF'][self.SolvedDofF],
+                                  self.op['CA'][self.SolvedDofA]])
     
     @utils.timeit('Compute eigen modes')
     def compute_eigenmodes(self):
@@ -2306,24 +2408,43 @@ class compute_sloshing():
         self.eigen_vectors[self.SolvedDofA,:] = self.eigen_vectors[self.SolvedDofA,:] \
             + np.sign(self.struct_LS[self.SolvedDofA])*self.eigen_vectors_enrichment[self.SolvedDofA,:]
         
+    def generate_formatted_id(self, paraval, paranames):
+        # generate an id string based on parameter values
+        id_formatted = ''
+        for i,pname in enumerate(paranames): 
+            parastr = f'{int(1e3*paraval[i]):+04d}'
+            id_formatted += '{}_{}'.format(pname, parastr.replace('+','p').replace('-','m'))
+            if i<len(paranames)-1:
+                id_formatted += '_'
+        return id_formatted
     
     def run_parametric(self, param_list=None):
-        if isintance(param_list,dict):
+        #
+        if isinstance(param_list,dict):
             para_val = param_list.get('values', None)
             para_names = param_list.get('names', None)
             freq_list = param_list.get('freq_list', None)
-        
-        if not isinstance(param_list, np.ndarray):
+        #
+        if not isinstance(para_val, np.ndarray):
             para_val = np.vstack(param_list)
-            para_names = ['p_{}'.format(i) for i in range(para_val.shape[1])]
+        if para_names is None:
+            para_names = ['p{}'.format(i) for i in range(para_val.shape[1])]
         logger.info('Run parametric study for {} parameters and {} sets'.format(para_val.shape[1], para_val.shape[0]))
         # run along each parameter set
         results = []
         for i,pset in enumerate(para_val):
             logger.info('Run parametric set {}/{}: {}'.format(i+1, para_val.shape[0], pset))
-            # set parameters
-            for j,pname in enumerate(para_names):
-                setattr(self.dataPb, pname, pset[j])
+            # update results file names
+            id_formatted = self.generate_formatted_id(pset, para_names)
+            self.results_file = self.results_file.parent / (self.results_file.stem + '_' + id_formatted)
+            # run pre-process
+            self.pre_process_online(pset)
+            # build operators
+            self.compute_operators_online()
+            # build loads
+            self.compute_xfem_loads()
+            # assemble system
+            self.assemble()
             # run frequencies
             data = self.run_frequencies(freq_list=freq_list)
             results.append(data)
@@ -2340,7 +2461,7 @@ class compute_sloshing():
         press = []
         QoI = []
         for it,f in enumerate(freq_list):
-            logger.info('Solve freq {}/{}: {} Hz'.format(it+1,len(freq_list),f))
+            logger.info('Solve freq {}/{}: {:5g} Hz'.format(it+1,len(freq_list),f))
             data = self.run_one_freq(f)
             press.append(data[0])
             QoI.append(data[1])
@@ -2348,6 +2469,34 @@ class compute_sloshing():
         self.QoI = np.reshape(np.array(QoI),shape=(len(QoI[0]),len(QoI)))
         return {'press': self.press,
                 'QoI': self.QoI}
+        
+    def pre_process_offline(self, param_val):
+        mesher_cube_tank.xfem_fluid_and_tank(lx,ly,lz,h_fluid_elts,self.mesh_fluid_order,self.mesh_file_fluid)
+        
+    def pre_process_online(self, para_val):
+        # build mesh file
+        lx = self.dataPb.get('lx')
+        ly = self.dataPb.get('ly')
+        lz = self.dataPb.get('lz')
+        struct_lx = self.dataPb.get('struct_lx')
+        struct_lz = self.dataPb.get('struct_lz')
+        struct_mesh_size = self.dataPb.get('struct_mesh_size')
+        #
+        lx_up = para_val[0]
+        lx_down = para_val[1]
+        if self.enrich:
+            mesher_cube_tank.Stiffener_DKT(lx,ly,lz,
+                                           struct_lx,
+                                           lx_up,
+                                           lx_down,
+                                           struct_lz,
+                                           struct_mesh_size,
+                                           self.shell_order,
+                                           self.mesh_file_struct)
+            # load struct
+            self.load_struct()
+            # build level set
+            self.compute_LS()
         
     def pre_process(self):
         # prepare data for post-processing
@@ -2368,12 +2517,12 @@ class compute_sloshing():
         
     def run_one_freq(self, freq):
         #
-        omega=2*np.pi*f
+        omega=2*np.pi*freq
         forceType ='float'
         # solve linear system                
         sol = solve_linear(self.method_sl, 
                             self.op['H']-omega**2*self.op['S'], 
-                            self.op['C'] , comm=mycomm )
+                            -omega**2*self.op['C'] , comm=mycomm )
         if self.enrich:
             press      = np.zeros(self.fluid_ndof)
             press[self.SolvedDofF] = sol[self.SolvedDofF].copy()
@@ -2387,7 +2536,7 @@ class compute_sloshing():
             press[self.SolvedDofF] = sol[self.SolvedDofF].copy()
         self.press = sol.copy()
         # run post-processing
-        QoI = self.post_process(f,sol)
+        QoI = self.post_process(freq,sol)
         
         return press,QoI
             
