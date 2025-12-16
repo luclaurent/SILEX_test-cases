@@ -29,12 +29,13 @@ dataPb['struct_lx'] = 0.53333333333
 dataPb['struct_lz'] = 0.32222333
 dataPb['struct_thickness'] = 0.002 # only for classic conforming mesh
 #size of elements
-dataPb['struct_mesh_size'] =  dataPb['lx']/20 #20
+crit_mesh = 50 
+dataPb['struct_mesh_size'] =  dataPb['lx']/crit_mesh #20
 # sets of parameters for structure position
-para_val = np.array([[0.0,0.0],
-                    #  [0.2,0.2],
-                    #  [-0.2,0.2],
-                    #  [0.2,-0.2],
+para_val = np.array([[+0.0,+0.0],
+                     [+0.2,+0.2],
+                     [-0.2,+0.2],
+                     [+0.2,-0.2],
                      [-0.2,-0.2]])
 para_dict ={'names': ['lx_baffle_shift_up','lx_baffle_shift_down'],
             'values': para_val}
@@ -43,10 +44,13 @@ para_dict ={'names': ['lx_baffle_shift_up','lx_baffle_shift_down'],
 dataPb['freq_ini'] = 0.4
 dataPb['freq_ref'] = 0.5
 dataPb['freq_end'] = 1.5 
-dataPb['nb_freq_step'] = 10
+dataPb['nb_freq_step'] = 500
+dataPb['nb_cpu'] = 10
 
 # Imposed acceleration on tank and stiffener surfaces 
-dataPb['U_dot_dot_imposed'] = np.array([1.0e-3, 1.0e-3, 0.0])/np.sqrt(2.0)
+# dataPb['U_dot_dot_imposed'] = np.array([1.0e-3, 1.0e-3, 0.0])/np.sqrt(2.0)
+# dataPb['U_dot_imposed'] = np.array([1.0e-3, 1.0e-3, 0.0])/np.sqrt(2.0)
+dataPb['U_imposed'] = np.array([1.0e-3, 1.0e-3, 0.0])/np.sqrt(2.0)
 
 # compute QoI 
 epsbbx = 1e-10
@@ -72,11 +76,12 @@ dataFluid['rho'] = 1000.0
 ################################################################
 import_export = dict()
 dataPb['enrichment'] = True
-import_export['fluid'] = Path(__file__).parent / 'xfem_tet4' / 'cube_xfem_sloshing_Fluid_and_Tank_tet4'
-import_export['struct'] = Path(__file__).parent / 'xfem_tet4' / 'cube_sloshing_Stiffener_DKT'
-import_export['results'] = Path(__file__).parent / 'xfem_tet4' / 'cube_sloshing_results'
+import_export['fluid'] = Path(__file__).parent / 'xfem_tet4' / ('cube_xfem_sloshing_Fluid_and_Tank_tet4_h'+str(crit_mesh))
+import_export['struct'] = Path(__file__).parent / 'xfem_tet4' / ('cube_sloshing_Stiffener_DKT_h'+str(crit_mesh))
+import_export['results'] = Path(__file__).parent / 'xfem_tet4' / ('cube_sloshing_results_h'+str(crit_mesh))
 import_export['format'] = 'msh'
 
+slib_sloshing.create_dir_sym(import_export['fluid'])
 objCompute = slib_sloshing.compute_sloshing(dataPb,dataFluid,import_export)
 objCompute.run_parametric(para_dict)
 
@@ -85,11 +90,12 @@ objCompute.run_parametric(para_dict)
 ################################################################
 import_export = dict()
 dataPb['enrichment'] = False
-import_export['fluid'] = Path(__file__).parent / 'classic_tet4' / 'cube_sloshing_Fluid_and_Tank_tet4'
+import_export['fluid'] = Path(__file__).parent / 'classic_tet4' / ('cube_sloshing_Fluid_and_Tank_tet4_h'+str(crit_mesh))
 import_export['struct'] = None
-import_export['results'] = Path(__file__).parent / 'classic_tet4' / 'cube_sloshing_results'
+import_export['results'] = Path(__file__).parent / 'classic_tet4' / ('cube_sloshing_results_h'+str(crit_mesh))
 import_export['format'] = 'msh'
 
+slib_sloshing.create_dir_sym(import_export['fluid'])
 objCompute = slib_sloshing.compute_sloshing(dataPb,dataFluid,import_export)
 objCompute.run_parametric(para_dict)
 
@@ -98,12 +104,14 @@ objCompute.run_parametric(para_dict)
 ################################################################
 dataPb['fluid_element'] = 'TET10'  # 'TET4' or 'TET10'
 dataPb['shell_element'] = 'TRI6'  # 'TRI3' or 'TRI6'
+dataPb['enrichment'] = True
 import_export = dict()
-import_export['fluid'] = Path(__file__).parent / 'xfem_tet10' / 'cube_xfem_sloshing_Fluid_and_Tank_tet10'
-import_export['struct'] = Path(__file__).parent / 'xfem_tet10' / 'cube_sloshing_Stiffener_DKT'
-import_export['results'] = Path(__file__).parent / 'xfem_tet10' / 'cube_sloshing_results'
+import_export['fluid'] = Path(__file__).parent / 'xfem_tet10' / ('cube_xfem_sloshing_Fluid_and_Tank_tet10_h'+str(crit_mesh))
+import_export['struct'] = Path(__file__).parent / 'xfem_tet10' / ('cube_sloshing_Stiffener_DKT_h'+str(crit_mesh))
+import_export['results'] = Path(__file__).parent / 'xfem_tet10' / ('cube_sloshing_results_h'+str(crit_mesh))
 import_export['format'] = 'msh'
 
+slib_sloshing.create_dir_sym(import_export['fluid'])
 objCompute = slib_sloshing.compute_sloshing(dataPb,dataFluid,import_export)
 objCompute.run_parametric(para_dict)
 
@@ -112,11 +120,12 @@ objCompute.run_parametric(para_dict)
 ################################################################
 import_export = dict()
 dataPb['enrichment'] = False
-import_export['fluid'] = Path(__file__).parent / 'classic_tet10' / 'cube_sloshing_Fluid_and_Tank_tet4'
+import_export['fluid'] = Path(__file__).parent / 'classic_tet10' / ('cube_sloshing_Fluid_and_Tank_tet4_h'+str(crit_mesh))
 import_export['struct'] = None
-import_export['results'] = Path(__file__).parent / 'classic_tet10' / 'cube_sloshing_results'
+import_export['results'] = Path(__file__).parent / 'classic_tet10' / ('cube_sloshing_results_h'+str(crit_mesh))
 import_export['format'] = 'msh'
 
+slib_sloshing.create_dir_sym(import_export['fluid'])
 objCompute = slib_sloshing.compute_sloshing(dataPb,dataFluid,import_export)
 objCompute.run_parametric(para_dict)
 
