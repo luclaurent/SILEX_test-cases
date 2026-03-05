@@ -12,10 +12,10 @@ dependencies = [
     "silexlib",
 ]
 
-[tool.uv.sources]
-silexlib = { git = "ssh://git@github.com/luclaurent/SILEXlib", rev = "devel" }
+#[tool.uv.sources]
+#silexlib = { git = "ssh://git@github.com/luclaurent/SILEXlib", rev = "devel" }
 
-[tool.uv.workspace]
-members = [
-    "SILEXrun/SILEXrun/SILEXrun",
-]
+#[tool.uv.workspace]
+#members = [
+#    "SILEXrun/SILEXrun/SILEXrun",
+#]

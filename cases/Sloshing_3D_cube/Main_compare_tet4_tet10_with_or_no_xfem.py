@@ -44,8 +44,8 @@ para_dict ={'names': ['lx_baffle_shift_up','lx_baffle_shift_down'],
 dataPb['freq_ini'] = 0.4
 dataPb['freq_ref'] = 0.5
 dataPb['freq_end'] = 1.5 
-dataPb['nb_freq_step'] = 500
-dataPb['nb_cpu'] = 10
+dataPb['nb_freq_step'] = 10
+dataPb['nb_cpu'] = 1 # set to 1 to deactivate parallelism in the frequency loop and thus be able to compare results with or without parallelism
 
 # Imposed acceleration on tank and stiffener surfaces 
 # dataPb['U_dot_dot_imposed'] = np.array([1.0e-3, 1.0e-3, 0.0])/np.sqrt(2.0)

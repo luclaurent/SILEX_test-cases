@@ -1075,17 +1075,21 @@ class compute_sloshing():
         self.enrichment.clear()
         self.qoi.clear()
         qoi = []
-        # for it,f in enumerate(freq_list):
-        #     logger.info('Solve freq {}/{}: {:5g} Hz'.format(it+1,len(freq_list),f))
-        #     data = self.run_one_freq(f)
-        #     qoi.append(data[1])
-        with joblib.Parallel(n_jobs=self.dataPb.get('nb_cpu', 1), require='None') as parallel:
-            nitf = len(freq_list)
-            def run_one_freq_wrapper(itf, nitf, f):
-                logger.info('Solve freq: {:5g} Hz ({}/{})'.format(f, itf, nitf))
-                return self.run_one_freq(f)
-            data = parallel( joblib.delayed(run_one_freq_wrapper)(itf,nitf,f) for (itf,f) in enumerate(freq_list) )
-            qoi.append(data[1])
+        if self.dataPb.get('nb_cpu', 1)>1:
+            ## TODO: must be fixed
+            with joblib.Parallel(n_jobs=self.dataPb.get('nb_cpu', 1), require=None) as parallel:
+                nitf = len(freq_list)
+                def run_one_freq_wrapper(itf, nitf, f):
+                    logger.info('Solve freq: {:5g} Hz ({}/{})'.format(f, itf, nitf))
+                    return self.run_one_freq(f)
+                data = parallel( joblib.delayed(run_one_freq_wrapper)(itf,nitf,f) for (itf,f) in enumerate(freq_list) )
+                qoi.append(data[1])
+        else:
+            for it,f in enumerate(freq_list):
+                logger.info('Solve freq {}/{}: {:5g} Hz'.format(it+1,len(freq_list),f))
+                data = self.run_one_freq(f)
+                qoi.append(data[1])
+        
         # export fields along frequencies
         self.export(kind='fields', show=False)
         if self.enrich:
