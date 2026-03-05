@@ -37,7 +37,7 @@ from SILEXlib import silex_lib_gmsh
 
 # from SILEXlib import silex_lib_porous_tet4_fortran
 #import silex_lib_tet4_fortran
-import pymumps
+import mumps
 
 from mpi4py import MPI
 comm = MPI.COMM_WORLD

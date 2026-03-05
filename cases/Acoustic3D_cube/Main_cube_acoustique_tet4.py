@@ -13,7 +13,7 @@ import pylab as pl
 import pickle
 
 
-import pymumps
+import mumps
 
 import sys
 from meshRW import msh, msh2

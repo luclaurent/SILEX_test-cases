@@ -24,7 +24,7 @@ except ImportError:
 import sys
 from pathlib import Path
 
-import pymumps as mumps
+import mumps
 import gmsh
 # import utils as u
 # import utils_acoustics as ua

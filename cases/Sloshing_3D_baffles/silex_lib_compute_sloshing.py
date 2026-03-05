@@ -13,7 +13,7 @@ import pickle
 import sys
 from pathlib import Path
 sys.path.append('/home/legay/Codes/SILEXGIT/SILEXlib/SILEXlib/tests/')
-import pymumps as mumps
+import mumps
 import gmsh
 # import utils as u
 # import utils_acoustics as ua
