@@ -34,9 +34,9 @@ Y = frf_tet4_xfem[1].reshape((nbval, nbval))
 val_p = frf_tet4_xfem[2].reshape((nbval, nbval))
 val_f = frf_tet4_xfem[3].reshape((nbval, nbval))
 
-sigma=1.0
+sigma=0.7
 val_p = gaussian_filter(val_p, sigma)
-sigma=1.2
+sigma=0.9
 val_f = gaussian_filter(val_f, sigma)
 
 
@@ -70,7 +70,10 @@ surf_f = ax2.plot_surface(X, Y, val_f
                     #    linewidth=0, antialiased=False, 
                     #    shade=False
                        )
-
+ax1.set_xlabel('up shift')
+ax1.set_ylabel('down shift')
+ax2.set_xlabel('up shift')
+ax2.set_ylabel('down shift')
 # https://matplotlib.org/stable/gallery/images_contours_and_fields/irregulardatagrid.html
 fig3, (ax3,ax4) = plt.subplots(2)
 ax3.set_aspect('equal')

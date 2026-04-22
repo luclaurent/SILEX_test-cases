@@ -25,8 +25,8 @@ lpy2=2.4;
 lpz2=1.3;
 
 // size of elements
-h = lx1/40;
-h2 = ee/2;
+h = lx1/20;
+h2 = ee/1;
 
 
 lx5 = 6.0;
@@ -218,7 +218,7 @@ Physical Volume(5) = {185}; // controlled air volume (small)
 
 Physical Volume(2) = {189}; // porous volume
 
-Physical Surface(3) = {165}; // [porous]-[air cavity] : interface surface : plafond
+Physical Surface(3) = {131}; // [porous]-[air cavity] : interface surface : plafond
 
 Physical Surface(4) = {181, 179, 177, 175, 183};// porous external surface
 

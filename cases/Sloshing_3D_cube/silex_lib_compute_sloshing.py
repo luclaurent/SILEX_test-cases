@@ -11,7 +11,7 @@ import pickle
 
 import sys
 from pathlib import Path
-sys.path.append('/home/legay/Codes/SILEXGIT/SILEXlib/SILEXlib/tests/')
+#sys.path.append('/home/legay/Codes/SILEXGIT/SILEXlib/SILEXlib/tests/')
 import pymumps as mumps
 import gmsh
 # import utils as u
@@ -1019,6 +1019,10 @@ def sloshing_rigid_baffle_tet4_xfem(dataPb,dataFluid,mesh_file_fluid,mesh_file_s
     ##############################################################
     # Compute FRF
     ##############################################################
+    meanQI=0
+    maxQI=0
+    meanforce=0
+    maxforce=0
     if dataPb['flag_FRF']==1:
         Correctedpress=[]
         press=[]

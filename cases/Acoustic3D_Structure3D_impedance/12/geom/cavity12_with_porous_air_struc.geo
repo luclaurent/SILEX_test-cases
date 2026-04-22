@@ -20,7 +20,7 @@ angle = deg*Pi/180;
 ee = 0.20;
 
 // size of elements
-h = lx1/70;
+h = lx1/30;
 h2 = ee/3;
 
 

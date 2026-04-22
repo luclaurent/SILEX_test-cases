@@ -203,7 +203,9 @@ if (Flag_frf_analysis==1):
         #sol = mumps.spsolve( scipy.sparse.csc_matrix(fluid_damping*K-(omega**2)*M,dtype='c16') , F , comm=mycomm )
         #sol = mumps.spsolve( scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='float') , F , comm=mycomm )
 
-        sol = pymumps.spsolve( scipy.sparse.csc_matrix(K-(omega**2)*M,dtype='d') , F , comm=mycomm )
+        sol = pymumps.spsolve(K-(omega**2)*M , F , comm=mycomm )
+        #sol = scipy.sparse.linalg.spsolve(K-(omega**2)*M , F )
+
         #sol = mumps.spsolve( scipy.sparse.csc_matrix(fluid_damping*K-(omega**2)*M,dtype='c16') , F , comm=mycomm )
         
 

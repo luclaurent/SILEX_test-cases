@@ -58,17 +58,17 @@ class solve:
 
         # Baffle position and geom
         self.lx_baffle = 0.53333333333
-        self.lz_baffle = 0.273333333333
+        self.lz_baffle = 0.52222333
         self.thickness_baffle = 0.002  # only for classic conforming mesh
-        self.lx_baffle_shift_up = 0.18
-        self.lx_baffle_shift_down = 0.08
+        self.lx_baffle_shift_up = 0.0
+        self.lx_baffle_shift_down = 0.0
         
         
 
-        self.dataPb["freq_ini"] = 0.9
+        self.dataPb["freq_ini"] = 1.149
         self.dataPb["freq_ref"] = 0.5
-        self.dataPb["freq_end"] = 1.1
-        self.dataPb["nb_freq_step"] = 10
+        self.dataPb["freq_end"] = 1.151
+        self.dataPb["nb_freq_step"] = 3
 
         # Imposed acceleration on tank and stiffener surfaces
         self.dataPb["U_dot_dot_imposed"] = np.array([1.0e-3, 1.0e-3, 0.0])/np.sqrt(2.0)  
@@ -86,7 +86,7 @@ class solve:
 
 
         # size of elements
-        self.h_fluid_elts = self.lx / 17
+        self.h_fluid_elts = self.lx / 37
 
         # # parallepipedic cavity with plane structure
         # mesh_file_fluid_tet10       =Path(__file__).parent / 'cube_xfem_sloshing_Fluid_and_Tank_tet10'
@@ -149,9 +149,9 @@ obj = solve()
 # log.info(f"Test run completed with value: {valtest}")
 
 # X = np.linspace()
-nb_val = 11
-lup = np.linspace(-0.21, 0.21, nb_val)
-ldown = np.linspace(-0.21, 0.21, nb_val)
+nb_val = 25
+lup = np.linspace(-0.2, 0.2, nb_val)
+ldown = np.linspace(-0.2, 0.2, nb_val)
 X, Y = np.meshgrid(lup, ldown)
 val_p = np.zeros(nb_val * nb_val)
 val_f = np.zeros(nb_val * nb_val)

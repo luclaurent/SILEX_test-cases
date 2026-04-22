@@ -7,11 +7,15 @@ import scipy.sparse.linalg
 #import mumps
 
 import sys
-sys.path.append('../../librairies')
+#sys.path.append('../../librairies')
+from pathlib import Path
+sys.path.append('/home/legay/Codes/SILEXGIT/SILEXlib-new')
+#import mumps
+import gmsh
 
 #import silex_lib_tri3_python as silex_lib_elt
-import silex_lib_tri3_fortran as silex_lib_elt
-import silex_lib_gmsh
+from SILEXlib import silex_lib_tri3_fortran as silex_lib_elt
+from SILEXlib import silex_lib_gmsh
 
 #############################################################################
 print("SILEX CODE - calcul d'une plaque trouee avec des tri3")
@@ -26,7 +30,7 @@ tic = time.process_time()
 MeshFileName='lame'
 
 # Output result file: define the name of the result file (*.msh)
-ResultsFileName='Results_lame-tri3'
+ResultsFileName='Results_lame-tri3_2026'
 
 # choose the element type
 eltype=2

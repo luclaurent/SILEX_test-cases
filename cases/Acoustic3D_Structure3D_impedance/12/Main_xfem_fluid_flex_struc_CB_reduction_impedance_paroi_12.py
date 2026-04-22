@@ -25,14 +25,18 @@ import pickle
 
 import sys
 sys.path.append('../../../librairies')
+from pathlib import Path
 
-import silex_lib_xfem_acou_tet4
-import silex_lib_gmsh
-import silex_lib_dkt_fortran as silex_lib_dkt
+from SILEXlib import silex_lib_xfem_acou_tet4
+from SILEXlib import silex_lib_acou_tet4
+from SILEXlib import silex_lib_gmsh
+from SILEXlib import silex_lib_dkt
+from SILEXlib import silex_lib_porous_tet4
 
-import silex_lib_porous_tet4_fortran
+#import pymumps as mumps
+#import mumps
 
-import mumps
+import numpy as np
 
 from mpi4py import MPI
 comm = MPI.COMM_WORLD
@@ -69,8 +73,8 @@ if rank==0:
 # Datas
 ##############################################################
 
-mesh_file='geom/cavity12_with_porous_air'
-results_file='results/cavity12_with_impedance_air_flexible_structure_CB_reduction_test'
+mesh_file    = Path(__file__).parent /  'geom/cavity12_with_porous_air'
+results_file = Path(__file__).parent /  'results/cavity12_with_impedance_air_flexible_structure_CB_reduction_test'
 
 # fichier : results_file='results/cavity12_with_impedance_air_flexible_structure_CB_reduction'
 # nb_mode_F = 400
@@ -82,11 +86,11 @@ results_file='results/cavity12_with_impedance_air_flexible_structure_CB_reductio
 
 flag_write_gmsh_results=1
 
-nb_mode_F = 200
-nb_mode_S = 50
+nb_mode_F = 100
+nb_mode_S = 20
 freq_ini     = 10.0
 freq_end     = 200.0
-nb_freq_step_per_proc=800
+nb_freq_step_per_proc=100
 
 nb_freq_step = nb_freq_step_per_proc*nproc
 deltafreq=(freq_end-freq_ini)/(nb_freq_step-1)
@@ -116,10 +120,10 @@ k_imp_paroi = 5.0e6 # Pa/m
 
 tic = time.process_time()
 
-fluid_nodes    = silex_lib_gmsh.ReadGmshNodes(mesh_file+'.msh',3)
-fluid_elements1,IdNodes1 = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',4,1) # air, cavity + controlled volume
-fluid_elements5,IdNodes5 = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',4,5) # air, ONLY controlled volume
-fluid_elements_S3,IdNodesS3 = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',2,3)# air-porous interface surface
+fluid_nodes    = silex_lib_gmsh.ReadGmshNodes(mesh_file.as_posix()+'.msh',3)
+fluid_elements1,IdNodes1 = silex_lib_gmsh.ReadGmshElements(mesh_file.as_posix()+'.msh',4,1) # air, cavity + controlled volume
+fluid_elements5,IdNodes5 = silex_lib_gmsh.ReadGmshElements(mesh_file.as_posix()+'.msh',4,5) # air, ONLY controlled volume
+fluid_elements_S3,IdNodesS3 = silex_lib_gmsh.ReadGmshElements(mesh_file.as_posix()+'.msh',2,3)# air-porous interface surface
 #fluid_elements2,IdNodes2 = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',4,2) # porous, volume
 #fluid_elements_S4,IdNodesS4 = silex_lib_gmsh.ReadGmshElements(mesh_file+'.msh',2,4) # porous, external surface
 
@@ -220,29 +224,31 @@ for e in range(fluid_nelem3):
         #InterfaceConnectivity[e,i+3] = dico2[fluid_elements_S3[e,i]] # for the porous mesh
 
 if (flag_write_gmsh_results==1) and (rank==0):
-    silex_lib_gmsh.WriteResults(results_file+'_air_cavity_Mesh1',fluid_nodes1,fluid_elements1,4)
+    silex_lib_gmsh.WriteResults(results_file.as_posix()+'_air_cavity_Mesh1',fluid_nodes1,fluid_elements1,4)
     #silex_lib_gmsh.WriteResults(results_file+'_porous_material_Mesh2',fluid_nodes2,fluid_elements2,4)
-    silex_lib_gmsh.WriteResults(results_file+'_porous_air_interface_Mesh_surface3',fluid_nodes,fluid_elements_S3,2)
+    silex_lib_gmsh.WriteResults(results_file.as_posix()+'_porous_air_interface_Mesh_surface3',fluid_nodes,fluid_elements_S3,2)
     #silex_lib_gmsh.WriteResults(results_file+'_porous_fixed_Mesh_surface4',fluid_nodes,fluid_elements_S4,2)
-    silex_lib_gmsh.WriteResults(results_file+'_air_controlled_volume_Mesh5',fluid_nodes1,fluid_elements5,4)
+    silex_lib_gmsh.WriteResults(results_file.as_posix()+'_air_controlled_volume_Mesh5',fluid_nodes1,fluid_elements5,4)
 
     #silex_lib_gmsh.WriteResults(results_file+'_air_porous_interface1',fluid_nodes1,InterfaceConnectivity[:,range(3)],2)
     #silex_lib_gmsh.WriteResults(results_file+'_air_porous_interface2',fluid_nodes2,InterfaceConnectivity[:,range(3,6,1)],2)
 
+
+
 ##############################################################
 # Load structure mesh
 ##############################################################
-struc_nodes        = silex_lib_gmsh.ReadGmshNodes(mesh_file+'_struc.msh',3)
-struc_elements,tmp = silex_lib_gmsh.ReadGmshElements(mesh_file+'_struc.msh',2,6)
-struc_boun,tmp     = silex_lib_gmsh.ReadGmshElements(mesh_file+'_struc.msh',1,7)
+struc_nodes        = silex_lib_gmsh.ReadGmshNodes(mesh_file.as_posix()+'_struc.msh',3)
+struc_elements,tmp = silex_lib_gmsh.ReadGmshElements(mesh_file.as_posix()+'_struc.msh',2,6)
+struc_boun,tmp     = silex_lib_gmsh.ReadGmshElements(mesh_file.as_posix()+'_struc.msh',1,7)
 
 struc_nnodes   = struc_nodes.shape[0]
 struc_nelem    = struc_elements.shape[0]
 struc_ndof     = struc_nnodes*6
 
 if (flag_write_gmsh_results==1) and (rank==0):
-    silex_lib_gmsh.WriteResults2(results_file+'_struc_mesh_surface_6',struc_nodes,struc_elements,2)
-    silex_lib_gmsh.WriteResults2(results_file+'_struc_boun_mesh_line_7',struc_nodes,struc_boun,1)
+    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_struc_mesh_surface_6',struc_nodes,struc_elements,2)
+    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_struc_boun_mesh_line_7',struc_nodes,struc_boun,1)
 
 if rank==0:
     print ("nnodes for structure=",struc_nnodes)
@@ -308,7 +314,7 @@ for i in range(nb_mode_S):
     eigen_vector_S_list.append(disp)
 
 if (flag_write_gmsh_results==1) and (rank==0):
-    silex_lib_gmsh.WriteResults2(results_file+'_structure_modes',struc_nodes,struc_elements,2,[[eigen_vector_S_list,'nodal',3,'modes']])
+    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_structure_modes',struc_nodes,struc_elements,2,[[eigen_vector_S_list,'nodal',3,'modes']])
 
 ##################################################################
 # compute level set
@@ -333,10 +339,10 @@ if rank==0:
     print ("time to compute tangent level set: {}".format(toc-tic))
 
 if (flag_write_gmsh_results==1) and (rank==0):
-    silex_lib_gmsh.WriteResults2(results_file+'_LS_signed_distance',fluid_nodes1,fluid_elements1,4,[[[LevelSet],'nodal',1,'Level set']])
-    silex_lib_gmsh.WriteResults2(results_file+'_LS_tangent_level_set',fluid_nodes1,fluid_elements1,4,[[[LevelSetTangent],'nodal',1,'Tangent level set']])
-    silex_lib_gmsh.WriteResults2(results_file+'_LS_distance',fluid_nodes1,fluid_elements1,4,[[[distance],'nodal',1,'Distance']])
-    silex_lib_gmsh.WriteResults2(results_file+'_LS_tangent_mesh',tangent_nodes,tangent_mesh,2)
+    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_LS_signed_distance',fluid_nodes1,fluid_elements1,4,[[[LevelSet],'nodal',1,'Level set']])
+    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_LS_tangent_level_set',fluid_nodes1,fluid_elements1,4,[[[LevelSetTangent],'nodal',1,'Tangent level set']])
+    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_LS_distance',fluid_nodes1,fluid_elements1,4,[[[distance],'nodal',1,'Distance']])
+    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_LS_tangent_mesh',tangent_nodes,tangent_mesh,2)
 
 ##################################################################
 # Get enriched nodes and elements
@@ -369,11 +375,11 @@ HeavisideEnrichedElements=np.setdiff1d(EnrichedElements,EdgeEnrichedElements)
 AllElementsExceptEdgeEnrichedElements=np.setdiff1d(range(fluid_nelem1),EdgeEnrichedElements)
 
 if (flag_write_gmsh_results==1) and (rank==0):
-    silex_lib_gmsh.WriteResults2(results_file+'_LSenriched_elements',fluid_nodes1,fluid_elements1[LSEnrichedElements],4)
-    silex_lib_gmsh.WriteResults2(results_file+'_enriched_elements',fluid_nodes1,fluid_elements1[EnrichedElements],4)
-    silex_lib_gmsh.WriteResults2(results_file+'_edge_enriched_elements',fluid_nodes1,fluid_elements1[EdgeEnrichedElements],4)
-    silex_lib_gmsh.WriteResults2(results_file+'_edge_enriched_elements_in_all_mesh',fluid_nodes1,fluid_elements1[EdgeEnrichedElementsInAllMesh],4)
-    silex_lib_gmsh.WriteResults2(results_file+'_heaviside_enriched_elements',fluid_nodes1,fluid_elements1[HeavisideEnrichedElements],4)
+    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_LSenriched_elements',fluid_nodes1,fluid_elements1[LSEnrichedElements],4)
+    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_enriched_elements',fluid_nodes1,fluid_elements1[EnrichedElements],4)
+    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_edge_enriched_elements',fluid_nodes1,fluid_elements1[EdgeEnrichedElements],4)
+    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_edge_enriched_elements_in_all_mesh',fluid_nodes1,fluid_elements1[EdgeEnrichedElementsInAllMesh],4)
+    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_heaviside_enriched_elements',fluid_nodes1,fluid_elements1[HeavisideEnrichedElements],4)
 
 ##################################################################
 # Compute coupling STRUCTURE / AIR terms
@@ -395,7 +401,7 @@ if rank==0:
 
 tic = time.process_time()
 
-IIf,JJf,Vffk,Vffm=silex_lib_xfem_acou_tet4.globalacousticmatrices(fluid_elements1,fluid_nodes1,celerity,rho)
+IIf,JJf,Vffk,Vffm=silex_lib_acou_tet4.globalacousticmatrices(fluid_elements1,fluid_nodes1,celerity,rho)
 
 KFF=scipy.sparse.csc_matrix( (Vffk,(IIf,JJf)), shape=(fluid_ndof1,fluid_ndof1) )
 MFF=scipy.sparse.csc_matrix( (Vffm,(IIf,JJf)), shape=(fluid_ndof1,fluid_ndof1) )
@@ -409,7 +415,7 @@ SolvedDofI=np.setdiff1d(SolvedDofF,SolvedDofB)
 # Compute impedance matrices
 ##############################################################
 #print(silex_lib_porous_tet4_fortran.stiffnessimpedanceparoi.__doc__)
-IIimp,JJimp,Vimp=silex_lib_porous_tet4_fortran.stiffnessimpedanceparoi(fluid_nodes1,InterfaceConnectivity)
+IIimp,JJimp,Vimp=silex_lib_porous_tet4.stiffnessimpedanceparoi(fluid_nodes1,InterfaceConnectivity)
 
 CII=scipy.sparse.csc_matrix( (Vimp,(IIimp,JJimp)), shape=(fluid_ndof1,fluid_ndof1) )
 
@@ -471,11 +477,11 @@ KAF=KAFheaviside+KAFedge
 MAF=MAFheaviside+MAFedge
 
 if (flag_write_gmsh_results==1) and (rank==0):
-    silex_lib_gmsh.WriteResults2(results_file+'_NegativeLSelements',fluid_nodes1,fluid_elements1[NegativeLSelements],4)
-    silex_lib_gmsh.WriteResults2(results_file+'_PositiveLSelements',fluid_nodes1,fluid_elements1[PositiveLSelements],4)
-    silex_lib_gmsh.WriteResults2(results_file+'_NegativeLStgtElements',fluid_nodes1,fluid_elements1[NegativeLStgtElements],4)
-    silex_lib_gmsh.WriteResults2(results_file+'_PositiveLStgtElements',fluid_nodes1,fluid_elements1[PositiveLStgtElements],4)
-    silex_lib_gmsh.WriteResults2(results_file+'_PartiallyPositiveLStgtElements',fluid_nodes1,fluid_elements1[PartiallyPositiveLStgtElements],4)
+    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_NegativeLSelements',fluid_nodes1,fluid_elements1[NegativeLSelements],4)
+    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_PositiveLSelements',fluid_nodes1,fluid_elements1[PositiveLSelements],4)
+    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_NegativeLStgtElements',fluid_nodes1,fluid_elements1[NegativeLStgtElements],4)
+    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_PositiveLStgtElements',fluid_nodes1,fluid_elements1[PositiveLStgtElements],4)
+    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_PartiallyPositiveLStgtElements',fluid_nodes1,fluid_elements1[PartiallyPositiveLStgtElements],4)
 
 
 ##################################################################
@@ -498,7 +504,7 @@ if rank==0:
     print ("LAST fluid eigen frequencies : ",freq_eigv_I[-1])
  
 if (flag_write_gmsh_results==1) and (rank==0):
-    silex_lib_gmsh.WriteResults2(results_file+'_fluid_modes',fluid_nodes1,fluid_elements1,4,[[eigen_vector_F_list,'nodal',1,'pressure']])
+    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_fluid_modes',fluid_nodes1,fluid_elements1,4,[[eigen_vector_F_list,'nodal',1,'pressure']])
 
 toc = time.process_time()
 if rank==0:
@@ -775,9 +781,10 @@ if (Flag_frf_analysis==1):
                                          ]
                                        )
         
-        F  = scipy.append(omega**2*Freduced_F,np.zeros((len(SolvedDofA)+nb_mode_S) , dtype='c16'))
+        F  = np.append(omega**2*Freduced_F,np.zeros((len(SolvedDofA)+nb_mode_S) , dtype='c16'))
 
-        sol = mumps.spsolve(  scipy.sparse.coo_matrix(K-(omega**2)*M+omega*D*1j,dtype='c16')  , F , comm=mycomm )
+        #sol = mumps.spsolve(  scipy.sparse.coo_matrix(K-(omega**2)*M+omega*D*1j,dtype='c16')  , F , comm=mycomm )
+        sol = scipy.sparse.linalg.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M+omega*D*1j,dtype='c16')  , F )
 
         alpha_m    = sol[list(range(nb_mode_F))]
 
@@ -793,14 +800,14 @@ if (Flag_frf_analysis==1):
         enrichment[SolvedDofA]= P_A
         CorrectedPressure=np.array(press)
         CorrectedPressure[SolvedDofA]=CorrectedPressure[SolvedDofA].T+np.array(enrichment[SolvedDofA]*np.sign(LevelSet[SolvedDofA]).T)
-        frf.append(silex_lib_xfem_acou_tet4.computecomplexquadratiquepressure(fluid_elements5,fluid_nodes1,CorrectedPressure))
+        frf.append(silex_lib_acou_tet4.computecomplexquadraticpressure(fluid_elements5,fluid_nodes1,CorrectedPressure))
         #frf.append(silex_lib_xfem_acou_tet4.computexfemcomplexquadratiquepressure(fluid_elements5,fluid_nodes1,press,enrichment,LevelSet,LevelSetTangent))
 
         if (flag_write_gmsh_results==1) and (rank==0):
             press_save.append(CorrectedPressure.real)
             alpha_n=sol[list(range(nb_mode_F+len(SolvedDofB)+len(SolvedDofA),nb_mode_F+len(SolvedDofB)+len(SolvedDofA)+nb_mode_S,1))].real
             Q=np.zeros((struc_ndof),dtype=float)
-            Q[SolvedDofS]=eigen_vectors_S*alpha_n
+            Q[SolvedDofS]=np.dot(eigen_vectors_S,alpha_n)
             disp=np.zeros((struc_nnodes,3))
             disp[range(struc_nnodes),0]=Q[list(range(0,struc_ndof,6))]
             disp[range(struc_nnodes),1]=Q[list(range(1,struc_ndof,6))]
@@ -815,8 +822,8 @@ if (Flag_frf_analysis==1):
     print ("Proc. {} / time at the end of the FRF: {}".format(rank, time.ctime()))
 
     if (flag_write_gmsh_results==1) and (rank==0):
-        silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_fluid_frf',fluid_nodes1,fluid_elements1,4,[[press_save,'nodal',1,'pressure']])
-        silex_lib_gmsh.WriteResults2(results_file+str(rank)+'_results_struct_frf',struc_nodes,struc_elements,2,[[disp_save,'nodal',3,'displacement']])
+        silex_lib_gmsh.WriteResults2(results_file.as_posix()+str(rank)+'_results_fluid_frf',fluid_nodes1,fluid_elements1,4,[[press_save,'nodal',1,'pressure']])
+        silex_lib_gmsh.WriteResults2(results_file.as_posix()+str(rank)+'_results_struct_frf',struc_nodes,struc_elements,2,[[disp_save,'nodal',3,'displacement']])
 
     # Save the FRF problem
     Allfrequencies=np.zeros(nb_freq_step)
@@ -835,7 +842,7 @@ if (Flag_frf_analysis==1):
 
         Allfrequencies, Allfrf = zip(*sorted(zip(Allfrequencies, Allfrf)))
         Allfrfsave=[np.array(list(Allfrequencies)),np.array(list(Allfrf))]
-        f=open(results_file+'_results.frf','wb')
+        f=open(results_file.as_posix()+'_results.frf','wb')
         pickle.dump(Allfrfsave, f)
         f.close()
         print('Last eigenfrequency in fluid basis: ',freq_eigv_I[-1])

@@ -4,7 +4,7 @@
 import string; import time; import scipy
 import scipy.sparse
 import scipy.sparse.linalg
-import mumps
+#import mumps
 
 import sys
 sys.path.append('../../librairies')
@@ -120,8 +120,8 @@ print ("time to compute the stiffness matrix / FORTRAN: {}".format(toc-tic))
 #############################################################################
 
 tic = time.process_time()
-#Q[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs], use_umfpack=True)
-Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
+Q[SolvedDofs] = scipy.sparse.linalg.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs], use_umfpack=True)
+#Q[SolvedDofs] = mumps.spsolve(K[SolvedDofs,:][:,SolvedDofs],F[SolvedDofs])
 toc = time.process_time()
 print ("time to solve the problem: {}".format(toc-tic))
 
