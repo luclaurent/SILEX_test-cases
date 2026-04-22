@@ -22,7 +22,7 @@ from SILEXlib import silex_lib_porous_tet4
 
 import numpy as np
 
-def vibroac_Xfem_flex_struc_CB_reduction_impedance_paroi(dataPb)
+def vibroac_Xfem_flex_struc_CB_reduction_impedance_paroi(dataPb):
     ###########################################################
     ## AIR CAVITY
     ## IMPEDANCE PAROI
@@ -31,7 +31,9 @@ def vibroac_Xfem_flex_struc_CB_reduction_impedance_paroi(dataPb)
     ## CB REDUCTION FOR AIR
     ## MODAL REDUCTION FOR STRUCTURE
     ###########################################################
-
+    
+    rank=dataPb['rank']
+    
     if rank==0:
         print ("time at the beginning of the computation: {}".format(time.ctime()))
 
@@ -56,35 +58,31 @@ def vibroac_Xfem_flex_struc_CB_reduction_impedance_paroi(dataPb)
     # nb_freq_step_per_proc=800
 
 
-    flag_write_gmsh_results=dataPb.['flag_write_gmsh_results']
+    flag_write_gmsh_results=dataPb['flag_write_gmsh_results']
 
-    nb_mode_F = dataPb.['nb_mode_F']
-    nb_mode_S = dataPb.['nb_mode_S']
-    freq_ini     = dataPb.['freq_ini']
-    freq_end     = dataPb.['freq_end']
-    nb_freq_step_per_proc = dataPb.['nb_freq_step_per_proc']
-    nproc = dataPb.['nproc']
+    nb_mode_F = dataPb['nb_mode_F']
+    nb_mode_S = dataPb['nb_mode_S']
+    freq_ini     = dataPb['freq_ini']
+    freq_end     = dataPb['freq_end']
+    nb_freq_step_per_proc = dataPb['nb_freq_step_per_proc']
+    nproc = dataPb['nproc']
 
     nb_freq_step = nb_freq_step_per_proc*nproc
     deltafreq=(freq_end-freq_ini)/(nb_freq_step-1)
 
     # air
-    celerity=343.0 # ok
-    rho=1.21 # ok
+    celerity=dataPb['celerity']
+    rho=dataPb['rho']
 
     # shell structure
-    material_Struc=[]
-    material_Struc.append(75000.0e6) # E Young
-    material_Struc.append(0.33) # nu
-    material_Struc.append(5.0e-3) # thickness
-    material_Struc.append(2700.0) # rho
+    material_Struc=dataPb['material_Struc']
 
     # structure damping
-    modal_damping_S=0.0
+    modal_damping_S=dataPb['modal_damping_S']
 
     # impedance paroi : article Walid-JFD : CMAME 2008
-    d_imp_paroi = 50.0 # Pa.s/m
-    k_imp_paroi = 5.0e6 # Pa/m
+    d_imp_paroi = dataPb['d_imp_paroi']
+    k_imp_paroi = dataPb['k_imp_paroi']
 
 
     ##############################################################

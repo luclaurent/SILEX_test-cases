@@ -55,18 +55,18 @@ mycomm=comm_mumps_one_proc()
 ##############################################################
 dataPb = dict()
 
-dataPb['mesh_file   '] = Path(__file__).parent /  'geom/cavity12_with_porous_air'
+dataPb['mesh_file'] = Path(__file__).parent /  'geom/cavity12_with_porous_air'
 dataPb['results_file'] = Path(__file__).parent /  'results/cavity12_with_impedance_air_flexible_structure_CB_reduction_test'
 
 dataPb['flag_write_gmsh_results']=1
 
-dataPb['nb_mode_F ']= 100
-dataPb['nb_mode_S ']= 20
-dataPb['freq_ini  ']   = 10.0
-dataPb['freq_end   ']  = 200.0
+dataPb['nb_mode_F']= 100
+dataPb['nb_mode_S']= 20
+dataPb['freq_ini']   = 10.0
+dataPb['freq_end']  = 200.0
 dataPb['nb_freq_step_per_proc']=100
 dataPb['nproc'] = nproc
-
+dataPb['rank'] = rank
 
 # air
 dataPb['celerity']=343.0 # ok
