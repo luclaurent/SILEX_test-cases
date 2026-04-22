@@ -113,18 +113,32 @@ class solve:
         
     def run(self, parameters):
         
+        # default values
+        lx_baffle = self.lx_baffle
+        lx_baffle_shift_up = self.lx_baffle_shift_up
+        lx_baffle_shift_down = self.lx_baffle_shift_down
+        lz_baffle = self.lz_baffle
+        h_baffle = self.h_fluid_elts * 0.5
+        
         lx_baffle_shift_up = parameters[0]
-        lx_baffle_shift_down = parameters[1]
+        if len(parameters)>1:
+            lx_baffle_shift_down = parameters[1]
+        if len(parameters)>2:
+            lx_baffle = parameters[2]
+        if len(parameters)>3:
+            lz_baffle = parameters[3]
+        if len(parameters)>4:
+            h_baffle = parameters[4]
         
         silex_lib_cube_tank_gmsh_geometry.Stiffener_DKT(
             self.lx,
             self.ly,
             self.lz,
-            self.lx_baffle,
+            lx_baffle,
             lx_baffle_shift_up,
             lx_baffle_shift_down,
-            self.lz_baffle,
-            self.h_fluid_elts * 0.5,
+            lz_baffle,
+            h_baffle,
             1,
             self.mesh_file_stiffener,
         )
@@ -143,32 +157,33 @@ class solve:
         # silex_lib_compute_sloshing.sloshing_rigid_baffle_tet10(dataPb,dataFluid,mesh_file_tet10_classic,results_file_tet10_classic)
 
 
+if __name__ == "__main__":
 
-obj = solve()
-# valtest = obj.run([0.09666666666666668, -0.1933333333333333])  # Run once to initialize the mesh and results
-# log.info(f"Test run completed with value: {valtest}")
+    obj = solve()
+    # valtest = obj.run([0.09666666666666668, -0.1933333333333333])  # Run once to initialize the mesh and results
+    # log.info(f"Test run completed with value: {valtest}")
 
-# X = np.linspace()
-nb_val = 25
-lup = np.linspace(-0.2, 0.2, nb_val)
-ldown = np.linspace(-0.2, 0.2, nb_val)
-X, Y = np.meshgrid(lup, ldown)
-val_p = np.zeros(nb_val * nb_val)
-val_f = np.zeros(nb_val * nb_val)
+    # X = np.linspace()
+    nb_val = 11
+    lup = np.linspace(-0.21, 0.21, nb_val)
+    ldown = np.linspace(-0.21, 0.21, nb_val)
+    X, Y = np.meshgrid(lup, ldown)
+    val_p = np.zeros(nb_val * nb_val)
+    val_f = np.zeros(nb_val * nb_val)
 
-for i,(xs,ys) in enumerate(zip(X.flatten(), Y.flatten())):
-    log.info(f"Running for {xs:.2f} and {ys:.2f}")
-    # return de run() : meanQI, maxQI, meanforce, maxforce
-    val_p[i],_, val_f[i],_ = obj.run([xs, ys])
-    log.info(f"Results: {val_p[i]}Pa and {val_f[i]}N")
-    if val_p[i] > 1e12 or val_f[i] > 1e12:
-        log.error(f"Error in computation for parameters {xs}, {ys}")
-        raise ValueError(f"Computation failed for parameters {xs}, {ys}")
-    
+    for i,(xs,ys) in enumerate(zip(X.flatten(), Y.flatten())):
+        log.info(f"Running for {xs:.2f} and {ys:.2f}")
+        # return de run() : meanQI, maxQI, meanforce, maxforce
+        val_p[i],_, val_f[i],_ = obj.run([xs, ys])
+        log.info(f"Results: {val_p[i]}Pa and {val_f[i]}N")
+        if val_p[i] > 1e12 or val_f[i] > 1e12:
+            log.error(f"Error in computation for parameters {xs}, {ys}")
+            raise ValueError(f"Computation failed for parameters {xs}, {ys}")
+        
 
 
-    
-results_file = Path(__file__).parent / "results_parametric_tet4.pck"
-log.info(f"Saving results to {results_file}")
-with open(results_file, "wb") as f:
-    pickle.dump((X, Y, val_p, val_f), f)
+        
+    results_file = Path(__file__).parent / "results_parametric_tet4.pck"
+    log.info(f"Saving results to {results_file}")
+    with open(results_file, "wb") as f:
+        pickle.dump((X, Y, val_p, val_f), f)
