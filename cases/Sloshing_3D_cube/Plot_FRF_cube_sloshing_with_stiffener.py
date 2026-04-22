@@ -18,7 +18,7 @@ f=open(filename,'rb')
 frf_tet4_no_stiff=pickle.load(f)
 f.close()
 
-filename = Path(__file__).parent / 'classic_tet4' / 'cube_sloshing_with_stiffener_tet4_results.frf'
+filename = Path(__file__).parent / 'cube_sloshing_with_stiffener_tet4_results.frf'
 f=open(filename,'rb')
 frf_tet4=pickle.load(f)
 f.close()

@@ -85,11 +85,11 @@ results_file=Path(__file__).parent /'results/cavity12_with_impedance_air_flexibl
 
 flag_write_gmsh_results=1
 
-nb_mode_F = 200
-nb_mode_S = 50
+nb_mode_F = 100
+nb_mode_S = 20
 freq_ini     = 10.0
 freq_end     = 200.0
-nb_freq_step_per_proc=800
+nb_freq_step_per_proc=100
 
 nb_freq_step = nb_freq_step_per_proc*nproc
 deltafreq=(freq_end-freq_ini)/(nb_freq_step-1)
@@ -231,6 +231,8 @@ if (flag_write_gmsh_results==1) and (rank==0):
 
     #silex_lib_gmsh.WriteResults(results_file+'_air_porous_interface1',fluid_nodes1,InterfaceConnectivity[:,range(3)],2)
     #silex_lib_gmsh.WriteResults(results_file+'_air_porous_interface2',fluid_nodes2,InterfaceConnectivity[:,range(3,6,1)],2)
+
+
 
 ##############################################################
 # Load structure mesh
@@ -780,7 +782,8 @@ if (Flag_frf_analysis==1):
         
         F  = np.concatenate((omega**2*Freduced_F,np.zeros((len(SolvedDofA)+nb_mode_S) , dtype='c16')))
 
-        sol = mumps.spsolve(  scipy.sparse.coo_matrix(K-(omega**2)*M+omega*D*1j,dtype='c16')  , F , comm=mycomm )
+        #sol = mumps.spsolve(  scipy.sparse.coo_matrix(K-(omega**2)*M+omega*D*1j,dtype='c16')  , F , comm=mycomm )
+        sol = scipy.sparse.linalg.spsolve(  scipy.sparse.csc_matrix(K-(omega**2)*M+omega*D*1j,dtype='c16')  , F )
 
         alpha_m    = sol[list(range(nb_mode_F))]
 
@@ -803,7 +806,7 @@ if (Flag_frf_analysis==1):
             press_save.append(CorrectedPressure.real)
             alpha_n=sol[list(range(nb_mode_F+len(SolvedDofB)+len(SolvedDofA),nb_mode_F+len(SolvedDofB)+len(SolvedDofA)+nb_mode_S,1))].real
             Q=np.zeros((struc_ndof),dtype=float)
-            Q[SolvedDofS]=eigen_vectors_S*alpha_n
+            Q[SolvedDofS]=np.dot(eigen_vectors_S,alpha_n)
             disp=np.zeros((struc_nnodes,3))
             disp[range(struc_nnodes),0]=Q[list(range(0,struc_ndof,6))]
             disp[range(struc_nnodes),1]=Q[list(range(1,struc_ndof,6))]
