@@ -809,6 +809,8 @@ def vibroac_Xfem_flex_struc_impedance_paroi(dataPb):
     freq_end   = dataPb['freq_end']
     nb_freq_step_per_proc = dataPb['nb_freq_step_per_proc']
     nproc      = dataPb['nproc']
+    nb_mode_S  = dataPb['nb_mode_S']
+
 
     nb_freq_step = nb_freq_step_per_proc*nproc
     deltafreq    = (freq_end-freq_ini)/(nb_freq_step-1)
@@ -1146,33 +1148,6 @@ def vibroac_Xfem_flex_struc_impedance_paroi(dataPb):
         #silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_PositiveLStgtElements',fluid_nodes1,fluid_elements1[PositiveLStgtElements],4)
         #silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_PartiallyPositiveLStgtElements',fluid_nodes1,fluid_elements1[PartiallyPositiveLStgtElements],4)
 
-
-    ##################################################################
-    # Compute eigen modes of the fluid: internal dof I
-    ##################################################################
-    #tic = time.process_time()
-
-    #if rank==0:
-    #    print ("Compute fluid modes")
-    #eigen_values_I,eigen_vectors_I= scipy.sparse.linalg.eigsh(KFF[SolvedDofI,:][:,SolvedDofI],nb_mode_F,MFF[SolvedDofI,:][:,SolvedDofI],sigma=0,which='LM')
-
-    #freq_eigv_I=list(np.sqrt(eigen_values_I)/(2*np.pi))
-    #eigen_vector_F_list=[]
-    #for i in range(nb_mode_F):
-    #    tmp=np.zeros((fluid_ndof1) , dtype='float')
-    #    tmp[SolvedDofI]=eigen_vectors_I[:,i].real
-    #    eigen_vector_F_list.append(tmp)
-
-    #if rank==0:
-    #    print ("LAST fluid eigen frequencies : ",freq_eigv_I[-1])
-    #
-    #if (flag_write_gmsh_results==1) and (rank==0):
-    #    silex_lib_gmsh.WriteResults2(results_file.as_posix()+'_fluid_modes',fluid_nodes1,fluid_elements1,4,[[eigen_vector_F_list,'nodal',1,'pressure']])
-
-    #toc = time.process_time()
-    #if rank==0:
-    #    print ("time for computing the fluid modes: {}".format(toc-tic))
-
     ##################################################################
     # Construct structure projection
     ##################################################################
@@ -1193,8 +1168,8 @@ def vibroac_Xfem_flex_struc_impedance_paroi(dataPb):
     # Compute structure damping matrix
     ##################################################################
     VDnn = 2.0*modal_damping_S*np.sqrt(eigen_values_S)
-    IIDnn = list(range(nb_mode_F+len(SolvedDofB)+len(SolvedDofA),nb_mode_F+len(SolvedDofB)+len(SolvedDofA)+nb_mode_S))
-    JJDnn = list(range(nb_mode_F+len(SolvedDofB)+len(SolvedDofA),nb_mode_F+len(SolvedDofB)+len(SolvedDofA)+nb_mode_S))
+    IIDnn = list(range(len(SolvedDofF)+len(SolvedDofA),len(SolvedDofF)+len(SolvedDofA)+nb_mode_S))
+    JJDnn = list(range(len(SolvedDofF)+len(SolvedDofA),len(SolvedDofF)+len(SolvedDofA)+nb_mode_S))
 
     totaldofs=len(SolvedDofF)+len(SolvedDofA)+nb_mode_S
 
@@ -1208,21 +1183,6 @@ def vibroac_Xfem_flex_struc_impedance_paroi(dataPb):
 
     # Fluid part
     tic = time.process_time()
-
-    VK_diag_mm = eigen_values_I
-    VM_diag_mm = eigen_values_I/eigen_values_I
-    IIDmm = list(range(nb_mode_F))
-    JJDmm = list(range(nb_mode_F))
-
-
-    #PhiFm=eigen_vectors_F
-
-    K_diag_mm= scipy.sparse.csc_matrix( (VK_diag_mm,(IIDmm,JJDmm)), shape=(nb_mode_F,nb_mode_F) )
-    M_diag_mm= scipy.sparse.csc_matrix( (VM_diag_mm,(IIDmm,JJDmm)), shape=(nb_mode_F,nb_mode_F) )
-    #Khat_AA = KAA[SolvedDofA,:][:,SolvedDofA]+Psi_IA.T*KAF[SolvedDofI,:][:,SolvedDofA]
-    #Khat_BB = KFF[SolvedDofB,:][:,SolvedDofB]+Psi_IB.T*KFF[SolvedDofI,:][:,SolvedDofB]
-
-    #Khat_BA = KFF[SolvedDofB,:][:,SolvedDofI]*Psi_IA
 
     #toc = time.process_time()
     #if rank==0:
@@ -1305,14 +1265,14 @@ def vibroac_Xfem_flex_struc_impedance_paroi(dataPb):
 
             Kimp=-(omega**2/(k_imp_paroi-1j*omega*d_imp_paroi))*CII # cf These Walid Larbi p46-47 / Rq: C^T C^(-1) C = C^T !!
 
-            K=scipy.sparse.bmat( [  [KFF+Kimp,  KAF.T,   None],
-                                    [KAF,       KAA,     None],
+            K=scipy.sparse.bmat( [  [KFF+Kimp,  KAF[SolvedDofA,:][:,SolvedDofF].T,   None],
+                                    [KAF[SolvedDofA,:][:,SolvedDofF],       KAA[SolvedDofA,:][:,SolvedDofA],     None],
                                     [None,     -CnA,     Knn]
                                             ]
                                         )
             
-            M=scipy.sparse.bmat( [  [MFF,    MAF.T,  None],
-                                    [MAF,    MAA,    CnA.T],
+            M=scipy.sparse.bmat( [  [MFF,    MAF[SolvedDofA,:][:,SolvedDofF].T,  None],
+                                    [MAF[SolvedDofA,:][:,SolvedDofF],    MAA[SolvedDofA,:][:,SolvedDofA],    CnA.T],
                                     [None,   None,   Mnn]
                                             ]
                                         )
@@ -1331,7 +1291,7 @@ def vibroac_Xfem_flex_struc_impedance_paroi(dataPb):
             #press[SolvedDofI] = P_I
             #press[SolvedDofB] = P_B
 
-            press = sol[list(range(SolvedDofF))]
+            press = sol[SolvedDofF]
             enrichment = np.zeros(fluid_ndof1,dtype=complex)
             enrichment[SolvedDofA]= sol[list(range(len(SolvedDofF),len(SolvedDofF)+len(SolvedDofA)))]
             CorrectedPressure=np.array(press)

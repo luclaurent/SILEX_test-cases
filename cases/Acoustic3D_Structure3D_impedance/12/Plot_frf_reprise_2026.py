@@ -30,9 +30,15 @@ from pathlib import Path
 #f.close()
 
 # xfem + impedance paroi + flexible structure /  CB reduction 
-f=open(Path(__file__).parent / 'results/cavity12_with_impedance_air_flexible_structure_CB_reduction_test_results.frf','rb')
+f=open(Path(__file__).parent / 'results/cavity12_with_impedance_air_flexible_structure_with_CB_results.frf','rb')
+#'cavity12_with_impedance_air_flexible_structure_CB_reduction_test_results.frf','rb')
 frf_xfem_imp_CB_reduc=pickle.load(f)
 f.close()
+
+f=open(Path(__file__).parent / 'results/cavity12_with_impedance_air_flexible_structure_no_CB_results.frf','rb')
+frf_xfem_imp_no_CB=pickle.load(f)
+f.close()
+
 
 # xfem + NO impedance paroi + flexible structure /  no reduction 
 #f=open('results/cavity12_no_impedance_air_flexible_structure_results.frf','rb')
@@ -49,6 +55,7 @@ pl.figure(1)
 #pl.plot(frf_xfem_reduc_air_struc[0],10*log10(frf_xfem_reduc_air_struc[1]/prefsquare),'ob--',label='xfem + flex. struc. + POROUS / 30 deg/ reduction', linewidth=2)
 #pl.plot(frf_xfem_imp_no_reduc[0],10*log10(frf_xfem_imp_no_reduc[1]/prefsquare),'g-',label='xfem + flex. struc. + imp. paroi / no reduc', linewidth=2)
 pl.plot(frf_xfem_imp_CB_reduc[0],10*log10(frf_xfem_imp_CB_reduc[1]/prefsquare),'m-',label='xfem + flex. struc. + imp. paroi / CB reduc', linewidth=2)
+pl.plot(frf_xfem_imp_no_CB[0],10*log10(frf_xfem_imp_no_CB[1]/prefsquare),'g-',label='xfem + flex. struc. + imp. paroi / no CB', linewidth=2)
 #pl.plot(frf_xfem_no_imp_no_reduc[0],10*log10(frf_xfem_no_imp_no_reduc[1]/prefsquare),'r-',label='xfem + flex. struc. + NO imp. paroi / no reduc', linewidth=2)
 #pl.axis([1.0, 120.0, 70, 105])
 pl.xlabel('Frequency (Hz)')

@@ -63,7 +63,7 @@ results_file_name_base='results/cavity12_with_impedance_air_flexible_structure'
 
 dataPb['flag_write_gmsh_results']=1
 
-dataPb['nb_mode_F']= 100
+dataPb['nb_mode_F']= 200
 dataPb['nb_mode_S']= 20
 dataPb['freq_ini']   = 10.0
 dataPb['freq_end']  = 80.0
@@ -154,7 +154,7 @@ dataPb['lx5'] = 6.0
 dataPb['ly5'] = 1.0
 dataPb['lz5'] = 1.5
 dataPb['h5']  = 1.0
-dataPb['h'] = dataPb['lx1']/20 #size of elements
+dataPb['h'] = dataPb['lx1']/30 #size of elements
 dataPb['ElementOrder'] = 1
 
 
@@ -187,12 +187,12 @@ silex_lib_make_meshes.xfem_fluid_cavity(dataPb)
 #       
 #    Structure position in cavity
 #   
-#                  /
-#                 / 
-#                / angle
-#   Y           /. . . . . . . 
-#   ^          / .   
-#   |         /  .           ly3
+#               ^  /
+#              /  / 
+#            l4  / angle
+#   Y        /  /. . . . . . . 
+#   ^       /  / .   
+#   |      \/ /  .           ly3
 #   |            .             
 #   |_____> X. . . . . . . . .
 #   .            .
@@ -211,10 +211,10 @@ dataPb['ElementOrder_struc'] = 1
 silex_lib_make_meshes.structure(dataPb)
 
 
-dataPb['results_file']=Path(__file__).parent /  results_file_name_base  '_with_CB'
+dataPb['results_file']=Path(__file__).parent /  (results_file_name_base + '_with_CB')
 print(dataPb['results_file'])
-#silex_lib_compute_vibroacX.vibroac_Xfem_flex_struc_CB_reduction_impedance_paroi(dataPb)
-dataPb['results_file']=Path(__file__).parent /  results_file_name_base  '_no_CB'
+silex_lib_compute_vibroacX.vibroac_Xfem_flex_struc_CB_reduction_impedance_paroi(dataPb)
+dataPb['results_file']=Path(__file__).parent /  (results_file_name_base + '_no_CB')
 print(dataPb['results_file'])
-#silex_lib_compute_vibroacX.vibroac_Xfem_flex_struc_impedance_paroi(dataPb)
+silex_lib_compute_vibroacX.vibroac_Xfem_flex_struc_impedance_paroi(dataPb)
 
