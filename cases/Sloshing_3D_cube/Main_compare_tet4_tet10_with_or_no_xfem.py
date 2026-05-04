@@ -3,6 +3,7 @@ import numpy as np
 
 from pathlib import Path
 # import utils as u
+import SILEXrun 
 from  SILEXlib.tests import utils_acoustics as ua
 
 import silex_lib_compute_sloshing as slib_sloshing
@@ -81,7 +82,7 @@ import_export['struct'] = Path(__file__).parent / 'xfem_tet4' / ('cube_sloshing_
 import_export['results'] = Path(__file__).parent / 'xfem_tet4' / ('cube_sloshing_results_h'+str(crit_mesh))
 import_export['format'] = 'msh'
 
-slib_sloshing.create_dir_sym(import_export['fluid'])
+SILEXrun.misc.tools.create_dir_sym(import_export['fluid'])
 objCompute = slib_sloshing.compute_sloshing(dataPb,dataFluid,import_export)
 objCompute.run_parametric(para_dict)
 
@@ -95,7 +96,7 @@ import_export['struct'] = None
 import_export['results'] = Path(__file__).parent / 'classic_tet4' / ('cube_sloshing_results_h'+str(crit_mesh))
 import_export['format'] = 'msh'
 
-slib_sloshing.create_dir_sym(import_export['fluid'])
+SILEXrun.misc.tools.create_dir_sym(import_export['fluid'])
 objCompute = slib_sloshing.compute_sloshing(dataPb,dataFluid,import_export)
 objCompute.run_parametric(para_dict)
 
@@ -111,7 +112,7 @@ import_export['struct'] = Path(__file__).parent / 'xfem_tet10' / ('cube_sloshing
 import_export['results'] = Path(__file__).parent / 'xfem_tet10' / ('cube_sloshing_results_h'+str(crit_mesh))
 import_export['format'] = 'msh'
 
-slib_sloshing.create_dir_sym(import_export['fluid'])
+SILEXrun.misc.tools.create_dir_sym(import_export['fluid'])
 objCompute = slib_sloshing.compute_sloshing(dataPb,dataFluid,import_export)
 objCompute.run_parametric(para_dict)
 
@@ -125,7 +126,7 @@ import_export['struct'] = None
 import_export['results'] = Path(__file__).parent / 'classic_tet10' / ('cube_sloshing_results_h'+str(crit_mesh))
 import_export['format'] = 'msh'
 
-slib_sloshing.create_dir_sym(import_export['fluid'])
+SILEXrun.misc.tools.create_dir_sym(import_export['fluid'])
 objCompute = slib_sloshing.compute_sloshing(dataPb,dataFluid,import_export)
 objCompute.run_parametric(para_dict)
 
