@@ -63,10 +63,10 @@ results_file_name_base='results/cavity12_with_impedance_air_flexible_structure'
 
 dataPb['flag_write_gmsh_results']=1
 
-dataPb['nb_mode_F']= 200
+dataPb['nb_mode_F']= 100
 dataPb['nb_mode_S']= 20
 dataPb['freq_ini']   = 10.0
-dataPb['freq_end']  = 80.0
+dataPb['freq_end']  = 50.0
 dataPb['nb_freq_step_per_proc']=40
 dataPb['nproc'] = nproc
 dataPb['rank'] = rank
@@ -83,10 +83,10 @@ material_Struc=[]
 # material_Struc.append(5.0e-3) # thickness
 # material_Struc.append(2700.0) # rho
 # WOOD
-material_Struc.append(20000.0e6) # E Young
+material_Struc.append(20000.0e6*1e10) # E Young
 material_Struc.append(0.30) # nu
-material_Struc.append(20.0e-3) # thickness
-material_Struc.append(600.0) # rho
+material_Struc.append(20.0e-3*1e10) # thickness
+material_Struc.append(600.0*1e10) # rho
 
 
 dataPb['material_Struc']=material_Struc
@@ -95,8 +95,10 @@ dataPb['material_Struc']=material_Struc
 dataPb['modal_damping_S']=0.0
 
 # impedance paroi : article Walid-JFD : CMAME 2008 : d=50.0 and k=5e6
-dataPb['d_imp_paroi']= 50.0 # Pa.s/m
-dataPb['k_imp_paroi']= 5.0e6 # Pa/m
+#dataPb['d_imp_paroi']= 50.0 # Pa.s/m
+#dataPb['k_imp_paroi']= 5.0e6 # Pa/m
+dataPb['d_imp_paroi']= 0.0 # Pa.s/m
+dataPb['k_imp_paroi']= 5.0e16 # Pa/m
 
 ##############################################################
 # Make fluid mesh
@@ -154,7 +156,7 @@ dataPb['lx5'] = 6.0
 dataPb['ly5'] = 1.0
 dataPb['lz5'] = 1.5
 dataPb['h5']  = 1.0
-dataPb['h'] = dataPb['lx1']/30 #size of elements
+dataPb['h'] = dataPb['lx1']/20 #size of elements
 dataPb['ElementOrder'] = 1
 
 
@@ -211,10 +213,17 @@ dataPb['ElementOrder_struc'] = 1
 silex_lib_make_meshes.structure(dataPb)
 
 
-dataPb['results_file']=Path(__file__).parent /  (results_file_name_base + '_with_CB')
-print(dataPb['results_file'])
-silex_lib_compute_vibroacX.vibroac_Xfem_flex_struc_CB_reduction_impedance_paroi(dataPb)
-dataPb['results_file']=Path(__file__).parent /  (results_file_name_base + '_no_CB')
-print(dataPb['results_file'])
-silex_lib_compute_vibroacX.vibroac_Xfem_flex_struc_impedance_paroi(dataPb)
+#dataPb['results_file']=Path(__file__).parent /  (results_file_name_base + '_with_CB_and_struc_reduction')
+#silex_lib_compute_vibroacX.vibroac_Xfem_flex_struc_CB_and_struc_reduction_impedance_paroi(dataPb)
+#
+#dataPb['results_file']=Path(__file__).parent /  (results_file_name_base + '_no_CB_with_struc_reduction')
+#silex_lib_compute_vibroacX.vibroac_Xfem_flex_struc_reduction_impedance_paroi(dataPb)
+#
+#dataPb['results_file']=Path(__file__).parent /  (results_file_name_base + '_no_CB_no_struc_reduction')
+#silex_lib_compute_vibroacX.vibroac_Xfem_flex_struc_impedance_paroi(dataPb)
+#
+#dataPb['results_file']=Path(__file__).parent /  (results_file_name_base + '_rigid_struc_no_CB_no_struc_reduction')
+#silex_lib_compute_vibroacX.vibroac_Xfem_rigid_struc_impedance_paroi(dataPb)
 
+dataPb['results_file']=Path(__file__).parent /  (results_file_name_base + '_rigid_struc_CB_reduction')
+silex_lib_compute_vibroacX.vibroac_Xfem_rigid_struc_CB_reduction_impedance_paroi(dataPb)

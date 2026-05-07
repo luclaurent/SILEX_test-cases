@@ -134,6 +134,7 @@ def xfem_fluid_cavity(dataPb):
     gmsh.model.addPhysicalGroup(3, [187,185], 20, "acoustic fluid + control volume")
     gmsh.model.addPhysicalGroup(3, [185], 30, "control volume")
     gmsh.model.addPhysicalGroup(2, [131], 40, "impedance interface, roof")
+    #gmsh.model.addPhysicalGroup(2, [118], 40, "impedance interface, small side ")
 
     gmsh.model.geo.synchronize() 
     gmsh.model.mesh.generate(3)

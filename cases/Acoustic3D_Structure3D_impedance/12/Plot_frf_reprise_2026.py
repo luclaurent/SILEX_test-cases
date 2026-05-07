@@ -30,13 +30,25 @@ from pathlib import Path
 #f.close()
 
 # xfem + impedance paroi + flexible structure /  CB reduction 
-f=open(Path(__file__).parent / 'results/cavity12_with_impedance_air_flexible_structure_with_CB_results.frf','rb')
+f=open(Path(__file__).parent / 'results/cavity12_with_impedance_air_flexible_structure_with_CB_and_struc_reduction_results.frf','rb')
 #'cavity12_with_impedance_air_flexible_structure_CB_reduction_test_results.frf','rb')
-frf_xfem_imp_CB_reduc=pickle.load(f)
+frf_xfem_imp_CB_and_struc_reduc=pickle.load(f)
 f.close()
 
-f=open(Path(__file__).parent / 'results/cavity12_with_impedance_air_flexible_structure_no_CB_results.frf','rb')
-frf_xfem_imp_no_CB=pickle.load(f)
+f=open(Path(__file__).parent / 'results/cavity12_with_impedance_air_flexible_structure_no_CB_with_struc_reduction_results.frf','rb')
+frf_xfem_imp_no_CB_with_struc_reduction=pickle.load(f)
+f.close()
+
+f=open(Path(__file__).parent / 'results/cavity12_with_impedance_air_flexible_structure_no_CB_no_struc_reduction_results.frf','rb')
+frf_xfem_imp_no_CB_no_struc_reduction=pickle.load(f)
+f.close()
+
+f=open(Path(__file__).parent / 'results/cavity12_with_impedance_air_flexible_structure_rigid_struc_no_CB_no_struc_reduction_results.frf','rb')
+frf_xfem_imp_rigid_struc_no_CB_no_struc_reduction=pickle.load(f)
+f.close()
+
+f=open(Path(__file__).parent / 'results/cavity12_with_impedance_air_flexible_structure_rigid_struc_CB_reduction_results.frf','rb')
+frf_xfem_imp_rigid_struc_with_CB=pickle.load(f)
 f.close()
 
 
@@ -54,8 +66,11 @@ pl.figure(1)
 #pl.plot(frf_xfem[0],10*log10(frf_xfem[1]/prefsquare),'b-',label='xfem + flex. struc. + POROUS Biot-Allard/ 30 deg/ no reduction', linewidth=2)
 #pl.plot(frf_xfem_reduc_air_struc[0],10*log10(frf_xfem_reduc_air_struc[1]/prefsquare),'ob--',label='xfem + flex. struc. + POROUS / 30 deg/ reduction', linewidth=2)
 #pl.plot(frf_xfem_imp_no_reduc[0],10*log10(frf_xfem_imp_no_reduc[1]/prefsquare),'g-',label='xfem + flex. struc. + imp. paroi / no reduc', linewidth=2)
-pl.plot(frf_xfem_imp_CB_reduc[0],10*log10(frf_xfem_imp_CB_reduc[1]/prefsquare),'m-',label='xfem + flex. struc. + imp. paroi / CB reduc', linewidth=2)
-pl.plot(frf_xfem_imp_no_CB[0],10*log10(frf_xfem_imp_no_CB[1]/prefsquare),'g-',label='xfem + flex. struc. + imp. paroi / no CB', linewidth=2)
+pl.plot(frf_xfem_imp_CB_and_struc_reduc[0],10*log10(frf_xfem_imp_CB_and_struc_reduc[1]/prefsquare),'m-',label='xfem + flex. struc. + imp. paroi / CB and struc reduc', linewidth=2)
+pl.plot(frf_xfem_imp_no_CB_with_struc_reduction[0],10*log10(frf_xfem_imp_no_CB_with_struc_reduction[1]/prefsquare),'g-',label='xfem + flex. struc. + imp. paroi / no CB, with struc reduction', linewidth=2)
+pl.plot(frf_xfem_imp_no_CB_no_struc_reduction[0],10*log10(frf_xfem_imp_no_CB_no_struc_reduction[1]/prefsquare),'r--',label='xfem + flex. struc. + imp. paroi / no CB, no struc reduction', linewidth=2)
+pl.plot(frf_xfem_imp_rigid_struc_no_CB_no_struc_reduction[0],10*log10(frf_xfem_imp_rigid_struc_no_CB_no_struc_reduction[1]/prefsquare),'b--',label='xfem + RIGID struc. + imp. paroi / no CB', linewidth=2)
+pl.plot(frf_xfem_imp_rigid_struc_with_CB[0],10*log10(frf_xfem_imp_rigid_struc_with_CB[1]/prefsquare),'k--',label='xfem + RIGID struc. + imp. paroi / with CB', linewidth=2)
 #pl.plot(frf_xfem_no_imp_no_reduc[0],10*log10(frf_xfem_no_imp_no_reduc[1]/prefsquare),'r-',label='xfem + flex. struc. + NO imp. paroi / no reduc', linewidth=2)
 #pl.axis([1.0, 120.0, 70, 105])
 pl.xlabel('Frequency (Hz)')
